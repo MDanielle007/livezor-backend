@@ -14,15 +14,15 @@ class CreateLivestockBreedTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'livestockBreedName' => [
+            'livestock_breed_name' => [
                 'type' => 'VARCHAR',
                 'constraint' => 50,
             ],
-            'livestockBreedDescription' => [
+            'livestock_breed_description' => [
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
             ],
-            'livestockTypeId' => [
+            'livestock_type_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
@@ -30,11 +30,11 @@ class CreateLivestockBreedTable extends Migration
 
         $this->forge->addKey('id', true);
         // $this->forge->addForeignKey('livestockTypeId', 'livestockTypes', 'id');
-        $this->forge->createTable('livestockBreeds');
+        $this->forge->createTable('livestock_breeds');
     }
 
     public function down()
     {
-        $this->forge->dropTable('livestockBreeds');
+        $this->forge->dropTable('livestock_breeds');
     }
 }

@@ -14,26 +14,26 @@ class CreateLivestockAgeClassTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'livestockAgeClassification' => [
+            'livestock_age_classification' => [
                 'type' => 'VARCHAR',
                 'constraint' => 50,
             ],
-            'ageClassRange' => [
+            'age_class_range' => [
                 'type' => 'VARCHAR',
                 'constraint' => 25,
             ],
-            'livestockTypeId' => [
+            'livestock_type_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('livestockAgeClass');
+        $this->forge->createTable('livestock_age_class');
     }
 
     public function down()
     {
-        $this->forge->dropTable('livestockAgeClass');
+        $this->forge->dropTable('livestock_age_class');
     }
 }

@@ -14,42 +14,42 @@ class CreateLivestockTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'livestockId' => [
+            'livestock_id' => [
                 'type' => 'Varchar',
                 'constraint' => 11,
                 'unique' => true,
             ],
-            'livestockTagId' => [
+            'livestock_tag_id' => [
                 'type' => 'VARCHAR',
                 'constraint' => 25,
                 'null' => true, // Allow NULL values
             ],
-            'livestockTypeId' => [
+            'livestock_type_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'livestockBreedId' => [
+            'livestock_breed_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
                 'null' => true, // Allow NULL values
             ],
-            'livestockAgeClassId' => [
+            'livestock_age_class_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'ageDays' => [
+            'age_days' => [
                 'type' => 'INT',
                 'default' => 0,
             ],
-            'ageWeeks' => [
+            'age_weeks' => [
                 'type' => 'INT',
                 'default' => 0,
             ],
-            'ageMonths' => [
+            'age_months' => [
                 'type' => 'INT',
                 'default' => 0,
             ],
-            'ageYears' => [
+            'age_years' => [
                 'type' => 'INT',
                 'default' => 0,
             ],
@@ -57,29 +57,26 @@ class CreateLivestockTable extends Migration
                 'type' => 'ENUM',
                 'constraint' => ['Male', 'Female'],
             ],
-            'breedingEligibility' => [
+            'breeding_eligibility' => [
                 'type' => 'ENUM',
                 'constraint' => ['Age-Suited', 'Not Age-Suited'],
                 'default' => 'Not Age-Suited',
             ],
-            'dateOfBirth' => [
+            'date_of_birth' => [
                 'type' => 'DATE',
             ],
-            'livestockHealthStatus' => [
+            'livestock_health_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Alive', 'Sick' ,'Dead'],
                 'default' => 'Alive',
             ],
-            'recordStatus' => [
+            'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],
                 'default' => 'Accessible',
             ],
         ]);
         $this->forge->addKey('id', true);
-        // $this->forge->addForeignKey('livestockTypeId', 'livestockTypes', 'id');
-        // $this->forge->addForeignKey('livestockBreedId', 'livestockBreeds', 'id');
-        // $this->forge->addForeignKey('livestockAgeClassId', 'livestockAgeClass', 'id');
         $this->forge->createTable('livestocks');
     }
 

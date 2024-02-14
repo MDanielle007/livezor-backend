@@ -14,23 +14,22 @@ class CreateLivestockMortalityTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'livestockId' => [
+            'livestock_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'farmerId' => [
+            'farmer_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
-                'unsigned' => true,
             ],
-            'causeOfDeath' => [
+            'cause_of_death' => [
                 'type' => 'TEXT',
                 'null' => false,
             ],
-            'dateOfDeath' => [
+            'date_of_death' => [
                 'type' => 'DATE',
             ],
-            'recordStatus' => [
+            'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],
                 'default' => 'Accessible',
@@ -38,11 +37,11 @@ class CreateLivestockMortalityTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('livestockMortalities');
+        $this->forge->createTable('livestock_mortalities');
     }
 
     public function down()
     {
-        $this->forge->dropTable('livestockMortalities');
+        $this->forge->dropTable('livestock_mortalities');
     }
 }

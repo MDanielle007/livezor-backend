@@ -14,26 +14,26 @@ class CreateLivestockVaccinationTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'vaccineAdministratorId' => [
+            'vaccine_administrator_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'livestockId' => [
+            'livestock_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'vaccinationName' => [
+            'vaccination_name' => [
                 'type' => 'VARCHAR',
                 'constraint' => 70,
             ],
-            'vaccinationDescription' => [
+            'vaccination_description' => [
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
             ],
-            'vaccinationDate' => [
+            'vaccination_date' => [
                 'type' => 'DATE',
             ],
-            'recordStatus' => [
+            'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],
                 'default' => 'Accessible',
@@ -41,11 +41,11 @@ class CreateLivestockVaccinationTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('livestockVaccinations');
+        $this->forge->createTable('livestock_vaccinations');
     }
 
     public function down()
     {
-        $this->forge->dropTable('livestockVaccinations');
+        $this->forge->dropTable('livestock_vaccinations');
     }
 }

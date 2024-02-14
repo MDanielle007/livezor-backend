@@ -8,8 +8,8 @@ class AddForeignKeyLivestockAdvisoriesTable extends Migration
 {
     public function up()
     {
-        $this->forge->addForeignKey('targetFarmerId', 'userAccounts', 'id');
-        $this->forge->processIndexes('livestockAdvisories');
+        $this->forge->addForeignKey('target_farmer_id', 'user_accounts', 'id');
+        $this->forge->processIndexes('livestock_advisories');
     }
 
     public function down()

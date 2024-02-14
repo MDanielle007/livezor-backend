@@ -6,13 +6,13 @@ use CodeIgniter\Model;
 
 class LivestockAgeClassModel extends Model
 {
-    protected $table            = 'livestockageclass';
+    protected $table            = 'livestock_age_class';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['livestockAgeClassification', 'ageClassRange', 'livestockTypeId'];
+    protected $allowedFields    = ['livestock_age_classification', 'age_class_range', 'livestock_type_id'];
 
     protected bool $allowEmptyInserts = false;
 

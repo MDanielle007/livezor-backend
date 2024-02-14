@@ -14,24 +14,23 @@ class CreateFarmerLivestockTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'farmerId' => [
-                'type' => 'INT',
-                'unsigned' => true,
-                'constraint' => 11,
-            ],
-            'livestockId' => [
+            'farmer_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'acquiredDate' => [
+            'livestock_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+            ],
+            'acquired_date' => [
                 'type' => 'DATE',
             ],
-            'ownershipStatus' => [
+            'ownership_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Owned', 'Sold', 'Deceased', 'Transferred'],
                 'default' => 'Owned',
             ],
-            'recordStatus' => [
+            'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archive'],
                 'default' => 'Accessible',
@@ -39,13 +38,11 @@ class CreateFarmerLivestockTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        // $this->forge->addForeignKey('farmerId', 'userAccounts', 'id');
-        // $this->forge->addForeignKey('livestockId', 'livestocks', 'id');
-        $this->forge->createTable('farmerlivestocks');
+        $this->forge->createTable('farmer_livestocks');
     }
 
     public function down()
     {
-        $this->forge->dropTable('farmerlivestocks');
+        $this->forge->dropTable('farmer_livestocks');
     }
 }

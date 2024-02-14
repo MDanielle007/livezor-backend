@@ -6,13 +6,13 @@ use CodeIgniter\Model;
 
 class LivestockVaccinationModel extends Model
 {
-    protected $table            = 'livestockvaccinations';
+    protected $table            = 'livestock_vaccinations';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['vaccineAdministratorId', 'livestockId', 'vaccinationName', 'vaccinationDescription', 'vaccinationDate', 'recordStatus'];
+    protected $allowedFields    = [ 'vaccine_administrator_id', 'livestock_id', 'vaccination_name', 'vaccination_description', 'vaccination_date', 'record_status'];
 
     protected bool $allowEmptyInserts = false;
 

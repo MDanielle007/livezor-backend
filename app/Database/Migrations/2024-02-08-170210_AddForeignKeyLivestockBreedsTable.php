@@ -8,8 +8,8 @@ class AddForeignKeyLivestockBreedsTable extends Migration
 {
     public function up()
     {
-        $this->forge->addForeignKey('livestockTypeId', 'livestockTypes', 'id');
-        $this->forge->processIndexes('livestockBreeds');
+        $this->forge->addForeignKey('livestock_type_id', 'livestock_types', 'id');
+        $this->forge->processIndexes('livestock_breeds');
     }
 
     public function down()

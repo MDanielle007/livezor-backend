@@ -13,10 +13,9 @@ class CreateUserTable extends Migration
             'id' => [
                 'type' => 'INT',
                 'constraint' => 11,
-                'unsigned' => true,
                 'auto_increment' => true
             ],
-            'userID' => [
+            'user_id' => [
                 'type' => 'VARCHAR',
                 'constraint' => '10',
                 'unique' => true
@@ -33,19 +32,19 @@ class CreateUserTable extends Migration
                 'type' => 'TEXT',
                 'null' => true,
             ],
-            'firstName' => [
+            'first_name' => [
                 'type' => 'TEXT',
                 'null' => false,
             ],
-            'middleName' => [
+            'middle_name' => [
                 'type' => 'TEXT',
                 'null' => false,
             ],
-            'lastName' => [
+            'last_name' => [
                 'type' => 'TEXT',
                 'null' => false,
             ],
-            'dateOfBirth' => [
+            'date_of_birth' => [
                 'type' => 'DATETIME',
                 'null' => false,
             ],
@@ -54,7 +53,7 @@ class CreateUserTable extends Migration
                 'constraint' => ['Male', 'Female', 'Other'],
                 'null' => false,
             ],
-            'civilStatus' => [
+            'civil_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Single', 'Married', 'Windowed', 'Separated', 'Divorced'],
                 'null' => false,
@@ -75,35 +74,44 @@ class CreateUserTable extends Migration
                 'type' => 'TEXT',
                 'null' => false,
             ],
-            'phoneNumber' => [
+            'phone_number' => [
                 'type' => 'VARCHAR',
                 'constraint' => '11',
                 'null' => false,
             ],
-            'userImagePath' => [
+            'user_image' => [
                 'type' => 'TEXT',
                 'null' => false,
             ],
-            'userRole' => [
+            'user_role' => [
                 'type' => 'ENUM',
                 'constraint' => ['DA Personnel', 'Farmer'],
                 'null' => false,
             ],
-            'userStatus' => [
+            'user_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Active', 'Inactive'],
                 'null' => false,
             ],
-            'lastLoginDate' => [
+            'last_login_date' => [
                 'type' => 'DATETIME',
                 'null' => false,
             ],
-            'createdAt' => [
+            'created_at' => [
                 'type' => 'DATETIME',
                 'null' => false,
                 'default' => new RawSql('CURRENT_TIMESTAMP'),
             ],
-            'recordStatus' => [
+            'updated_at' => [
+                'type' => 'DATETIME',
+                'null' => false,
+                'default' => new RawSql('CURRENT_TIMESTAMP'),
+            ],
+            'remember_token' => [
+                'type' => 'TEXT',
+                'null' => true,
+            ],
+            'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],
                 'default' => 'Accessible',
@@ -111,12 +119,12 @@ class CreateUserTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('userAccounts');
+        $this->forge->createTable('user_accounts');
     }
 
     public function down()
     {
-        $this->forge->dropTable('userAccounts');
+        $this->forge->dropTable('user_accounts');
 
     }
 }

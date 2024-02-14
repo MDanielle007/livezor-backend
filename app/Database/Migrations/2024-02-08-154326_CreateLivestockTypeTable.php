@@ -14,22 +14,22 @@ class CreateLivestockTypeTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'livestockTypeName' => [
+            'livestock_type_name' => [
                 'type' => 'VARCHAR',
                 'constraint' => 50,
             ],
-            'livestockTypeUses' => [
+            'livestock_type_uses' => [
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
             ],
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('livestockTypes');
+        $this->forge->createTable('livestock_types');
     }
 
     public function down()
     {
-        $this->forge->dropTable('livestockTypes');
+        $this->forge->dropTable('livestock_types');
     }
 }

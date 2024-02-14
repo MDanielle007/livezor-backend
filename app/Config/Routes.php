@@ -10,6 +10,7 @@ $routes->get('/', 'Home::index');
 // API routes
 $routes->group('api',static function($routes){
     $routes->post('login', 'UserController::loginAuth');
+    $routes->post('upload', 'UserController::uploadUserImage');
 
     // Admin routes
     $routes->group('admin',static function($routes){

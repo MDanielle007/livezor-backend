@@ -21,22 +21,21 @@ class CreateLivestockAdvisoriesTable extends Migration
             'content' => [
                 'type' => 'TEXT',
             ],
-            'targetFarmerId' => [
+            'target_farmer_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
-                'unsigned' => true,
                 'null' => true,
             ],
-            'isGeneral' => [
+            'is_general' => [
                 'type' => 'BOOL',
             ],
-            'datePublished' => [
+            'date_published' => [
                 'type' => 'DATE',
             ],
-            'isRead' => [
+            'is_read' => [
                 'type' => 'BOOL',
             ],
-            'recordStatus' => [
+            'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],
                 'default' => 'Accessible',
@@ -44,7 +43,7 @@ class CreateLivestockAdvisoriesTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('livestockAdvisories');
+        $this->forge->createTable('livestock_advisories');
     }
 
     public function down()

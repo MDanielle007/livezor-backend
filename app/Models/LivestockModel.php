@@ -12,7 +12,7 @@ class LivestockModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['livestockId', 'livestockTagId', 'livestockTypeId', 'livestockBreedId', 'livestockAgeClassId', 'ageDays', 'ageWeeks', 'ageMonths', 'ageYears', 'sex', 'breedingEligibility', 'dateOfBirth', 'livestockHealthStatus', 'recordStatus'];
+    protected $allowedFields    = ['livestock_id', 'livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'date_of_birth', 'livestock_health_status', 'record_status'];
 
     protected bool $allowEmptyInserts = false;
 

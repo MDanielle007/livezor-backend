@@ -16,14 +16,13 @@ class CreateFarmerAuditTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'livestockId' => [
+            'livestock_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'farmerId' => [
+            'farmer_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
-                'unsigned' => true,
             ],
             'action' => [
                 'type' => 'ENUM',
@@ -38,7 +37,7 @@ class CreateFarmerAuditTable extends Migration
             'description' => [
                 'type' => 'TEXT',
             ],
-            'entityAffected' => [
+            'entity_affected' => [
                 'type' => 'ENUM',
                 'constraint' => ['Livestock', 'Vaccination', 'Breeding', 'Mortality'],
                 'null' => false,
@@ -47,7 +46,7 @@ class CreateFarmerAuditTable extends Migration
                 'type' => 'TIMESTAMP',
                 'default' => new RawSql('CURRENT_TIMESTAMP'),
             ],
-            'recordStatus' => [
+            'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],
                 'default' => 'Accessible',
@@ -55,7 +54,7 @@ class CreateFarmerAuditTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('farmerAudit');
+        $this->forge->createTable('farmer_audit');
     }
 
     public function down()

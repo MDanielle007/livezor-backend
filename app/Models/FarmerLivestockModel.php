@@ -6,13 +6,13 @@ use CodeIgniter\Model;
 
 class FarmerLivestockModel extends Model
 {
-    protected $table            = 'farmerlivestocks';
+    protected $table            = 'farmer_livestocks';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['farmerId', 'livestockId', 'acquiredDate', 'ownershipStatus', 'recordStatus'];
+    protected $allowedFields    = ['farmer_id', 'livestock_id', 'acquired_date', 'ownership_status', 'record_status'];
 
     protected bool $allowEmptyInserts = false;
 

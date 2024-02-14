@@ -6,13 +6,13 @@ use CodeIgniter\Model;
 
 class LivestockTypeModel extends Model
 {
-    protected $table            = 'livestocktypes';
+    protected $table            = 'livestock_types';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['livestockTypeName', 'livestockTypeUses'];
+    protected $allowedFields    = ['livestock_type_name', 'livestock_type_uses'];
 
     protected bool $allowEmptyInserts = false;
 
