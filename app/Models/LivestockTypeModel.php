@@ -39,4 +39,42 @@ class LivestockTypeModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    public function getLivestockTypes(){
+        $livestockTypes = $this->findAll();
+
+        return $livestockTypes;
+    }
+
+    public function getLivestockType($id){
+        $livestockType = $this->find($id);
+
+        return $livestockType;
+    }
+
+    public function insertLivestockType($data){
+        $bind = [
+            'livestock_type_name' => $data->livestockTypeName,
+            'livestock_type_uses' => $data->livestockTypeUses
+        ];
+        $result = $this->insert($bind);
+        return $result;
+    }
+
+    public function updateLivestockType($id,$data){
+        $bind = [
+            'livestock_type_name' => $data->livestockTypeName,
+            'livestock_type_uses' => $data->livestockTypeUses
+        ];
+
+        $result = $this->update($id,$bind);
+
+        return $result;
+    }
+
+    public function deleteLivestockType($id){
+        $result = $this->delete($id);
+
+        return $result;
+    }
 }

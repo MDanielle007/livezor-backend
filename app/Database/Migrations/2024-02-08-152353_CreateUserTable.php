@@ -45,7 +45,7 @@ class CreateUserTable extends Migration
                 'null' => false,
             ],
             'date_of_birth' => [
-                'type' => 'DATETIME',
+                'type' => 'DATE',
                 'null' => false,
             ],
             'gender' => [
@@ -108,6 +108,10 @@ class CreateUserTable extends Migration
                 'default' => new RawSql('CURRENT_TIMESTAMP'),
             ],
             'remember_token' => [
+                'type' => 'TEXT',
+                'null' => true,
+            ],
+            'firebase_token' => [
                 'type' => 'TEXT',
                 'null' => true,
             ],

@@ -39,4 +39,44 @@ class LivestockBreedModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    public function getLivestockBreeds(){
+        $livestockBreeds = $this->findAll();
+
+        return $livestockBreeds;
+    }
+
+    public function getLivestockBreed($id){
+        $livestockBreed = $this->find($id);
+
+        return $livestockBreed;
+    }
+
+    public function insertLivestockBreed($data){
+        $bind = [
+            'livestock_breed_name' => $data->livestockBreedName,
+            'livestock_breed_description' => $data->livestockBreedDescription,
+            'livestock_type_id' => $data->livestockTypeId,
+        ];
+        $result = $this->insert($bind);
+        return $result;
+    }
+
+    public function updateLivestockBreed($id,$data){
+        $bind = [
+            'livestock_breed_name' => $data->livestockBreedName,
+            'livestock_breed_description' => $data->livestockBreedDescription,
+            'livestock_type_id' => $data->livestockTypeId,
+        ];
+
+        $result = $this->update($id,$bind);
+
+        return $result;
+    }
+
+    public function deleteLivestockBreed($id){
+        $result = $this->delete($id);
+
+        return $result;
+    }
 }

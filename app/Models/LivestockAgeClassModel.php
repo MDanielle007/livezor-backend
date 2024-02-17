@@ -39,4 +39,44 @@ class LivestockAgeClassModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    public function getLivestockAgeClasses(){
+        $livestockAgeClasses = $this->findAll();
+
+        return $livestockAgeClasses;
+    }
+
+    public function getLivestockAgeClass($id){
+        $livestockAgeClass = $this->find($id);
+
+        return $livestockAgeClass;
+    }
+
+    public function insertLivestockAgeClass($data){
+        $bind = [
+            'livestock_age_classification' => $data->livestockAgeClassification,
+            'age_class_range' => $data->ageClassRange,
+            'livestock_type_id' => $data->livestockTypeId,
+        ];
+        $result = $this->insert($bind);
+        return $result;
+    }
+
+    public function updateLivestockAgeClass($id,$data){
+        $bind = [
+            'livestock_age_classification' => $data->livestockAgeClassification,
+            'age_class_range' => $data->ageClassRange,
+            'livestock_type_id' => $data->livestockTypeId,
+        ];
+
+        $result = $this->update($id,$bind);
+
+        return $result;
+    }
+
+    public function deleteLivestockAgeClass($id){
+        $result = $this->delete($id);
+
+        return $result;
+    }
 }

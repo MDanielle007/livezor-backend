@@ -39,4 +39,35 @@ class FarmerLivestockModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    public function associateFarmerLivestock($data){
+        $bind = [
+            'farmer_id' => $data->farmerId,
+            'livestock_id' => $data->livestockId,
+            'acquired_date' => $data->acquiredDate,
+        ];
+
+        $result = $this->insert($bind);
+
+        return $result;
+    }
+
+    public function updateFarmerLivestock($id, $data){
+        $bind = [
+            'farmer_id' => $data->farmerId,
+            'livestock_id' => $data->livestockId,
+            'acquired_date' => $data->acquiredDate,
+            'ownership_status' => $data->ownershipStatus,
+        ];
+
+        $result = $this->update($id, $bind);
+
+        return $result;
+    }
+
+    public function deleteFarmerLivestock($id){
+        $result = $this->delete($id);
+
+        return $result;
+    }
 }

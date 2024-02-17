@@ -27,10 +27,15 @@ class UserController extends ResourceController
         try {
             $username = $this->request->getJsonVar('username');
             $password = $this->request->getJsonVar('password');
+            $notiftoken = $this->request->getJsonVar('token');
+            $loginDate = $this->request->getJsonVar('loginDate');
 
             $user = $this->userModel->getUserByUsername($username);
 
             if ($user && password_verify($password, $user['password'])) {
+
+                $loginres = $this->userModel->setUserLogin($user['id'], $notiftoken, $loginDate);
+
                 $key = getenv('JWT_SECRET');
                 $iat = time(); // current timestamp value
                 $exp = $iat + 10800;
@@ -38,7 +43,7 @@ class UserController extends ResourceController
                 $payload = array(
                     "iss" => "OrMin Livestock Management System",
                     "aud" => $user['user_role'],
-                    "sub" => $user['user_id'],
+                    "sub" => ['id' => $user['id'], 'userId' => $user['user_id']],
                     "iat" => $iat, //Time the JWT issued at
                     "exp" => $exp, // Expiration time of token
                 );
@@ -48,16 +53,29 @@ class UserController extends ResourceController
                 $response = [
                     'login' => true,
                     'message' => 'Login Succesful',
-                    'token' => $token
+                    'token' => $token,
+                    'loginres' => $loginres
                 ];
                 return $this->respond($response, 200);
             } else {
-                return $this->respond(['message' => 'Invalid username or password.'], 401);
+                return $this->respond([
+                    'login' => false,
+                    'error' => 'Invalid username or password.'
+                ]);
             }
         } catch (\Throwable $th) {
             log_message('error', $th->getMessage());
-            return $this->respond(['message' => 'Invalid username or password.', 'error' => $th->getMessage()], 401);
+            return $this->respond(['message' => 'Invalid username or password.', 'error' => $th->getMessage()]);
         }
+    }
+
+    public function userLogOut()
+    {
+        $userId = $this->request->getJsonVar('userId');
+
+        $result = $this->userModel->setUserLogout($userId);
+
+        return $this->respond(['message' => 'User Logged Out Successfully', 'result' => $result], 200);
     }
 
     public function registerUser()
@@ -73,13 +91,14 @@ class UserController extends ResourceController
         }
     }
 
-    public function uploadUserImage(){
+    public function uploadUserImage()
+    {
         try {
             $file = $this->request->getFile('file');
             $newName = $file->getRandomName();
-            if ($file->isValid() && !$file->hasMoved()){
+            if ($file->isValid() && !$file->hasMoved()) {
                 $file->move('./uploads', $newName);
-                return $this->respond(['path'=> $newName], 200);
+                return $this->respond(['path' => $newName], 200);
             }
         } catch (\Throwable $th) {
             return $this->respond(['error' => $th->getMessage()], 401);
@@ -114,5 +133,17 @@ class UserController extends ResourceController
         $userID = $userTypeCode . '-' . strtoupper($initials) . $randomNumber;
 
         return $userID;
+    }
+
+    public function getAllUsers()
+    {
+        try {
+            $users = $this->userModel->getAllUsers();
+
+            return $this->respond($users);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()], 401);
+        }
     }
 }

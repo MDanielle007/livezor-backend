@@ -14,11 +14,6 @@ class CreateLivestockTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'livestock_id' => [
-                'type' => 'Varchar',
-                'constraint' => 11,
-                'unique' => true,
-            ],
             'livestock_tag_id' => [
                 'type' => 'VARCHAR',
                 'constraint' => 25,

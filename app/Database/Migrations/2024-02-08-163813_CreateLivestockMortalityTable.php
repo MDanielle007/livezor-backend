@@ -26,6 +26,10 @@ class CreateLivestockMortalityTable extends Migration
                 'type' => 'TEXT',
                 'null' => false,
             ],
+            'additional_death_notes' => [
+                'type' => 'TEXT',
+                'null' => true,
+            ],
             'date_of_death' => [
                 'type' => 'DATE',
             ],

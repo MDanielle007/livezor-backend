@@ -12,7 +12,7 @@ class UserModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
-    protected $allowedFields = ['user_id', 'username', 'password', 'email', 'first_name', 'middle_name', 'last_name', 'date_of_birth', 'gender', 'civil_status', 'sitio', 'barangay', 'city', 'province', 'phone_number', 'user_image', 'user_role', 'user_status', 'last_login_date', 'created_at', 'updated_at', 'remember_token', 'record_status'];
+    protected $allowedFields = ['user_id', 'username', 'password', 'email', 'first_name', 'middle_name', 'last_name', 'date_of_birth', 'gender', 'civil_status', 'sitio', 'barangay', 'city', 'province', 'phone_number', 'user_image', 'user_role', 'user_status', 'last_login_date', 'created_at', 'updated_at', 'remember_token','firebase_token', 'record_status'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -43,6 +43,31 @@ class UserModel extends Model
     public function getUserByUsername($username)
     {
         return $this->where('username', $username)->first();
+    }
+
+    public function setUserLogin($userId, $token, $loginDate){
+        $bind = [
+            'firebase_token' => $token,
+            'last_login_date' => $loginDate,
+            'user_status' => 'Active'
+        ];
+
+        $result = $this->where('id', $userId)->set($bind)->update();
+        return $result;
+    }
+
+    public function setUserLogout($userId){
+        $bind = [
+            'user_status' => 'Inactive'
+        ];
+
+        return $this->where('user_id', $userId)->set($bind)->update();
+    }
+
+    public function getAllUsers(){
+        $users = $this->findAll();
+
+        return $users;
     }
 
     public function insertUser($data)
