@@ -11,7 +11,6 @@ $routes->get('/', 'Home::index');
 $routes->group('api', static function ($routes) {
     $routes->post('login', 'UserController::loginAuth');
     $routes->post('logout', 'UserController::userLogOut');
-    $routes->post('upload', 'UserController::uploadUserImage');
 
     // Livestocks routes
     $routes->group('livestock', static function ($routes) {
@@ -40,8 +39,16 @@ $routes->group('api', static function ($routes) {
     // Admin routes
     $routes->group('admin', static function ($routes) {
         // User Management routes
+        $routes->post('upload', 'UserController::uploadUserImage');
         $routes->post('register-user', 'UserController::registerUser');
         $routes->get('all-users', 'UserController::getAllUsers');
+        $routes->get('get-user-profile/(:any)', 'UserController::getUser/$1');
+        $routes->put('update-user-profile/(:any)', 'UserController::updateUser/$1');
+        $routes->put('update-user-personal-info/(:any)', 'UserController::updateUserPersonalInfo/$1');
+        $routes->put('update-user-account-info/(:any)', 'UserController::updateUserAccountInfo/$1');
+        $routes->put('update-user-password/(:any)', 'UserController::updateUserPassword/$1');
+        $routes->put('update-user-record-stat/(:any)', 'UserController::updateUserRecordStatus/$1');
+        $routes->delete('delete-user/(:any)', 'UserController::deleteUser/$1');
 
         // Livestock routes
         $routes->get('all-livestocks', 'LivestocksController::getAllLivestocks');
@@ -65,6 +72,15 @@ $routes->group('api', static function ($routes) {
         $routes->put('update-livestock-breeding/(:any)', 'LivestockBreedingsController::updateLivestockBreeding/$1');
         $routes->put('update-livestock-breeding-record-stat/(:any)', 'LivestockBreedingsController::updateLivestockBreedingRecordStatus/$1');
         $routes->delete('delete-livestock-breeding/(:any)', 'LivestockBreedingsController::deleteLivestockBreeding/$1');
+
+        // Livestock Egg Production routes
+        $routes->get('all-livestock-eggprods', 'LivestockEggProductionController::getAllEggProductions');
+        $routes->get('all-farmer-livestock-eggprods/(:any)', 'LivestockEggProductionController::getAllFarmerEggProductions/$1');
+        $routes->get('livestock-eggprods/(:any)', 'LivestockEggProductionController::getEggProduction/$1');
+        $routes->post('add-livestock-eggprod', 'LivestockEggProductionController::insertEggProduction');
+        $routes->put('update-livestock-eggprod/(:any)', 'LivestockEggProductionController::updateEggProduction/$1');
+        $routes->put('update-livestock-eggprod-record-stat/(:any)', 'LivestockEggProductionController::updateEggProductionRecordStatus/$1');
+        $routes->delete('delete-livestock-eggprod/(:any)', 'LivestockEggProductionController::deleteEggProduction/$1');
 
         // Livestock Mortality routes
         $routes->get('all-livestock-mortalities', 'LivestockMortalityController::getAllLivestockMortalities');
@@ -97,10 +113,20 @@ $routes->group('api', static function ($routes) {
         $routes->put('update-livestock-breeding/(:any)', 'LivestockBreedingsController::updateLivestockBreeding/$1');
         $routes->put('update-livestock-breeding-record-stat/(:any)', 'LivestockBreedingsController::updateLivestockBreedingRecordStatus/$1');
 
+        // Farmer Livestock Egg Production routes
+        $routes->get('all-livestock-eggprods/(:any)', 'LivestockEggProductionController::getAllFarmerEggProductions/$1');
+        $routes->post('add-livestock-eggprods', 'LivestockEggProductionController::insertEggProduction');
+        $routes->put('update-livestock-eggprods/(:any)', 'LivestockEggProductionController::updateEggProduction/$1');
+        $routes->put('update-livestock-eggprods-record-stat/(:any)', 'LivestockEggProductionController::updateEggProductionRecordStatus/$1');
+
         // Farmer Livestock Mortality routes
         $routes->get('all-livestock-mortalities/(:any)', 'LivestockMortalityController::getAllFarmerLivestockMortalities/$1');
         $routes->post('add-livestock-mortality', 'LivestockMortalityController::insertLivestockMortality');
         $routes->put('update-livestock-mortality/(:any)', 'LivestockMortalityController::updateLivestockMortality/$1');
         $routes->put('update-livestock-mortality-record-stat/(:any)', 'LivestockMortalityController::updateLivestockMortalityRecordStatus/$1');
+
+        // Farmer User Management routes
+        $routes->get('get-farmer-profile/(:any)', 'UserController::getUser/$1');
+        $routes->put('update-user-personal-info/(:any)', 'UserController::updateUserPersonalInfo/$1');
     });
 });
