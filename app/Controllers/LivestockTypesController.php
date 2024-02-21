@@ -23,8 +23,11 @@ class LivestockTypesController extends ResourceController
 
     public function insertLivestockType(){
         $data = $this->request->getJSON();
-        $response = $this->livestockType->insertLivestockType($data);
-        return $this->respond(['message' => 'New Livestock Type Successfully Added', 'result' => $response], 200);
+        $result = $this->livestockType->insertLivestockType($data);
+        if(!$result) {
+            return $this->fail($this->livestockType->errors());
+        }
+        return $this->respond(['message' => 'New Livestock Type Successfully Added', 'result' => $result], 200);
     }
 
     public function getLivestockTypes(){
@@ -41,12 +44,18 @@ class LivestockTypesController extends ResourceController
 
     public function updateLivestockType($id){
         $data = $this->request->getJSON();
-        $response = $this->livestockType->updateLivestockType($id,$data);
-        return $this->respond(['message' => 'Livestock Type Successfully Updated', 'result' => $response], 200);
+        $result = $this->livestockType->updateLivestockType($id,$data);
+        if(!$result) {
+            return $this->fail($this->livestockType->errors());
+        }
+        return $this->respond(['message' => 'Livestock Type Successfully Updated', 'result' => $result], 200);
     }
 
     public function deleteLivestockType($id){
-        $response = $this->livestockType->deleteLivestockType($id);
-        return $this->respond(['message' => 'Livestock Type Successfully Deleted','result' => $response], 200);
+        $result = $this->livestockType->deleteLivestockType($id);
+        if(!$result) {
+            return $this->fail($this->livestockType->errors());
+        }
+        return $this->respond(['message' => 'Livestock Type Successfully Deleted','result' => $result], 200);
     }
 }

@@ -71,7 +71,7 @@ class UserController extends ResourceController
 
     public function userLogOut()
     {
-        $userId = $this->request->getJsonVar('userId');
+        $userId = $this->request->getJsonVar('id');
 
         $result = $this->userModel->setUserLogout($userId);
 
@@ -140,10 +140,96 @@ class UserController extends ResourceController
         try {
             $users = $this->userModel->getAllUsers();
 
+            $baseURL = getenv('app.baseURL');
+            foreach ($users as &$user) {
+                $user['image'] = $baseURL . 'uploads/' . $user['user_image'];
+            }
             return $this->respond($users);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()], 401);
+        }
+    }
+
+    public function getUser($id)
+    {
+        try {
+            $user = $this->userModel->getUser($id);
+
+            $baseURL = getenv('app.baseURL');
+            $user['image'] = $baseURL . 'uploads/' . $user['user_image'];
+
+            return $this->respond($user);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function updateUser($id)
+    {
+        try {
+            $data = $this->request->getJSON();
+            $response = $this->userModel->updateUser($id, $data);
+            return $this->respond($response, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function updateUserPersonalInfo($id)
+    {
+        try {
+            $data = $this->request->getJSON();
+            $response = $this->userModel->updateUserPersonalInfo($id, $data);
+            return $this->respond($response, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function updateUserAccountInfo($id)
+    {
+        try {
+            $data = $this->request->getJSON();
+            $result = $this->userModel->updateUserAccountInfo($id, $data);
+            if(!$result) {
+                return $this->fail($this->userModel->errors());
+            }
+            return $this->respond($result, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function updateUserPassword($id)
+    {
+        try {
+            $data = $this->request->getJSON();
+            $response = $this->userModel->updateUserPassword($id, $data);
+            return $this->respond($response, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function updateUserRecordStatus($id)
+    {
+        try {
+            $data = $this->request->getJSON();
+            $response = $this->userModel->updateUserRecordStatus($id, $data->recordStatus);
+            return $this->respond($response, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function deleteUser($id)
+    {
+        try {
+            $response = $this->userModel->deleteUser($id);
+            return $this->respond($response, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
         }
     }
 }
