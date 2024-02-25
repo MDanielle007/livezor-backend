@@ -6,53 +6,56 @@ use CodeIgniter\Model;
 
 class LivestockModel extends Model
 {
-    protected $table            = 'livestocks';
-    protected $primaryKey       = 'id';
+    protected $table = 'livestocks';
+    protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'array';
-    protected $useSoftDeletes   = false;
-    protected $protectFields    = true;
-    protected $allowedFields    = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'date_of_birth', 'livestock_health_status', 'record_status'];
+    protected $returnType = 'array';
+    protected $useSoftDeletes = false;
+    protected $protectFields = true;
+    protected $allowedFields = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'date_of_birth', 'livestock_health_status', 'record_status'];
 
     protected bool $allowEmptyInserts = false;
 
     // Dates
     protected $useTimestamps = false;
-    protected $dateFormat    = 'datetime';
-    protected $createdField  = 'created_at';
-    protected $updatedField  = 'updated_at';
-    protected $deletedField  = 'deleted_at';
+    protected $dateFormat = 'datetime';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
+    protected $deletedField = 'deleted_at';
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
-    protected $skipValidation       = false;
+    protected $validationRules = [];
+    protected $validationMessages = [];
+    protected $skipValidation = false;
     protected $cleanValidationRules = true;
 
     // Callbacks
     protected $allowCallbacks = true;
-    protected $beforeInsert   = [];
-    protected $afterInsert    = [];
-    protected $beforeUpdate   = [];
-    protected $afterUpdate    = [];
-    protected $beforeFind     = [];
-    protected $afterFind      = [];
-    protected $beforeDelete   = [];
-    protected $afterDelete    = [];
+    protected $beforeInsert = [];
+    protected $afterInsert = [];
+    protected $beforeUpdate = [];
+    protected $afterUpdate = [];
+    protected $beforeFind = [];
+    protected $afterFind = [];
+    protected $beforeDelete = [];
+    protected $afterDelete = [];
 
-    public function getAllLivestock(){
+    public function getAllLivestock()
+    {
         $livestocks = $this->findAll();
 
         return $livestocks;
     }
 
-    public function getLivestockById($id){
+    public function getLivestockById($id)
+    {
         $livestock = $this->find($id);
 
         return $livestock;
     }
 
-    public function insertLivestock($data){
+    public function insertLivestock($data)
+    {
         try {
             $bind = [
                 'livestock_tag_id' => $data->livestockTagId,
@@ -77,7 +80,8 @@ class LivestockModel extends Model
         }
     }
 
-    public function updateLivestock($id, $data){
+    public function updateLivestock($id, $data)
+    {
         try {
             $bind = [
                 'livestock_tag_id' => $data->livestockTagId,
@@ -103,12 +107,14 @@ class LivestockModel extends Model
         }
     }
 
-    public function deleteLivestock($id){
+    public function deleteLivestock($id)
+    {
         $result = $this->delete($id);
         return $result;
     }
 
-    public function updateLivestockHealthStatus($id, $data){
+    public function updateLivestockHealthStatus($id, $data)
+    {
         try {
             $bind = [
                 'livestock_health_status' => $data->livestockHealthStatus,
@@ -122,8 +128,9 @@ class LivestockModel extends Model
             return $th->getMessage();
         }
     }
-    
-    public function updateLivestockRecordStatus($id, $status){
+
+    public function updateLivestockRecordStatus($id, $status)
+    {
         try {
             $bind = [
                 'record_status' => $status,
@@ -138,7 +145,8 @@ class LivestockModel extends Model
         }
     }
 
-    public function getFarmerAllLivestock($userId){
+    public function getFarmerAllLivestock($userId)
+    {
         try {
             $livestock = [];
 
@@ -150,7 +158,7 @@ class LivestockModel extends Model
             ];
 
             $livestock = $this->select(
-                        'livestocks.id as id, 
+                'livestocks.id as id, 
                         livestocks.livestock_tag_id as livestockTagID, 
                         livestocks.livestock_type_id as livestockTypeId, 
                         livestocks.livestock_breed_id as livestockBreedId, 
@@ -170,8 +178,9 @@ class LivestockModel extends Model
                             WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
                             WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years")
                             ELSE "Unknown Age"
-                        END as livestockAge')
-                ->join('farmer_livestocks','livestocks.id = farmer_livestocks.livestock_id')
+                        END as livestockAge'
+            )
+                ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
                 ->where($whereClause)
                 ->findAll();
 
@@ -181,7 +190,29 @@ class LivestockModel extends Model
         }
     }
 
-    
+    public function getFarmerEachLivestockTypeCountData($id)
+    {
+        try {
+            $whereClause = [
+                'livestocks.record_status' => 'Accessible',
+                'farmer_livestocks.farmer_id' => $id
+            ];
+
+            $mappingData = $this->select('lt.livestock_type_name AS livestockType, COUNT(*) AS livestockCount')
+                ->join('livestock_types lt', 'lt.id = livestocks.livestock_type_id')
+                ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->groupBy('lt.livestock_type_name')
+                ->where($whereClause)
+                ->findAll();
+
+            return $mappingData;
+
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
 
 
 }

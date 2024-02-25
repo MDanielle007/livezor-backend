@@ -232,4 +232,22 @@ class UserController extends ResourceController
             //throw $th;
         }
     }
+
+    public function getAllAdminFirebaseToken(){
+        $usersTokens = $this->userModel->getAllUserFirebaseToken('DA Personnel');
+
+        return $this->respond($usersTokens,200);
+    }
+
+    public function getAllFarmerFirebaseToken(){
+        $usersTokens = $this->userModel->getAllUserFirebaseToken('Farmer');
+
+        return $this->respond($usersTokens,200);
+    }
+
+    public function getUserFirebaseToken($id){
+        $userToken = $this->userModel->getUserFirebaseToken($id);
+
+        return $this->respond($userToken[0]['firebase_token'],200);
+    }
 }

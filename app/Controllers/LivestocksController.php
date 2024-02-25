@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\LivestockModel;
@@ -12,11 +13,13 @@ class LivestocksController extends ResourceController
 {
     private $livestock;
     private $farmerLivestock;
+    private $userModel;
 
     public function __construct()
     {
         $this->livestock = new LivestockModel();
         $this->farmerLivestock = new FarmerLivestockModel();
+        $this->userModel = new UserModel();
     }
 
     public function index()
@@ -131,6 +134,23 @@ class LivestocksController extends ResourceController
             return $this->respond(['result' => $response,'message' => 'Livestock Successfully Deleted'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+        }
+    }
+
+    public function getLivestockMappingData(){
+        try {
+            //code...
+            $mappingData = $this->userModel->getBasicUserInfo();
+
+            foreach($mappingData as &$md){
+                $md['livestock'] = $this->livestock->getFarmerEachLivestockTypeCountData($md['id']);
+            }
+
+
+            return $this->respond(['farmers'=>$mappingData]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
         }
     }
 }

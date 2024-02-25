@@ -3,6 +3,7 @@
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
+use CodeIgniter\Database\RawSql;
 
 class CreateLivestockAdvisoriesTable extends Migration
 {
@@ -30,7 +31,8 @@ class CreateLivestockAdvisoriesTable extends Migration
                 'type' => 'BOOL',
             ],
             'date_published' => [
-                'type' => 'DATE',
+                'type' => 'DATETIME',
+                'default' => new RawSql('CURRENT_TIMESTAMP'),
             ],
             'is_read' => [
                 'type' => 'BOOL',

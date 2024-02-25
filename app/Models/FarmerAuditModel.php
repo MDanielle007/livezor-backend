@@ -39,4 +39,70 @@ class FarmerAuditModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    public function getAllFarmerAuditTrailLogs(){
+        $auditTrails = $this->findAll();
+        return $auditTrails;
+    }
+
+    public function getFarmerAuditTrailLogs($id){
+        $auditTrails = $this->where('farmer_id',$id)->findAll();
+        return $auditTrails;
+    }
+
+    public function getAuditTrailLogsByEntity($entity){
+        $auditTrails = $this->where('entity_affected',$entity)->findAll();
+
+         return $auditTrails;
+    }
+
+    public function getAuditTrailLogsByAction($action){
+        $auditTrails = $this->where('action',$action)->findAll();
+
+         return $auditTrails;
+    }
+
+
+    public function insertAuditTrailLog($data){
+        $bind = [
+            'livestock_id' => $data->livestockId,
+            'farmer_id' => $data->farmerId,
+            'action' => $data->action,
+            'title' => $data->title,
+            'description' => $data->description,
+            'entity_affected' => $data->entityAffected
+        ];
+
+        $result = $this->insert($bind);
+        return $result;
+    }
+
+    public function updateAuditTrailLog($id,$data){
+        $bind = [
+            'livestock_id' => $data->livestock_id,
+            'farmer_id' => $data->farmerId,
+            'action' => $data->action,
+            'title' => $data->title,
+            'description' => $data->description,
+            'entity_affected' => $data->entityAffected
+        ];
+
+        $result = $this->update($id, $bind);
+        return $result;
+    }
+
+    public function updateAuditTrailRecordStatus($id, $status){
+        $bind = [
+            'record_status' => $status
+        ];
+
+        $result = $this->update($id, $bind);
+        return $result;
+    }
+
+    public function deleteAuditTrailLog($id){
+        $result = $this->delete($id);
+
+        return $result;
+    }
 }

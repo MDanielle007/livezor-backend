@@ -115,7 +115,8 @@ class UserModel extends Model
         }
     }
 
-    public function updateUser($id, $data){
+    public function updateUser($id, $data)
+    {
         try {
             $bind = [
                 'first_name' => $data->firstName,
@@ -137,7 +138,7 @@ class UserModel extends Model
             return $result;
         } catch (\Throwable $th) {
             return $th->getMessage();
-        }   
+        }
     }
 
     public function updateUserPersonalInfo($id, $data)
@@ -231,5 +232,37 @@ class UserModel extends Model
             //throw $th;
             return $th->getMessage();
         }
+    }
+
+    public function getAllUserFirebaseToken($userRole)
+    {
+        $result = $this->select('firebase_token')->where('user_role', $userRole)->where('firebase_token IS NOT NULL')->findAll();
+        $users = array_column($result, 'firebase_token');
+        return $users;
+    }
+
+    public function getUserFirebaseToken($id)
+    {
+        $result = $this->select('firebase_token')->where('id', $id)->find();
+
+        return $result;
+    }
+
+    public function getBasicUserInfo()
+    {
+        $result = $this->select(
+            'id,
+            first_name as firstName,
+            last_name as lastName,
+            user_role as userRole, 
+            sitio, 
+            barangay, 
+            city, 
+            province, 
+            username,
+            user_id as userId')
+            ->where('user_role', 'Farmer')
+            ->findAll();
+        return $result;
     }
 }
