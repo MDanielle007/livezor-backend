@@ -42,13 +42,29 @@ class LivestockMortalityModel extends Model
 
     public function getAllLivestockMortalities()
     {
-        $livestockMortalities = $this->findAll();
+        $livestockMortalities = $this->select(
+            'id,
+            livestock_id as livestockId,
+            farmer_id as farmerId,
+            cause_of_death as causeOfDeath,
+            additional_death_notes as additionalDeathNotes,
+            date_of_death as dateOfDeath,
+            record_status as recordStatus'
+        )->findAll();
         return $livestockMortalities;
     }
 
     public function getLivestockMortality($id)
     {
-        $livestockMortality = $this->find($id);
+        $livestockMortality = $this->select(
+            'id,
+            livestock_id as livestockId,
+            farmer_id as farmerId,
+            cause_of_death as causeOfDeath,
+            additional_death_notes as additionalDeathNotes,
+            date_of_death as dateOfDeath,
+            record_status as recordStatus'
+        )->find($id);
         return $livestockMortality;
     }
 
@@ -59,7 +75,15 @@ class LivestockMortalityModel extends Model
             'record_status' => 'Accessible'
         ];
 
-        $livestockMortalities = $this->where($whereClause)->findAll();
+        $livestockMortalities = $this->select(
+            'id,
+            livestock_id as livestockId,
+            farmer_id as farmerId,
+            cause_of_death as causeOfDeath,
+            additional_death_notes as additionalDeathNotes,
+            date_of_death as dateOfDeath,
+            record_status as recordStatus'
+        )->where($whereClause)->findAll();
         return $livestockMortalities;
     }
 

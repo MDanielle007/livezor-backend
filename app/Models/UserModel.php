@@ -68,7 +68,28 @@ class UserModel extends Model
 
     public function getAllUsers()
     {
-        $users = $this->findAll();
+        $users = $this->select(
+            'id,
+            user_id as userId,
+            username,
+            password,
+            email,
+            first_name as firstName,
+            middle_name as middleName,
+            last_name as lastName,
+            date_of_birth as dateOfBirth,
+            gender,
+            civil_status as civilStatus,
+            sitio,
+            barangay,
+            city,
+            province,
+            phone_number as phoneNumber,
+            user_image as userImage,
+            user_role as userRole,
+            user_status as userStatus,
+            last_login_date as lastLoginDate'
+        )->findAll();
 
         return $users;
     }
@@ -106,7 +127,28 @@ class UserModel extends Model
     public function getUser($id)
     {
         try {
-            $user = $this->find($id);
+            $user = $this->select(
+                'id,
+                user_id as userId,
+                username,
+                password,
+                email,
+                first_name as firstName,
+                middle_name as middleName,
+                last_name as lastName,
+                date_of_birth as dateOfBirth,
+                gender,
+                civil_status as civilStatus,
+                sitio,
+                barangay,
+                city,
+                province,
+                phone_number as phoneNumber,
+                user_image as userImage,
+                user_role as userRole,
+                user_status as userStatus,
+                last_login_date as lastLoginDate'
+            )->find($id);
 
             return $user;
         } catch (\Throwable $th) {

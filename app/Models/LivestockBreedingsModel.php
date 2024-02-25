@@ -42,13 +42,33 @@ class LivestockBreedingsModel extends Model
 
     public function getAllLivestockBreedings()
     {
-        $livestockBreedings = $this->findAll();
+        $livestockBreedings = $this->select(
+            'id,
+            farmer_id as farmerId,
+            livestock_type_id as livestockTypeId,
+            male_livestock_tag_id as maleLivestockTagId,
+            female_livestock_tag_id as femaleLivestockTagId,
+            breed_result as breedResult,
+            breed_additional_notes as breedAdditionalNotes,
+            breed_date as breedDate,
+            record_status as recordStatus'
+        )->findAll();
         return $livestockBreedings;
     }
 
     public function getLivestockBreeding($id)
     {
-        $livestockBreeding = $this->find($id);
+        $livestockBreeding = $this->select(
+            'id,
+            farmer_id as farmerId,
+            livestock_type_id as livestockTypeId,
+            male_livestock_tag_id as maleLivestockTagId,
+            female_livestock_tag_id as femaleLivestockTagId,
+            breed_result as breedResult,
+            breed_additional_notes as breedAdditionalNotes,
+            breed_date as breedDate,
+            record_status as recordStatus'
+        )->find($id);
         return $livestockBreeding;
     }
 
@@ -59,7 +79,17 @@ class LivestockBreedingsModel extends Model
             'record_status' => 'Accessible'
         ];
 
-        $livestockBreedings = $this->where($whereClause)->findAll();
+        $livestockBreedings = $this->select(
+            'id,
+            farmer_id as farmerId,
+            livestock_type_id as livestockTypeId,
+            male_livestock_tag_id as maleLivestockTagId,
+            female_livestock_tag_id as femaleLivestockTagId,
+            breed_result as breedResult,
+            breed_additional_notes as breedAdditionalNotes,
+            breed_date as breedDate,
+            record_status as recordStatus'
+        )->where($whereClause)->findAll();
         return $livestockBreedings;
     }
 

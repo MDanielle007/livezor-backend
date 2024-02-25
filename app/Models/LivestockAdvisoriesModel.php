@@ -42,25 +42,59 @@ class LivestockAdvisoriesModel extends Model
 
     public function getAllLivestockAdvisories()
     {
-        $livestockAdvisories = $this->findAll();
+        $livestockAdvisories = $this->select(
+            'id,
+            subject,
+            content,
+            target_farmer_id as targetFarmerId,
+            is_general as isGeneral,
+            date_published as datePublished,
+            is_read as isRead,
+            record_status as recordStatus'
+        )->findAll();
         return $livestockAdvisories;
     }
 
     public function getLivestockAdvisory($id)
     {
-        $livestockAdvisory = $this->find($id);
+        $livestockAdvisory = $this->select(
+            'id,
+            subject,
+            content,
+            target_farmer_id as targetFarmerId,
+            is_general as isGeneral,
+            date_published as datePublished,
+            is_read as isRead,
+            record_status as recordStatus'
+        )->find($id);
         return $livestockAdvisory;
     }
 
     public function getAllFarmerLivestockAdvisories($userid)
     {
-        $livestockAdvisories = $this->where('target_farmer_id', $userid)->findAll();
+        $livestockAdvisories = $this->select(
+            'id,
+            subject,
+            content,
+            target_farmer_id as targetFarmerId,
+            is_general as isGeneral,
+            date_published as datePublished,
+            is_read as isRead'
+        )->where('target_farmer_id', $userid)->findAll();
         return $livestockAdvisories;
     }
 
     public function getAllGeneralLivestockAdvisories()
     {
-        $livestockAdvisories = $this->where('is_general', 1)->findAll();
+        $livestockAdvisories = $this
+        ->select(
+            'id,
+            subject,
+            content,
+            date_published as datePublished,
+            is_read as isRead,
+            record_status as recordStatus'
+        )->where('is_general', 1)->findAll();
         return $livestockAdvisories;
     }
 

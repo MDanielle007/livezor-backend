@@ -142,7 +142,7 @@ class UserController extends ResourceController
 
             $baseURL = getenv('app.baseURL');
             foreach ($users as &$user) {
-                $user['image'] = $baseURL . 'uploads/' . $user['user_image'];
+                $user['image'] = $baseURL . 'uploads/' . $user['userImage'];
             }
             return $this->respond($users);
         } catch (\Throwable $th) {
@@ -157,7 +157,7 @@ class UserController extends ResourceController
             $user = $this->userModel->getUser($id);
 
             $baseURL = getenv('app.baseURL');
-            $user['image'] = $baseURL . 'uploads/' . $user['user_image'];
+            $user['image'] = $baseURL . 'uploads/' . $user['userImage'];
 
             return $this->respond($user);
         } catch (\Throwable $th) {

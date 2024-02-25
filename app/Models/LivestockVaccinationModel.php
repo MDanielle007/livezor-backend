@@ -42,13 +42,29 @@ class LivestockVaccinationModel extends Model
 
     public function getAllLivestockVaccinations()
     {
-        $livestockVaccinations = $this->findAll();
+        $livestockVaccinations = $this->select(
+            'id,
+            vaccine_administrator_id as vaccineAdministratorId,
+            livestock_id as livestockId,
+            vaccination_name as vaccinationName,
+            vaccination_description as vaccinationDescription,
+            vaccination_date as vaccinationDate,
+            record_status as recordStatus'
+        )->findAll();
         return $livestockVaccinations;
     }
 
     public function getLivestockVaccination($id)
     {
-        $livestockVaccination = $this->find($id);
+        $livestockVaccination = $this->select(
+            'id,
+            vaccine_administrator_id as vaccineAdministratorId,
+            livestock_id as livestockId,
+            vaccination_name as vaccinationName,
+            vaccination_description as vaccinationDescription,
+            vaccination_date as vaccinationDate,
+            record_status as recordStatus'
+        )->find($id);
         return $livestockVaccination;
     }
 
@@ -59,7 +75,15 @@ class LivestockVaccinationModel extends Model
             'record_status' => 'Accessible'
         ];
 
-        $livestockVaccinations = $this->where($whereClause)->findAll();
+        $livestockVaccinations = $this->select(
+            'id,
+            vaccine_administrator_id as vaccineAdministratorId,
+            livestock_id as livestockId,
+            vaccination_name as vaccinationName,
+            vaccination_description as vaccinationDescription,
+            vaccination_date as vaccinationDate,
+            record_status as recordStatus'
+        )->where($whereClause)->findAll();
         return $livestockVaccinations;
     }
 
@@ -93,7 +117,8 @@ class LivestockVaccinationModel extends Model
         return $result;
     }
 
-    public function updateLivestockVaccinationRecordStatus($id, $status){
+    public function updateLivestockVaccinationRecordStatus($id, $status)
+    {
         $bind = [
             'record_status' => $status,
         ];
@@ -103,7 +128,8 @@ class LivestockVaccinationModel extends Model
         return $result;
     }
 
-    public function deleteLivestockVaccination($id){
+    public function deleteLivestockVaccination($id)
+    {
         $result = $this->delete($id);
         return $result;
     }

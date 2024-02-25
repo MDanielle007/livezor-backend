@@ -41,23 +41,63 @@ class FarmerAuditModel extends Model
     protected $afterDelete    = [];
 
     public function getAllFarmerAuditTrailLogs(){
-        $auditTrails = $this->findAll();
+        $auditTrails = $this->select(
+            'id,
+            livestock_id as livestockId,
+            farmer_id as farmerId,
+            action,
+            title,
+            description,
+            entity_affected as entityAffected,
+            timestamp,
+            record_status as recordStatus'
+        )->findAll();
         return $auditTrails;
     }
 
     public function getFarmerAuditTrailLogs($id){
-        $auditTrails = $this->where('farmer_id',$id)->findAll();
+        $auditTrails = $this->select(
+            'id,
+            livestock_id as livestockId,
+            farmer_id as farmerId,
+            action,
+            title,
+            description,
+            entity_affected as entityAffected,
+            timestamp,
+            record_status as recordStatus'
+        )->where('farmer_id',$id)->findAll();
         return $auditTrails;
     }
 
     public function getAuditTrailLogsByEntity($entity){
-        $auditTrails = $this->where('entity_affected',$entity)->findAll();
+        $auditTrails = $this->select(
+            'id,
+            livestock_id as livestockId,
+            farmer_id as farmerId,
+            action,
+            title,
+            description,
+            entity_affected as entityAffected,
+            timestamp,
+            record_status as recordStatus'
+        )->where('entity_affected',$entity)->findAll();
 
          return $auditTrails;
     }
 
     public function getAuditTrailLogsByAction($action){
-        $auditTrails = $this->where('action',$action)->findAll();
+        $auditTrails = $this->select(
+            'id,
+            livestock_id as livestockId,
+            farmer_id as farmerId,
+            action,
+            title,
+            description,
+            entity_affected as entityAffected,
+            timestamp,
+            record_status as recordStatus'
+        )->where('action',$action)->findAll();
 
          return $auditTrails;
     }

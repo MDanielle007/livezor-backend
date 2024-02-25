@@ -59,6 +59,7 @@ class LivestockEggProductionController extends ResourceController
 
         } catch (\Throwable $th) {
             //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
         }
     }    
 

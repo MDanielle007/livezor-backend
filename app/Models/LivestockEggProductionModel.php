@@ -6,49 +6,65 @@ use CodeIgniter\Model;
 
 class LivestockEggProductionModel extends Model
 {
-    protected $table            = 'livestock_egg_productions';
-    protected $primaryKey       = 'id';
+    protected $table = 'livestock_egg_productions';
+    protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'array';
-    protected $useSoftDeletes   = false;
-    protected $protectFields    = true;
-    protected $allowedFields    = ['farmer_id', 'livestock_id', 'eggs_produced', 'additional_egg_prod_notes', 'date_of_production', 'record_status'];
+    protected $returnType = 'array';
+    protected $useSoftDeletes = false;
+    protected $protectFields = true;
+    protected $allowedFields = ['farmer_id', 'livestock_id', 'eggs_produced', 'additional_egg_prod_notes', 'date_of_production', 'record_status'];
 
     protected bool $allowEmptyInserts = false;
 
     // Dates
     protected $useTimestamps = false;
-    protected $dateFormat    = 'datetime';
-    protected $createdField  = 'created_at';
-    protected $updatedField  = 'updated_at';
-    protected $deletedField  = 'deleted_at';
+    protected $dateFormat = 'datetime';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
+    protected $deletedField = 'deleted_at';
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
-    protected $skipValidation       = false;
+    protected $validationRules = [];
+    protected $validationMessages = [];
+    protected $skipValidation = false;
     protected $cleanValidationRules = true;
 
     // Callbacks
     protected $allowCallbacks = true;
-    protected $beforeInsert   = [];
-    protected $afterInsert    = [];
-    protected $beforeUpdate   = [];
-    protected $afterUpdate    = [];
-    protected $beforeFind     = [];
-    protected $afterFind      = [];
-    protected $beforeDelete   = [];
-    protected $afterDelete    = [];
+    protected $beforeInsert = [];
+    protected $afterInsert = [];
+    protected $beforeUpdate = [];
+    protected $afterUpdate = [];
+    protected $beforeFind = [];
+    protected $afterFind = [];
+    protected $beforeDelete = [];
+    protected $afterDelete = [];
 
     public function getAllEggProductions()
     {
-        $eggProductions = $this->findAll();
+        $eggProductions = $this->select(
+            'id,
+            farmer_id as farmerId,
+            livestock_id as livestockId,
+            eggs_produced as eggsProduced,
+            additional_egg_prod_notes as additionalEggProdNotes,
+            date_of_production as dateOfProduction,
+            record_status as recordStatus'
+        )->findAll();
         return $eggProductions;
     }
 
     public function getEggProduction($id)
     {
-        $eggProduction = $this->find($id);
+        $eggProduction = $this->select(
+            'id,
+            farmer_id as farmerId,
+            livestock_id as livestockId,
+            eggs_produced as eggsProduced,
+            additional_egg_prod_notes as additionalEggProdNotes,
+            date_of_production as dateOfProduction,
+            record_status as recordStatus'
+        )->find($id);
         return $eggProduction;
     }
 
@@ -59,7 +75,15 @@ class LivestockEggProductionModel extends Model
             'record_status' => 'Accessible'
         ];
 
-        $eggProductions = $this->where($whereClause)->findAll();
+        $eggProductions = $this->select(
+            'id,
+            farmer_id as farmerId,
+            livestock_id as livestockId,
+            eggs_produced as eggsProduced,
+            additional_egg_prod_notes as additionalEggProdNotes,
+            date_of_production as dateOfProduction,
+            record_status as recordStatus'
+        )->where($whereClause)->findAll();
         return $eggProductions;
     }
 
@@ -93,7 +117,8 @@ class LivestockEggProductionModel extends Model
         return $result;
     }
 
-    public function updateEggProductionRecordStatus($id, $status){
+    public function updateEggProductionRecordStatus($id, $status)
+    {
         $bind = [
             'record_status' => $status,
         ];
@@ -103,7 +128,8 @@ class LivestockEggProductionModel extends Model
         return $result;
     }
 
-    public function deleteEggProduction($id){
+    public function deleteEggProduction($id)
+    {
         $result = $this->delete($id);
         return $result;
     }

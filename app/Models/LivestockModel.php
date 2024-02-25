@@ -42,14 +42,44 @@ class LivestockModel extends Model
 
     public function getAllLivestock()
     {
-        $livestocks = $this->findAll();
+        $livestocks = $this->select(
+            'id,
+            livestock_tag_id as livestockTagId,
+            livestock_type_id as livestockTypeId,
+            livestock_breed_id as livestockBreedId,
+            livestock_age_class_id as livestockAgeClassId,
+            age_days as ageDays,
+            age_weeks as ageWeeks,
+            age_months as ageMonths,
+            age_years as ageYears,
+            sex as sex,
+            breeding_eligibility as breedingEligibility,
+            date_of_birth as dateOfBirth,
+            livestock_health_status as livestockHealthStatus,
+            record_status as recordStatus'
+        )->findAll();
 
         return $livestocks;
     }
 
     public function getLivestockById($id)
     {
-        $livestock = $this->find($id);
+        $livestock = $this->select(
+            'id,
+            livestock_tag_id as livestockTagId,
+            livestock_type_id as livestockTypeId,
+            livestock_breed_id as livestockBreedId,
+            livestock_age_class_id as livestockAgeClassId,
+            age_days as ageDays,
+            age_weeks as ageWeeks,
+            age_months as ageMonths,
+            age_years as ageYears,
+            sex as sex,
+            breeding_eligibility as breedingEligibility,
+            date_of_birth as dateOfBirth,
+            livestock_health_status as livestockHealthStatus,
+            record_status as recordStatus'
+        )->find($id);
 
         return $livestock;
     }
