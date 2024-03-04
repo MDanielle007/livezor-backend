@@ -250,4 +250,16 @@ class UserController extends ResourceController
 
         return $this->respond($userToken[0]['firebase_token'],200);
     }
+
+    // testing method
+    public function getUserName($id){
+        try {
+            $userName = $this->userModel->getUserName($id);
+
+            return $this->respond(['message' => $userName]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
 }

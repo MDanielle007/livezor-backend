@@ -84,22 +84,38 @@ class LivestockModel extends Model
         return $livestock;
     }
 
+    public function getLivestockPrimaryData($id)
+    {
+        $livestock = $this->select('
+            livestock_tag_id as livestockTagId,
+            livestock_type_id as livestockTypeId,
+            livestock_age_class_id as livestockAgeClassId,'
+        )->find($id);
+
+        return $livestock;
+    }
+
     public function insertLivestock($data)
     {
         try {
             $bind = [
-                'livestock_tag_id' => $data->livestockTagId,
                 'livestock_type_id' => $data->livestockTypeId,
-                'livestock_breed_id' => $data->livestockBreedId,
                 'livestock_age_class_id' => $data->livestockAgeClassId,
                 'age_days' => $data->ageDays,
                 'age_weeks' => $data->ageWeeks,
                 'age_months' => $data->ageMonths,
                 'age_years' => $data->ageYears,
                 'sex' => $data->sex,
-                'breeding_eligibility' => $data->breedingEligibility,
                 'date_of_birth' => $data->dateOfBirth,
             ];
+
+            if (isset($data->livestockTagId)) {
+                $bind['livestock_tag_id'] = $data->livestockTagId;
+            }
+
+            if (isset($data->livestockBreedId)) {
+                $bind['livestock_breed_id'] = $data->livestockBreedId;
+            }
 
             $result = $this->insert($bind);
 
@@ -116,7 +132,6 @@ class LivestockModel extends Model
             $bind = [
                 'livestock_tag_id' => $data->livestockTagId,
                 'livestock_type_id' => $data->livestockTypeId,
-                'livestock_breed_id' => $data->livestockBreedId,
                 'livestock_age_class_id' => $data->livestockAgeClassId,
                 'age_days' => $data->ageDays,
                 'age_weeks' => $data->ageWeeks,
@@ -127,6 +142,10 @@ class LivestockModel extends Model
                 'date_of_birth' => $data->dateOfBirth,
                 'livestock_health_status' => $data->livestockHealthStatus,
             ];
+
+            if (isset($data->livestockBreedId)) {
+                $bind['livestock_breed_id'] = $data->livestockBreedId;
+            }
 
             $result = $this->update($id, $bind);
 
@@ -242,6 +261,20 @@ class LivestockModel extends Model
             //throw $th;
             return $th->getMessage();
         }
+    }
+
+    public function getFarmerLivestockIdByTag($livestockTagId, $userId)
+    {
+        $whereClause = [
+            'livestocks.livestock_tag_id' => $livestockTagId,
+            'farmer_livestocks.farmer_id' => $userId
+        ];
+
+        $livestockId = $this->select('livestocks.id')
+            ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+            ->where($whereClause)->find();
+
+        return $livestockId[0]['id'];
     }
 
 

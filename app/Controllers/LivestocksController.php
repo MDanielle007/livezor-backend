@@ -153,4 +153,29 @@ class LivestocksController extends ResourceController
             return $this->respond(['error' => $th->getMessage()]);
         }
     }
+
+    // testing method
+    public function getLivestockPrimaryData($id){
+        try {
+            $livestock = $this->livestock->getLivestockPrimaryData($id);
+
+            return $this->respond($livestock);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getFarmerLivestockIdByTag(){
+        try {
+            $data = $this->request->getJSON();
+
+            $response = $this->livestock->getFarmerLivestockIdByTag($data->livestockTagId,$data->userId);
+
+            return $this->respond($response);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
 }

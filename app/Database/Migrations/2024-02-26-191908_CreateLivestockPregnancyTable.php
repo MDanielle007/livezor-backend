@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateLivestockBreedingTable extends Migration
+class CreateLivestockPregnancyTable extends Migration
 {
     public function up()
     {
@@ -14,49 +14,49 @@ class CreateLivestockBreedingTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'farmer_id' => [
+            'breeding_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'livestock_type_id' => [
+            'livestock_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'male_livestock_tag_id' => [
-                'type' => 'VARCHAR',
-                'constraint' => 25,
-                'null' => true, // Allow NULL values
-            ],
-            'female_livestock_tag_id' => [
-                'type' => 'VARCHAR',
-                'constraint' => 25,
-                'null' => true, // Allow NULL values
-            ],
-            'breed_result' => [
+            'outcome' => [
                 'type' => 'ENUM',
-                'constraint' => ['Successful Breeding', 'Unsuccessful Breeding'],
-            ],
-            'breed_additional_notes' => [
-                'type' => 'TEXT',
+                'constraint' => ['Successful', 'Miscarriage', 'Pending'],
                 'null' => false,
+                'default' => 'Pending'
             ],
-            'breed_date' => [
+            'pregnancy_start_date' => [
                 'type' => 'DATE',
                 'null' => false,
+            ],
+            'expected_delivery_date' => [
+                'type' => 'DATE',
+                'null' => true,
+            ],
+            'actual_delivery_date' => [
+                'type' => 'DATE',
+                'null' => true,
+            ],
+            'pregnancy_notes' => [
+                'type' => 'TEXT',
+                'null' => true,
             ],
             'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],
                 'default' => 'Accessible',
-            ]
+            ],
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('livestock_breedings');
+        $this->forge->createTable('livestock_pregnancies');
     }
 
     public function down()
     {
-        $this->forge->dropTable('livestock_breedings');
+        $this->forge->dropTable('livestock_pregnancies');
     }
 }

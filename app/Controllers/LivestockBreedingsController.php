@@ -4,16 +4,22 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\LivestockBreedingsModel;
+use App\Models\LivestockModel;
+use App\Models\LivestockPregnancyModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
 class LivestockBreedingsController extends ResourceController
 {
     private $livestockBreeding;
+    private $livestockPregnancy;
+    private $livestock;
 
     public function __construct()
     {
         $this->livestockBreeding = new LivestockBreedingsModel();
+        $this->livestockPregnancy = new LivestockPregnancyModel();
+        $this->livestock = new LivestockModel();
     }
 
     public function getAllLivestockBreedings(){
@@ -53,12 +59,26 @@ class LivestockBreedingsController extends ResourceController
         try {
             $data = $this->request->getJSON();
 
-            $response = $this->livestockBreeding->insertLivestockBreeding($data);
+            $breedingId = $this->livestockBreeding->insertLivestockBreeding($data);
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Breeding Successfully Added'], 200);
+            $result = null;
+
+            if($data->breedResult == 'Successful Breeding'){
+                $femaleLivestockId = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
+
+                $data->breedingId = $breedingId;
+                $data->femaleLivestockId = $femaleLivestockId;
+                $data->pregnancyStartDate = $data->breedDate;
+
+                $result = $this->livestockPregnancy->insertLivestockPregnancyByBreeding($data);
+            }
+
+
+            return $this->respond(['result' => $result,'message' => 'Livestock Breeding Successfully Added'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
         }
     }    
 
@@ -96,6 +116,17 @@ class LivestockBreedingsController extends ResourceController
 
         } catch (\Throwable $th) {
             //throw $th;
+        }
+    }
+
+    public function getAllBreedingParentOffspringData(){
+        try {
+            $livestockBreedings = $this->livestockBreeding->getAllBreedingParentOffspringData();
+            return $this->respond($livestockBreedings);
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            return $this->respond(['error' => $th->getMessage()], 200);
         }
     }
 

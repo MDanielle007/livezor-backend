@@ -94,4 +94,9 @@ class LivestockAgeClassModel extends Model
 
         return $result;
     }
+
+    public function getLivestockTypeOffspring($typeId){
+        $ageClass = $this->where('livestock_type_id', $typeId)->first();
+        return $ageClass;
+    }
 }

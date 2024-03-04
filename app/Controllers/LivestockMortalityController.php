@@ -55,6 +55,17 @@ class LivestockMortalityController extends ResourceController
         }
     }
 
+    public function getAllCompleteLivestockMortalities(){
+        try {
+            $livestockMortalities = $this->livestockMortality->getAllCompleteLivestockMortalities();
+
+            return $this->respond($livestockMortalities);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond($th->getMessage());
+        }
+    }
+
     public function insertLivestockMortality()
     {
         try {

@@ -3,27 +3,44 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\LivestockModel;
 use App\Models\LivestockVaccinationModel;
+use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
 class LivestockVaccinationsController extends ResourceController
 {
     private $livestockVaccination;
+    private $livestock;
+    private $userModel;
 
     public function __construct()
     {
         $this->livestockVaccination = new LivestockVaccinationModel();
+        $this->livestock = new LivestockModel();
+        $this->userModel = new UserModel();
     }
 
     public function getAllLivestockVaccinations(){
         try {
             $livestockVaccinations = $this->livestockVaccination->getAllLivestockVaccinations();
 
+            foreach($livestockVaccinations as &$livestockVaccination){
+                $livestockData =  $this->livestock->getLivestockPrimaryData($livestockVaccination['livestockId']);
+                $administratorData = $this->userModel->getUserName($livestockVaccination['vaccineAdministratorId']);
+
+                $livestockVaccination['livestockTagId'] = $livestockData['livestockTagId'];
+                $livestockVaccination['livestockTypeId'] = $livestockData['livestockTypeId'];
+                $livestockVaccination['livestockAgeClassId'] = $livestockData['livestockAgeClassId'];
+                $livestockVaccination['administratorName'] = $administratorData['userName'];
+            }
+
             return $this->respond($livestockVaccinations);
 
         } catch (\Throwable $th) {
             //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
         }
     }
 

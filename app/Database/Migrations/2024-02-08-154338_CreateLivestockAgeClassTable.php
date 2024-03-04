@@ -22,6 +22,10 @@ class CreateLivestockAgeClassTable extends Migration
                 'type' => 'VARCHAR',
                 'constraint' => 25,
             ],
+            'is_offspring' => [
+                'type' => 'BOOL',
+                'default' => false,
+            ],
             'livestock_type_id' => [
                 'type' => 'INT',
                 'constraint' => 11,

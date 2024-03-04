@@ -87,6 +87,28 @@ class LivestockMortalityModel extends Model
         return $livestockMortalities;
     }
 
+    public function getAllCompleteLivestockMortalities(){
+        $whereClause = [
+         'livestock_mortalities.record_status' => 'Accessible'
+        ];
+
+        $livestockMortalities = $this->select(
+            'livestock_mortalities.id,
+            livestock_mortalities.livestock_id as livestockId,
+            livestocks.livestock_tag_id as livestockTagId,
+            livestocks.livestock_type_id as livestockTypeId,
+            livestock_mortalities.farmer_id as farmerId,
+            user_accounts.user_id as farmerUserId,
+            CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+            livestock_mortalities.cause_of_death as causeOfDeath,
+            livestock_mortalities.additional_death_notes as additionalDeathNotes,
+            livestock_mortalities.date_of_death as dateOfDeath'
+        )->join('livestocks', 'livestocks.id = livestock_mortalities.livestock_id')
+        ->join('user_accounts', 'user_accounts.id = livestock_mortalities.farmer_id')
+        ->where($whereClause)->findAll();
+        return $livestockMortalities;
+    }
+
     public function insertLivestockMortality($data)
     {
         $bind = [

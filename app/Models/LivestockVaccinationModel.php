@@ -48,8 +48,7 @@ class LivestockVaccinationModel extends Model
             livestock_id as livestockId,
             vaccination_name as vaccinationName,
             vaccination_description as vaccinationDescription,
-            vaccination_date as vaccinationDate,
-            record_status as recordStatus'
+            vaccination_date as vaccinationDate'
         )->findAll();
         return $livestockVaccinations;
     }
@@ -62,8 +61,7 @@ class LivestockVaccinationModel extends Model
             livestock_id as livestockId,
             vaccination_name as vaccinationName,
             vaccination_description as vaccinationDescription,
-            vaccination_date as vaccinationDate,
-            record_status as recordStatus'
+            vaccination_date as vaccinationDate'
         )->find($id);
         return $livestockVaccination;
     }
@@ -81,8 +79,7 @@ class LivestockVaccinationModel extends Model
             livestock_id as livestockId,
             vaccination_name as vaccinationName,
             vaccination_description as vaccinationDescription,
-            vaccination_date as vaccinationDate,
-            record_status as recordStatus'
+            vaccination_date as vaccinationDate'
         )->where($whereClause)->findAll();
         return $livestockVaccinations;
     }

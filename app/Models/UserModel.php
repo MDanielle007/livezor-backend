@@ -307,4 +307,12 @@ class UserModel extends Model
             ->findAll();
         return $result;
     }
+
+    public function getUserName($id){
+        $userData = $this->select(
+            'CONCAT(first_name, " ", last_name) as userName'
+        )->find($id);
+
+        return $userData;
+    }
 }

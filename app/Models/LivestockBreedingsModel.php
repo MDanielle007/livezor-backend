@@ -141,4 +141,32 @@ class LivestockBreedingsModel extends Model
         $result = $this->delete($id);
         return $result;
     }
+
+    public function getAllBreedingParentOffspringData(){
+        try {
+
+            $livestockBreedings = $this->select(
+                'livestock_breedings.id,
+                livestock_breedings.male_livestock_tag_id as parentMaleLivestockTagId,
+                livestock_breedings.female_livestock_tag_id as parentFemaleLivestockTagId,
+                livestocks.livestock_type_id as livestockTypeId,
+                livestocks.livestock_tag_id as offspringLivestockTagId,
+                livestock_pregnancies.outcome,
+                livestock_pregnancies.pregnancy_start_date as pregnancyStartDate,
+                livestock_pregnancies.actual_delivery_date as actualDeliveryDate,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                user_accounts.user_id as farmerUserId'
+            )
+            ->join('livestock_pregnancies','livestock_pregnancies.breeding_id = livestock_breedings.id')
+            ->join('livestock_offspring','livestock_offspring.pregnancy_id = livestock_pregnancies.id')
+            ->join('livestocks','livestocks.id = livestock_offspring.livestock_id')
+            ->join('user_accounts','user_accounts.id = livestock_breedings.farmer_id')
+            ->findAll();
+
+            return $livestockBreedings;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
 }
