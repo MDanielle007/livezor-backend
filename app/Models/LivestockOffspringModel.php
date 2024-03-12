@@ -12,12 +12,12 @@ class LivestockOffspringModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['pregnancy_id', 'livestock_id', 'birth_date', 'sex', 'offspring_notes', 'record_status'];
+    protected $allowedFields    = ['pregnancy_id', 'livestock_id', 'birth_date', 'sex', 'offspring_notes', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
     // Dates
-    protected $useTimestamps = false;
+    protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';

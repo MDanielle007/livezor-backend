@@ -12,12 +12,12 @@ class UserModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
-    protected $allowedFields = ['user_id', 'username', 'password', 'email', 'first_name', 'middle_name', 'last_name', 'date_of_birth', 'gender', 'civil_status', 'sitio', 'barangay', 'city', 'province', 'phone_number', 'user_image', 'user_role', 'user_status', 'last_login_date', 'created_at', 'updated_at', 'remember_token', 'firebase_token', 'record_status'];
+    protected $allowedFields = ['user_id', 'username', 'password', 'email', 'first_name', 'middle_name', 'last_name', 'date_of_birth', 'gender', 'civil_status', 'sitio', 'barangay', 'city', 'province', 'phone_number', 'user_image', 'user_role', 'user_status', 'last_login_date', 'remember_token', 'firebase_token', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
     // Dates
-    protected $useTimestamps = false;
+    protected $useTimestamps = true;
     protected $dateFormat = 'datetime';
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
