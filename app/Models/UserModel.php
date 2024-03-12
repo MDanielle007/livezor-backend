@@ -286,8 +286,8 @@ class UserModel extends Model
     public function getUserFirebaseToken($id)
     {
         $result = $this->select('firebase_token')->where('id', $id)->find();
-
-        return $result;
+        $token = array_column($result, 'firebase_token');
+        return $token;
     }
 
     public function getBasicUserInfo()

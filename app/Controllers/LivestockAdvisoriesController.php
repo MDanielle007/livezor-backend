@@ -71,11 +71,12 @@ class LivestockAdvisoriesController extends ResourceController
             $title = $data->subject;
             $body = $data->content;
 
+            $notifRes = null;
+
             if($data->isGeneral === true){
                 $result = $this->livestockAdvisories->sendLivestockAdvisory($data);
 
                 $farmerTokens = $this->userModel->getAllUserFirebaseToken('Farmer');
-
                 $notifRes = sendNotification($title, $body, $farmerTokens);
                 return $this->respond(['result' => $result,'message' => 'Livestock Advisory Successfully Sent','notification sent' => $notifRes], 200);
             }
@@ -84,9 +85,11 @@ class LivestockAdvisoriesController extends ResourceController
             foreach ($targetFarmers as $targetFarmer) {
                 $data->targetFarmerId = $targetFarmer;
                 $result = $this->userModel->getUserFirebaseToken($targetFarmer);
+
+                $notifRes = sendNotification($title, $body, $result);
             }
 
-            return $this->respond(['result' => $data, 'message' => 'Livestock Advisory Successfully Sent'], 200);
+            return $this->respond(['result' => $data, 'message' => 'Livestock Advisory Successfully Sent', 'notification sent' => $notifRes], 200);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['result' => $th->getMessage()]);

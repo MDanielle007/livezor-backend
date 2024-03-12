@@ -97,16 +97,6 @@ class CreateUserTable extends Migration
                 'type' => 'DATETIME',
                 'null' => false,
             ],
-            'created_at' => [
-                'type' => 'DATETIME',
-                'null' => false,
-                'default' => new RawSql('CURRENT_TIMESTAMP'),
-            ],
-            'updated_at' => [
-                'type' => 'DATETIME',
-                'null' => false,
-                'default' => new RawSql('CURRENT_TIMESTAMP'),
-            ],
             'remember_token' => [
                 'type' => 'TEXT',
                 'null' => true,
@@ -119,7 +109,7 @@ class CreateUserTable extends Migration
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],
                 'default' => 'Accessible',
-            ]
+            ],
         ]);
 
         $this->forge->addKey('id', true);
