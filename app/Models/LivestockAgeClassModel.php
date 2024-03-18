@@ -12,7 +12,7 @@ class LivestockAgeClassModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['livestock_age_classification', 'age_class_range', 'livestock_type_id', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['livestock_age_classification', 'age_class_range', 'is_offspring', 'livestock_type_id', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -95,8 +95,38 @@ class LivestockAgeClassModel extends Model
         return $result;
     }
 
-    public function getLivestockTypeOffspring($typeId){
+    public function getLivestockTypeOffspring($typeId)
+    {
         $ageClass = $this->where('livestock_type_id', $typeId)->first();
         return $ageClass;
+    }
+
+    public function getLivestockAgeClassIdAndName()
+    {
+        try {
+            $livestockAgeClasses = $this->select(
+                'id,
+                livestock_age_classification as livestockAgeClassification,
+                livestock_type_id as livestockTypeId'
+            )->findAll();
+
+            return $livestockAgeClasses;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockAgeClassIdAndNameById($livestockTypeId)
+    {
+        try {
+            $livestockAgeClasses = $this->select(
+                'id,
+                livestock_age_classification as livestockAgeClassification,
+                livestock_type_id as livestockTypeId'
+            )->where('livestock_type_id', $livestockTypeId)->findAll();
+            return $livestockAgeClasses;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 }

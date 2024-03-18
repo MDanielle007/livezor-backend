@@ -42,57 +42,69 @@ class LivestockModel extends Model
 
     public function getAllLivestock()
     {
-        $livestocks = $this->select(
-            'id,
-            livestock_tag_id as livestockTagId,
-            livestock_type_id as livestockTypeId,
-            livestock_breed_id as livestockBreedId,
-            livestock_age_class_id as livestockAgeClassId,
-            age_days as ageDays,
-            age_weeks as ageWeeks,
-            age_months as ageMonths,
-            age_years as ageYears,
-            sex as sex,
-            breeding_eligibility as breedingEligibility,
-            date_of_birth as dateOfBirth,
-            livestock_health_status as livestockHealthStatus,
-            record_status as recordStatus'
-        )->findAll();
+        try {
+            $livestocks = $this->select(
+                'id,
+                livestock_tag_id as livestockTagId,
+                livestock_type_id as livestockTypeId,
+                livestock_breed_id as livestockBreedId,
+                livestock_age_class_id as livestockAgeClassId,
+                age_days as ageDays,
+                age_weeks as ageWeeks,
+                age_months as ageMonths,
+                age_years as ageYears,
+                sex as sex,
+                breeding_eligibility as breedingEligibility,
+                date_of_birth as dateOfBirth,
+                livestock_health_status as livestockHealthStatus,
+                record_status as recordStatus'
+            )->findAll();
 
-        return $livestocks;
+            return $livestocks;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function getLivestockById($id)
     {
-        $livestock = $this->select(
-            'id,
-            livestock_tag_id as livestockTagId,
-            livestock_type_id as livestockTypeId,
-            livestock_breed_id as livestockBreedId,
-            livestock_age_class_id as livestockAgeClassId,
-            age_days as ageDays,
-            age_weeks as ageWeeks,
-            age_months as ageMonths,
-            age_years as ageYears,
-            sex as sex,
-            breeding_eligibility as breedingEligibility,
-            date_of_birth as dateOfBirth,
-            livestock_health_status as livestockHealthStatus,
-            record_status as recordStatus'
-        )->find($id);
+        try {
+            $livestock = $this->select(
+                'id,
+                livestock_tag_id as livestockTagId,
+                livestock_type_id as livestockTypeId,
+                livestock_breed_id as livestockBreedId,
+                livestock_age_class_id as livestockAgeClassId,
+                age_days as ageDays,
+                age_weeks as ageWeeks,
+                age_months as ageMonths,
+                age_years as ageYears,
+                sex as sex,
+                breeding_eligibility as breedingEligibility,
+                date_of_birth as dateOfBirth,
+                livestock_health_status as livestockHealthStatus,
+                record_status as recordStatus'
+            )->find($id);
 
-        return $livestock;
+            return $livestock;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function getLivestockPrimaryData($id)
     {
-        $livestock = $this->select('
-            livestock_tag_id as livestockTagId,
-            livestock_type_id as livestockTypeId,
-            livestock_age_class_id as livestockAgeClassId,'
-        )->find($id);
+        try {
+            $livestock = $this->select('
+                livestock_tag_id as livestockTagId,
+                livestock_type_id as livestockTypeId,
+                livestock_age_class_id as livestockAgeClassId,'
+            )->find($id);
 
-        return $livestock;
+            return $livestock;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function insertLivestock($data)
@@ -101,19 +113,20 @@ class LivestockModel extends Model
             $bind = [
                 'livestock_type_id' => $data->livestockTypeId,
                 'livestock_age_class_id' => $data->livestockAgeClassId,
+                'sex' => $data->sex,
+                'date_of_birth' => $data->dateOfBirth,
                 'age_days' => $data->ageDays,
                 'age_weeks' => $data->ageWeeks,
                 'age_months' => $data->ageMonths,
                 'age_years' => $data->ageYears,
-                'sex' => $data->sex,
-                'date_of_birth' => $data->dateOfBirth,
+                'breeding_eligibility' => $data->breedingEligibility,
             ];
 
-            if (isset($data->livestockTagId)) {
+            if (isset ($data->livestockTagId)) {
                 $bind['livestock_tag_id'] = $data->livestockTagId;
             }
 
-            if (isset($data->livestockBreedId)) {
+            if (isset ($data->livestockBreedId)) {
                 $bind['livestock_breed_id'] = $data->livestockBreedId;
             }
 
@@ -133,17 +146,13 @@ class LivestockModel extends Model
                 'livestock_tag_id' => $data->livestockTagId,
                 'livestock_type_id' => $data->livestockTypeId,
                 'livestock_age_class_id' => $data->livestockAgeClassId,
-                'age_days' => $data->ageDays,
-                'age_weeks' => $data->ageWeeks,
-                'age_months' => $data->ageMonths,
-                'age_years' => $data->ageYears,
                 'sex' => $data->sex,
                 'breeding_eligibility' => $data->breedingEligibility,
                 'date_of_birth' => $data->dateOfBirth,
                 'livestock_health_status' => $data->livestockHealthStatus,
             ];
 
-            if (isset($data->livestockBreedId)) {
+            if (isset ($data->livestockBreedId)) {
                 $bind['livestock_breed_id'] = $data->livestockBreedId;
             }
 
@@ -208,10 +217,13 @@ class LivestockModel extends Model
 
             $livestock = $this->select(
                 'livestocks.id as id, 
-                        livestocks.livestock_tag_id as livestockTagID, 
+                        livestocks.livestock_tag_id as livestockTagId, 
                         livestocks.livestock_type_id as livestockTypeId, 
+                        livestock_types.livestock_type_name as livestockType,
                         livestocks.livestock_breed_id as livestockBreedId, 
+                        livestock_breeds.livestock_breed_name as livestockBreed,
                         livestocks.livestock_age_class_id as livestockAgeClassId,
+                        livestock_age_class.livestock_age_classification as livestockAgeClassification,
                         livestocks.age_days as ageDays,
                         livestocks.age_weeks as ageWeeks,
                         livestocks.age_months as ageMonths,
@@ -227,9 +239,12 @@ class LivestockModel extends Model
                             WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
                             WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years")
                             ELSE "Unknown Age"
-                        END as livestockAge'
+                        END as age'
             )
                 ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
+                ->join('livestock_types','livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds','livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class','livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->where($whereClause)
                 ->findAll();
 
@@ -277,5 +292,161 @@ class LivestockModel extends Model
         return $livestockId[0]['id'];
     }
 
+    public function getAllLivestockTypeAgeClassCount()
+    {
+        try {
+            //code...
 
+            $whereClause = [
+                'livestocks.livestock_health_status' => 'Alive',
+                'livestocks.record_status' => 'Accessible',
+            ];
+
+            $data = $this->select('
+                livestock_types.livestock_type_name as livestockType,
+                livestock_age_class.livestock_age_classification as livestockAgeClass,
+                COUNT(livestocks.id) as livestockCount,
+            ')->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->where($whereClause)
+                ->groupBy('
+                livestock_types.livestock_type_name,
+                livestock_age_class.livestock_age_classification
+            ')
+                ->orderBy('
+                livestock_types.livestock_type_name,
+                livestock_age_class.livestock_age_classification
+            ')->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getFarmerLivestockTypeAgeClassCount($userId)
+    {
+        try {
+            $whereClause = [
+                'livestocks.livestock_health_status' => 'Alive',
+                'livestocks.record_status' => 'Accessible',
+                'farmer_livestocks.farmer_id' => $userId
+            ];
+
+            $data = $this->select('
+                livestock_types.livestock_type_name as livestockType,
+                livestock_age_class.livestock_age_classification as livestockAgeClass,
+                COUNT(livestocks.id) as livestockCount
+            ')->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->where($whereClause)
+                ->groupBy('
+                livestock_types.livestock_type_name,
+                livestock_age_class.livestock_age_classification
+            ')
+                ->orderBy('
+                livestock_types.livestock_type_name,
+                livestock_age_class.livestock_age_classification
+            ')->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getAllLivestockTypeCount()
+    {
+        try {
+            $whereClause = [
+                'livestocks.livestock_health_status' => 'Alive',
+                'livestocks.record_status' => 'Accessible',
+            ];
+
+            $data = $this->select('
+                livestock_types.livestock_type_name as livestockType,
+                COUNT(livestocks.id) as livestockCount
+            ')->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->groupBy('
+                livestock_types.livestock_type_name,
+            ')
+                ->orderBy('
+                livestock_types.livestock_type_name,
+            ')->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getFarmerLivestockTypeCount($userId)
+    {
+        try {
+            $whereClause = [
+                'livestocks.livestock_health_status' => 'Alive',
+                'livestocks.record_status' => 'Accessible',
+                'farmer_livestocks.farmer_id' => $userId
+            ];
+
+            $data = $this->select('
+                livestock_types.livestock_type_name as livestockType,
+                COUNT(livestocks.id) as livestockCount
+            ')->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            ->where($whereClause)
+            ->groupBy('
+                livestock_types.livestock_type_name
+            ')
+            ->orderBy('
+                livestock_types.livestock_type_name
+            ')->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getAllLivestockCount()
+    {
+        try {
+            $whereClause = [
+                'livestocks.livestock_health_status' => 'Alive',
+                'livestocks.record_status' => 'Accessible',
+            ];
+
+            $data = $this->where($whereClause)->countAllResults();
+
+            return $data ?: 0;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function getFarmerLivestockCount($userId)
+    {
+        try {
+            $whereClause = [
+                'livestocks.livestock_health_status' => 'Alive',
+                'livestocks.record_status' => 'Accessible',
+                'farmer_livestocks.farmer_id' => $userId
+            ];
+
+            $data = $this->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->where($whereClause)->countAllResults();
+
+            return $data;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
 }

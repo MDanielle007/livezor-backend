@@ -192,7 +192,7 @@ class UserController extends ResourceController
         try {
             $data = $this->request->getJSON();
             $result = $this->userModel->updateUserAccountInfo($id, $data);
-            if(!$result) {
+            if (!$result) {
                 return $this->fail($this->userModel->errors());
             }
             return $this->respond($result, 200);
@@ -233,26 +233,30 @@ class UserController extends ResourceController
         }
     }
 
-    public function getAllAdminFirebaseToken(){
+    public function getAllAdminFirebaseToken()
+    {
         $usersTokens = $this->userModel->getAllUserFirebaseToken('DA Personnel');
 
-        return $this->respond($usersTokens,200);
+        return $this->respond($usersTokens, 200);
     }
 
-    public function getAllFarmerFirebaseToken(){
+    public function getAllFarmerFirebaseToken()
+    {
         $usersTokens = $this->userModel->getAllUserFirebaseToken('Farmer');
 
-        return $this->respond($usersTokens,200);
+        return $this->respond($usersTokens, 200);
     }
 
-    public function getUserFirebaseToken($id){
+    public function getUserFirebaseToken($id)
+    {
         $userToken = $this->userModel->getUserFirebaseToken($id);
 
-        return $this->respond($userToken[0]['firebase_token'],200);
+        return $this->respond($userToken[0]['firebase_token'], 200);
     }
 
     // testing method
-    public function getUserName($id){
+    public function getUserName($id)
+    {
         try {
             $userName = $this->userModel->getUserName($id);
 

@@ -22,6 +22,15 @@ class CreateLivestockAgeClassTable extends Migration
                 'type' => 'VARCHAR',
                 'constraint' => 25,
             ],
+            'age_min_days' => [
+                'type' => 'INT',
+                'constraint' => 11,
+            ],
+            'age_max_days' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => true,
+            ],
             'is_offspring' => [
                 'type' => 'BOOL',
                 'default' => false,

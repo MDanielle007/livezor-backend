@@ -17,7 +17,7 @@ class CreateUserTable extends Migration
             ],
             'user_id' => [
                 'type' => 'VARCHAR',
-                'constraint' => '10',
+                'constraint' => '25',
                 'unique' => true
             ],
             'username' => [
@@ -38,7 +38,7 @@ class CreateUserTable extends Migration
             ],
             'middle_name' => [
                 'type' => 'TEXT',
-                'null' => false,
+                'null' => true,
             ],
             'last_name' => [
                 'type' => 'TEXT',

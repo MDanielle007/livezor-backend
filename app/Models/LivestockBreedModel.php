@@ -42,56 +42,105 @@ class LivestockBreedModel extends Model
 
     public function getLivestockBreeds()
     {
-        $livestockBreeds = $this->select(
-            'id,
-            livestock_breed_name as livestockBreedName,
-            livestock_breed_description as livestockBreedDescription,
-            livestock_type_id as livestockTypeId'
-        )->findAll();
+        try {
+            $livestockBreeds = $this->select(
+                'id,
+                livestock_breed_name as livestockBreedName,
+                livestock_breed_description as livestockBreedDescription,
+                livestock_type_id as livestockTypeId'
+            )->findAll();
 
-        return $livestockBreeds;
+            return $livestockBreeds;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function getLivestockBreed($id)
     {
-        $livestockBreed = $this->select(
-            'id,
-            livestock_breed_name as livestockBreedName,
-            livestock_breed_description as livestockBreedDescription,
-            livestock_type_id as livestockTypeId'
-        )->find($id);
+        try {
+            $livestockBreed = $this->select(
+                'id,
+                livestock_breed_name as livestockBreedName,
+                livestock_breed_description as livestockBreedDescription,
+                livestock_type_id as livestockTypeId'
+            )->find($id);
 
-        return $livestockBreed;
+            return $livestockBreed;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function insertLivestockBreed($data)
     {
-        $bind = [
-            'livestock_breed_name' => $data->livestockBreedName,
-            'livestock_breed_description' => $data->livestockBreedDescription,
-            'livestock_type_id' => $data->livestockTypeId,
-        ];
-        $result = $this->insert($bind);
-        return $result;
+        try {
+            $bind = [
+                'livestock_breed_name' => $data->livestockBreedName,
+                'livestock_breed_description' => $data->livestockBreedDescription,
+                'livestock_type_id' => $data->livestockTypeId,
+            ];
+            $result = $this->insert($bind);
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function updateLivestockBreed($id, $data)
     {
-        $bind = [
-            'livestock_breed_name' => $data->livestockBreedName,
-            'livestock_breed_description' => $data->livestockBreedDescription,
-            'livestock_type_id' => $data->livestockTypeId,
-        ];
+        try {
+            $bind = [
+                'livestock_breed_name' => $data->livestockBreedName,
+                'livestock_breed_description' => $data->livestockBreedDescription,
+                'livestock_type_id' => $data->livestockTypeId,
+            ];
 
-        $result = $this->update($id, $bind);
+            $result = $this->update($id, $bind);
 
-        return $result;
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function deleteLivestockBreed($id)
     {
-        $result = $this->delete($id);
+        try {
+            $result = $this->delete($id);
 
-        return $result;
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockBreedIdAndName()
+    {
+        try {
+            $livestockBreeds = $this->select(
+                'id,
+                livestock_breed_name as livestockBreedName,
+                livestock_type_id as livestockTypeId'
+            )->findAll();
+
+            return $livestockBreeds;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockBreedIdAndNameById($livestockTypeId)
+    {
+        try {
+            $livestockBreeds = $this->select(
+                'id,
+                livestock_breed_name as livestockBreedName,
+                livestock_type_id as livestockTypeId'
+            )->where('livestock_type_id', $livestockTypeId)->findAll();
+            return $livestockBreeds;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 }

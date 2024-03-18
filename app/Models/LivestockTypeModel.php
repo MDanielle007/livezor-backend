@@ -59,52 +59,88 @@ class LivestockTypeModel extends Model
 
     public function getLivestockTypes()
     {
-        $livestockTypes = $this->select(
-            'id,
-            livestock_type_name as livestockTypeName,
-            livestock_type_uses as livestockTypeUses'
-        )->findAll();
-
-        return $livestockTypes;
+        try {
+            $livestockTypes = $this->select(
+                'id,
+                livestock_type_name as livestockTypeName,
+                livestock_type_uses as livestockTypeUses'
+            )->findAll();
+    
+            return $livestockTypes;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function getLivestockType($id)
     {
-        $livestockType = $this->select(
-            'id,
-            livestock_type_name as livestockTypeName,
-            livestock_type_uses as livestockTypeUses'
-        )->find($id);
-
-        return $livestockType;
+        try {
+            $livestockType = $this->select(
+                'id,
+                livestock_type_name as livestockTypeName,
+                livestock_type_uses as livestockTypeUses'
+            )->find($id);
+    
+            return $livestockType;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function insertLivestockType($data)
     {
-        $bind = [
-            'livestock_type_name' => $data->livestockTypeName,
-            'livestock_type_uses' => $data->livestockTypeUses
-        ];
-        $result = $this->insert($bind);
-        return $result;
+        try {
+            $bind = [
+                'livestock_type_name' => $data->livestockTypeName,
+                'livestock_type_uses' => $data->livestockTypeUses
+            ];
+            $result = $this->insert($bind);
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
     }
 
     public function updateLivestockType($id, $data)
     {
-        $bind = [
-            'livestock_type_name' => $data->livestockTypeName,
-            'livestock_type_uses' => $data->livestockTypeUses
-        ];
-
-        $result = $this->update($id, $bind);
-
-        return $result;
+        try {
+            $bind = [
+                'livestock_type_name' => $data->livestockTypeName,
+                'livestock_type_uses' => $data->livestockTypeUses
+            ];
+    
+            $result = $this->update($id, $bind);
+    
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
     }
 
     public function deleteLivestockType($id)
     {
-        $result = $this->delete($id);
+        try {
+            $result = $this->delete($id);
 
-        return $result;
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getAllLivestockIdName(){
+        try {
+            $livestockTypes = $this->select(
+                'id,
+                livestock_type_name as livestockTypeName'
+            )->findAll();
+    
+            return $livestockTypes;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 }

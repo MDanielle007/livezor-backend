@@ -21,12 +21,7 @@ class LivestocksController extends ResourceController
         $this->farmerLivestock = new FarmerLivestockModel();
         $this->userModel = new UserModel();
     }
-
-    public function index()
-    {
-
-    }
-
+    
     public function getAllLivestocks()
     {
         try {
@@ -84,10 +79,10 @@ class LivestocksController extends ResourceController
             
             $response = $this->farmerLivestock->associateFarmerLivestock($data);
 
-            return $this->respond(['result' => $response, 'message' => 'Livestock Successfully Added','data' => $data], 200);
+            return $this->respond(['success'=> true,'message' => 'Livestock Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            return $this->respond(['error' => 'Failed to add livestock']);
         }
     }
 
@@ -97,9 +92,10 @@ class LivestocksController extends ResourceController
 
             $response = $this->livestock->updateLivestock($id, $data);
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Successfully Updated'], 200);
+            return $this->respond(['success' => $response,'message' => 'Livestock Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            return $this->respond(['error' => 'Failed to update livestock']);
         }
     }
 
@@ -173,6 +169,71 @@ class LivestocksController extends ResourceController
             $response = $this->livestock->getFarmerLivestockIdByTag($data->livestockTagId,$data->userId);
 
             return $this->respond($response);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getAllLivestockTypeAgeClassCount($userId){
+        try {
+            $data = $this->livestock->getAllLivestockTypeAgeClassCount();
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getFarmerLivestockTypeAgeClassCount($userId){
+        try {
+            $data = $this->livestock->getFarmerLivestockTypeAgeClassCount($userId);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getAllLivestockTypeCount(){
+        try {
+            $data = $this->livestock->getAllLivestockTypeCount();
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getFarmerLivestockTypeCount($userId){
+        try {
+            $data = $this->livestock->getFarmerLivestockTypeCount($userId);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getAllLivestockCount(){
+        try {
+            $data = $this->livestock->getAllLivestockCount();
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getFarmerLivestockCount($userId){
+        try {
+            $data = $this->livestock->getFarmerLivestockCount($userId);
+
+            return $this->respond($data);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);

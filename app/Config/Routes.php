@@ -16,6 +16,7 @@ $routes->group('api', static function ($routes) {
     $routes->group('livestock', static function ($routes) {
         // Livestock Types endpoint routes
         $routes->get('all-livestock-types', 'LivestockTypesController::getLivestockTypes');
+        $routes->get('all-livestock-types-idnames', 'LivestockTypesController::getLivestockTypesIdAndName');
         $routes->get('livestock-type/(:any)', 'LivestockTypesController::getLivestockType/$1');
         $routes->post('insert-livestock-type', 'LivestockTypesController::insertLivestockType');
         $routes->put('update-livestock-type/(:any)', 'LivestockTypesController::updateLivestockType/$1');
@@ -23,6 +24,8 @@ $routes->group('api', static function ($routes) {
 
         // Livestock Breeds endpoint routes
         $routes->get('all-livestock-breeds', 'LivestockBreedsController::getLivestockBreeds');
+        $routes->get('all-livestock-breeds-idnames', 'LivestockBreedsController::getLivestockBreedIdAndName');
+        $routes->get('all-livestock-breeds-idnames/(:any)', 'LivestockBreedsController::getLivestockBreedIdAndNameById/$1');
         $routes->get('livestock-breed/(:any)', 'LivestockBreedsController::getLivestockBreed/$1');
         $routes->post('insert-livestock-breed', 'LivestockBreedsController::insertLivestockBreed');
         $routes->put('update-livestock-breed/(:any)', 'LivestockBreedsController::updateLivestockBreed/$1');
@@ -30,6 +33,8 @@ $routes->group('api', static function ($routes) {
 
         // Livestock Age Classifications endpoint routes
         $routes->get('all-livestock-age-classes', 'LivestockAgeClassController::getLivestockAgeClasses');
+        $routes->get('all-livestock-ageclass-idnames', 'LivestockAgeClassController::getLivestockAgeClassIdAndName');
+        $routes->get('all-livestock-ageclass-idnames/(:any)', 'LivestockAgeClassController::getLivestockAgeClassIdAndNameById/$1');
         $routes->get('livestock-age-class/(:any)', 'LivestockAgeClassController::getLivestockAgeClass/$1');
         $routes->post('insert-livestock-age-class', 'LivestockAgeClassController::insertLivestockAgeClass');
         $routes->put('update-livestock-age-class/(:any)', 'LivestockAgeClassController::updateLivestockAgeClass/$1');
@@ -155,6 +160,11 @@ $routes->group('api', static function ($routes) {
 
     // Farmers endpoint routes
     $routes->group('farmer', static function ($routes) {
+        // Farmer Dashboard routes
+        $routes->get('livestock-type-age-class/(:any)', 'LivestocksController::getFarmerLivestockTypeAgeClassCount/$1');
+        $routes->get('livestock-count/(:any)', 'LivestocksController::getFarmerLivestockCount/$1');
+        $routes->get('livestock-type-count/(:any)', 'LivestocksController::getFarmerLivestockTypeCount/$1');
+
         // Farmer Livestocks endpoint routes
         $routes->post('add-livestock', 'LivestocksController::addFarmerLivestock');
         $routes->get('all-livestocks/(:any)', 'LivestocksController::getFarmerAllLivestocks/$1');

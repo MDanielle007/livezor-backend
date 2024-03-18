@@ -16,11 +16,6 @@ class LivestockAgeClassController extends ResourceController
         $this->livestockAgeClass = new LivestockAgeClassModel();
     }
 
-    public function index()
-    {
-
-    }
-
     public function insertLivestockAgeClass()
     {
         $data = $this->request->getJSON();
@@ -57,5 +52,24 @@ class LivestockAgeClassController extends ResourceController
     {
         $response = $this->livestockAgeClass->deleteLivestockAgeClass($id);
         return $this->respond(['message' => 'Livestock Age Classification Successfully Deleted', 'result' => $response], 200);
+    }
+    public function getLivestockAgeClassIdAndName(){
+        try {
+            $livestockAgeClasses = $this->livestockAgeClass->getLivestockAgeClassIdAndName();
+
+            return $this->respond($livestockAgeClasses,200);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockAgeClassIdAndNameById($livestockTypeId){
+        try {
+            $livestockAgeClasses = $this->livestockAgeClass->getLivestockAgeClassIdAndNameById($livestockTypeId);
+
+            return $this->respond($livestockAgeClasses,200);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 }
