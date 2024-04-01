@@ -5,7 +5,6 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\FarmerLivestockModel;
 use App\Models\LivestockAgeClassModel;
-use App\Models\LivestockBreedingsModel;
 use App\Models\LivestockModel;
 use App\Models\LivestockOffspringModel;
 use App\Models\LivestockPregnancyModel;
@@ -16,7 +15,6 @@ class LivestockPregnancyController extends ResourceController
 {
     private $livestockOffspring;
     private $livestockPregnancy;
-    private $livestockBreeding;
     private $livestock;
     private $livestockAgeClass;
     private $farmerLivestock;
@@ -25,7 +23,6 @@ class LivestockPregnancyController extends ResourceController
     {
         $this->livestockOffspring = new LivestockOffspringModel();
         $this->livestockPregnancy = new LivestockPregnancyModel();
-        $this->livestockBreeding = new LivestockBreedingsModel();
         $this->livestock = new LivestockModel();
         $this->livestockAgeClass = new LivestockAgeClassModel();
         $this->farmerLivestock = new FarmerLivestockModel();
@@ -69,10 +66,8 @@ class LivestockPregnancyController extends ResourceController
             $data->pregnancyId = $id;
 
             $result = $this->livestockPregnancy->updateLivestockPregnancyOutcomeSuccessful($id, $data);
-            $parentLivestock = $this->livestock->getLivestockById($data->parentLivestockId);
 
-            $data->livestockTypeId = $parentLivestock['livestockTypeId'];
-            $offspringAgeClass = $this->livestockAgeClass->getLivestockTypeOffspring($parentLivestock['livestockTypeId']);
+            $offspringAgeClass = $this->livestockAgeClass->getLivestockTypeOffspring($data->livestockTypeId);
             $data->livestockAgeClassId = $offspringAgeClass['id'];
             $data->ageDays = 0;
             $data->ageWeeks = 0;
@@ -81,19 +76,30 @@ class LivestockPregnancyController extends ResourceController
             $data->dateOfBirth = $data->actualDeliveryDate;
             $data->birthDate = $data->actualDeliveryDate;
             $data->acquiredDate = $data->actualDeliveryDate;
+            $data->breedingEligibility = 'Not Age-Suited';
+            $data->pasokSaIfOne = false;
+            $data->pasokSaIfTwo = false;
+            $data->pasokSaForOne = false;
+
 
             if ($data->maleOffsprings > 0) {
+                $data->pasokSaIfOne = true;
                 $data->sex = 'Male';
                 for ($i = 1; $i <= $data->maleOffsprings; $i++) {
-                    $livestockId = $this->livestock->insertLivestock($data);
+                    $data->pasokSaForOne = false;
 
+                    $livestockId = $this->livestock->insertLivestock($data);
+                    $data->res = $livestockId;
                     $data->livestockId = $livestockId;
                     $result = $this->livestockOffspring->insertLivestockOffspring($data);
                     $result = $this->farmerLivestock->associateFarmerLivestock($data);
+                    $data->pasokSaForOne = true;
+
                 }
             }
 
             if ($data->femaleOffsprings > 0) {
+                $data->pasokSaIfTwo = true;
                 $data->sex = 'Female';
                 for ($i = 1; $i <= $data->femaleOffsprings; $i++) {
                     $livestockId = $this->livestock->insertLivestock($data);
@@ -104,7 +110,19 @@ class LivestockPregnancyController extends ResourceController
                 }
             }
 
-            return $this->respond(['result' => $result, 'message' => 'Livestock Pregnancy Successfully Added'], 200);
+            return $this->respond(['success' => true, 'message' => 'Livestock Pregnancy Successfully Added','data' => $data], 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+
+    public function getFarmerPregnantLivestockCount($userId){
+        try {
+            $data = $this->livestockPregnancy->getFarmerPregnantLivestockCount($userId);
+
+            return $this->respond($data);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);

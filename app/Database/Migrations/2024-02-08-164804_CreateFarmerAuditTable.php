@@ -39,12 +39,13 @@ class CreateFarmerAuditTable extends Migration
             ],
             'entity_affected' => [
                 'type' => 'ENUM',
-                'constraint' => ['Livestock', 'Vaccination', 'Breeding', 'Mortality'],
+                'constraint' => ['Livestock', 'Vaccination', 'Deworming', 'Egg Production','Breeding', 'Mortality'],
                 'null' => false,
             ],
             'timestamp' => [
-                'type' => 'TIMESTAMP',
-                'default' => new RawSql('CURRENT_TIMESTAMP'),
+                'type' => 'DATETIME',
+                'null' => false,
+                'default' => new RawSql ('CURRENT_TIMESTAMP')
             ],
             'record_status' => [
                 'type' => 'ENUM',
@@ -71,6 +72,6 @@ class CreateFarmerAuditTable extends Migration
 
     public function down()
     {
-        //
+        $this->forge->dropTable('farmer_audit');
     }
 }

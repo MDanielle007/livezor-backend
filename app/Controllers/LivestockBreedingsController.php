@@ -67,14 +67,14 @@ class LivestockBreedingsController extends ResourceController
                 $femaleLivestockId = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
 
                 $data->breedingId = $breedingId;
-                $data->femaleLivestockId = $femaleLivestockId;
+                $data->livestockId = $femaleLivestockId;
                 $data->pregnancyStartDate = $data->breedDate;
 
                 $result = $this->livestockPregnancy->insertLivestockPregnancyByBreeding($data);
             }
 
 
-            return $this->respond(['result' => $result,'message' => 'Livestock Breeding Successfully Added'], 200);
+            return $this->respond(['success' => true,'message' => 'Livestock Breeding Successfully Added'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
@@ -88,7 +88,7 @@ class LivestockBreedingsController extends ResourceController
 
             $response = $this->livestockBreeding->updateLivestockBreeding($id, $data);
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Breeding Successfully Updated'], 200);
+            return $this->respond(['success' => true,'message' => 'Livestock Breeding Successfully Updated'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;

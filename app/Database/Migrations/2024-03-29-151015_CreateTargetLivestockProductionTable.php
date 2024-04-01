@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateLivestockMortalityTable extends Migration
+class CreateTargetLivestockProductionTable extends Migration
 {
     public function up()
     {
@@ -12,31 +12,25 @@ class CreateLivestockMortalityTable extends Migration
             'id' => [
                 'type' => 'INT',
                 'constraint' => 11,
-                'auto_increment' => true,
             ],
-            'livestock_id' => [
+            'livestock_type_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'farmer_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
+            'year' => [
+                'type' => 'YEAR',
             ],
-            'cause_of_death' => [
-                'type' => 'TEXT',
-                'null' => false,
+            'month' => [
+                'type' => 'TINYINT',
+                'constraint' => 2,
             ],
-            'mortality_remarks' => [
-                'type' => 'TEXT',
+            'target_quantity' => [
+                'type' => 'DOUBLE',
                 'null' => true,
             ],
-            'date_of_death' => [
-                'type' => 'DATE',
-            ],
-            'record_status' => [
-                'type' => 'ENUM',
-                'constraint' => ['Accessible', 'Archived'],
-                'default' => 'Accessible',
+            'target_measurement_unit' => [
+                'type' => 'VARCHAR',
+                'constraint' => 50,
             ],
             'created_at' => [
                 'type' => 'DATETIME',
@@ -51,13 +45,13 @@ class CreateLivestockMortalityTable extends Migration
                 'null' => true,
             ],
         ]);
-
-        $this->forge->addKey('id', true);
-        $this->forge->createTable('livestock_mortalities');
+        
+        $this->forge->addPrimaryKey('id');
+        $this->forge->createTable('target_livestock_production', true);
     }
 
     public function down()
     {
-        $this->forge->dropTable('livestock_mortalities');
+        $this->forge->dropTable('target_livestock_production');
     }
 }

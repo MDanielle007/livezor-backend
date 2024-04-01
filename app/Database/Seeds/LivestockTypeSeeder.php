@@ -18,7 +18,7 @@ class LivestockTypeSeeder extends Seeder
             ],
             [
                 'id'=> '2',
-                'livestock_type_name' => 'Cow',
+                'livestock_type_name' => 'Cattle',
                 'livestock_type_uses' => 'Meat, Milk',
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),

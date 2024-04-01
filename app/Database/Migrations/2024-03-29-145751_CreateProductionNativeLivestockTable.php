@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateFarmerEggInventoryTable extends Migration
+class CreateProductionNativeLivestockTable extends Migration
 {
     public function up()
     {
@@ -14,31 +14,28 @@ class CreateFarmerEggInventoryTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'farmer_id' => [
+            'user_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'livestock_type_id' => [
+            'livestock_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'total_eggs' => [
+            'produced_livestock' => [
                 'type' => 'INT',
                 'constraint' => 11,
-                'default' => 0,
-                'null' => false,
             ],
-            'eggs_of_sale' => [
+            'number_of_mortality' => [
                 'type' => 'INT',
                 'constraint' => 11,
-                'default' => 0,
-                'null' => false,
             ],
-            'eggs_of_reproduction' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'default' => 0,
-                'null' => false,
+            'remarks' => [
+                'type' => 'TEXT',
+                'null' => true, // Allow NULL values
+            ],
+            'date_of_production' => [
+                'type' => 'DATE',
             ],
             'record_status' => [
                 'type' => 'ENUM',
@@ -56,15 +53,15 @@ class CreateFarmerEggInventoryTable extends Migration
             'deleted_at' => [
                 'type' => 'DATETIME',
                 'null' => true,
-            ]
+            ],
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('farmer_egg_inventory');
+        $this->forge->createTable('native_livestock_productions');
     }
 
     public function down()
     {
-        $this->forge->dropTable('farmer_egg_inventory');
+        $this->forge->dropTable('native_livestock_productions');
     }
 }

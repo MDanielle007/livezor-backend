@@ -87,6 +87,24 @@ class LivestockTypeModel extends Model
         }
     }
 
+    public function getLivestockTypeName($id)
+    {
+        try {
+            // Assuming 'livestockTypeName' is the column name in your database
+            $livestockType = $this->find($id);
+    
+            if ($livestockType) {
+                return $livestockType['livestock_type_name'];
+            } else {
+                return null; // or handle the case where the record is not found
+            }
+        } catch (\Throwable $th) {
+            // Handle exceptions appropriately
+            // For now, let's just suppress them
+            return $th->getMessage();
+        }
+    }
+
     public function insertLivestockType($data)
     {
         try {

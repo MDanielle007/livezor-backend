@@ -41,6 +41,22 @@ class FarmerLivestockSeeder extends Seeder
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ],
+            [
+                'id' => '5',
+                'farmer_id' => '2',
+                'livestock_id' => '5',
+                'acquired_date' => date('Y-m-d H:i:s'),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
+            [
+                'id' => '6',
+                'farmer_id' => '2',
+                'livestock_id' => '6',
+                'acquired_date' => date('Y-m-d H:i:s'),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ],
         ];
 
         $this->db->table('farmer_livestocks')->insertBatch($farmerLivestock);

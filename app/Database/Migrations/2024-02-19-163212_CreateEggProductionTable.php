@@ -26,7 +26,7 @@ class CreateEggProductionTable extends Migration
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'additional_egg_prod_notes' => [
+            'remarks' => [
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
             ],

@@ -10,7 +10,7 @@ class LivestockModel extends Model
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $useSoftDeletes = false;
+    protected $useSoftDeletes = true;
     protected $protectFields = true;
     protected $allowedFields = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'date_of_birth', 'livestock_health_status', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
@@ -242,10 +242,11 @@ class LivestockModel extends Model
                         END as age'
             )
                 ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
-                ->join('livestock_types','livestock_types.id = livestocks.livestock_type_id')
-                ->join('livestock_breeds','livestock_breeds.id = livestocks.livestock_breed_id')
-                ->join('livestock_age_class','livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->where($whereClause)
+                ->orderBy('livestocks.livestock_tag_id','ASC')
                 ->findAll();
 
             return $livestock;
@@ -287,7 +288,9 @@ class LivestockModel extends Model
 
         $livestockId = $this->select('livestocks.id')
             ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
-            ->where($whereClause)->find();
+            ->where($whereClause)
+            ->orderBy('livestocks.livestock_tag_id','ASC')
+            ->find();
 
         return $livestockId[0]['id'];
     }
@@ -364,7 +367,7 @@ class LivestockModel extends Model
         try {
             $whereClause = [
                 'livestocks.livestock_health_status' => 'Alive',
-                'livestocks.record_status' => 'Accessible',
+                'livestocks.record_status' => 'Accessible'
             ];
 
             $data = $this->select('
@@ -374,10 +377,10 @@ class LivestockModel extends Model
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->where($whereClause)
                 ->groupBy('
-                livestock_types.livestock_type_name,
+                livestock_types.livestock_type_name
             ')
                 ->orderBy('
-                livestock_types.livestock_type_name,
+                livestock_types.livestock_type_name
             ')->findAll();
 
             return $data;
@@ -400,12 +403,12 @@ class LivestockModel extends Model
                 livestock_types.livestock_type_name as livestockType,
                 COUNT(livestocks.id) as livestockCount
             ')->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
-            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-            ->where($whereClause)
-            ->groupBy('
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->groupBy('
                 livestock_types.livestock_type_name
             ')
-            ->orderBy('
+                ->orderBy('
                 livestock_types.livestock_type_name
             ')->findAll();
 
@@ -447,6 +450,81 @@ class LivestockModel extends Model
             return $data;
         } catch (\Throwable $th) {
             return $th->getMessage();
+        }
+    }
+
+    public function getAllFarmerLivestockTagIDs($userId)
+    {
+        try {
+            $whereClause = [
+                'livestocks.livestock_health_status' => 'Alive',
+                'livestocks.record_status' => 'Accessible',
+                'farmer_livestocks.farmer_id' => $userId
+            ];
+
+            $data = $this->select('
+                livestocks.id,
+                livestocks.livestock_tag_id as livestockTagId
+            ')
+                ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->where($whereClause)
+                ->orderBy('livestocks.livestock_tag_id','ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getFarmerDistinctLivestockType($userId)
+    {
+        try {
+            $whereClause = [
+                'livestocks.livestock_health_status' => 'Alive',
+                'livestocks.record_status' => 'Accessible',
+                'farmer_livestocks.farmer_id' => $userId
+            ];
+
+            $data = $this->
+            distinct()
+            ->select('
+                livestock_types.id as id,
+                livestock_types.livestock_type_name as livestockTypeName
+            ')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+            ->where($whereClause)->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getAllFarmerLivestocksBySexAndType($userId){
+        try {
+            $whereClause = [
+                'livestocks.livestock_health_status' => 'Alive',
+                'livestocks.breeding_eligibility' => 'Age-Suited',
+                'livestocks.record_status' => 'Accessible',
+                'farmer_livestocks.farmer_id' => $userId
+            ];
+
+            $data = $this->select('
+                livestocks.id,
+                livestocks.livestock_tag_id as livestockTagId,
+                livestocks.livestock_type_id as livestockTypeId,
+                livestocks.sex,
+            ')
+                ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->where($whereClause)
+                ->orderBy('livestocks.livestock_tag_id','ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
         }
     }
 }

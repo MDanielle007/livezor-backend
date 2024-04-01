@@ -30,20 +30,32 @@ class AuditTrailController extends ResourceController
 
     public function getFarmerAuditTrailLogs($id)
     {
-        $auditTrails = $this->auditTrails->getFarmerAuditTrailLogs($id);
-        return $this->respond($auditTrails);
+        try {
+            $auditTrails = $this->auditTrails->getFarmerAuditTrailLogs($id);
+            return $this->respond($auditTrails);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function getAuditTrailLogsByEntity($entity)
     {
-        $auditTrails = $this->auditTrails->getAuditTrailLogsByEntity($entity);
-        return $this->respond($auditTrails);
+        try {
+            $auditTrails = $this->auditTrails->getAuditTrailLogsByEntity($entity);
+            return $this->respond($auditTrails);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function getAuditTrailLogsByAction($action)
     {
-        $auditTrails = $this->auditTrails->getAuditTrailLogsByAction($action);
-        return $this->respond($auditTrails);
+        try {
+            $auditTrails = $this->auditTrails->getAuditTrailLogsByAction($action);
+            return $this->respond($auditTrails);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function insertAuditTrailLog()
@@ -62,27 +74,39 @@ class AuditTrailController extends ResourceController
 
     public function updateAuditTrailLog($id)
     {
-        $data = $this->request->getJSON();
+        try {
+            $data = $this->request->getJSON();
 
-        $result = $this->auditTrails->updateAuditTrailLog($id, $data);
+            $result = $this->auditTrails->updateAuditTrailLog($id, $data);
 
-        return $this->respond(['message' => 'Audit Trail updated successfully', 'result' => $result]);
+            return $this->respond(['message' => 'Audit Trail updated successfully', 'result' => $result]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function updateAuditTrailRecordStatus($id)
     {
-        $data = $this->request->getJSON();
+        try {
+            $data = $this->request->getJSON();
 
-        $result = $this->auditTrails->updateAuditTrailRecordStatus($id, $data->recordStatus);
+            $result = $this->auditTrails->updateAuditTrailRecordStatus($id, $data->recordStatus);
 
-        return $this->respond(['message' => 'Audit Trail record status updated successfully', 'result' => $result]);
+            return $this->respond(['message' => 'Audit Trail record status updated successfully', 'result' => $result]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function deleteAuditTrailLog($id)
     {
-        $result = $this->auditTrails->deleteAuditTrailLog($id);
+        try {
+            $result = $this->auditTrails->deleteAuditTrailLog($id);
 
-        return $this->respond(['message' => 'Audit Trail deleted successfully', 'result' => $result]);
+            return $this->respond(['message' => 'Audit Trail deleted successfully', 'result' => $result]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
 }

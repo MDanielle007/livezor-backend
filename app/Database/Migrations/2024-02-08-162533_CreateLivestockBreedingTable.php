@@ -32,11 +32,11 @@ class CreateLivestockBreedingTable extends Migration
                 'constraint' => 25,
                 'null' => true, // Allow NULL values
             ],
-            'breed_result' => [
+            'breeding_result' => [
                 'type' => 'ENUM',
                 'constraint' => ['Successful Breeding', 'Unsuccessful Breeding'],
             ],
-            'breed_additional_notes' => [
+            'breeding_remarks' => [
                 'type' => 'TEXT',
                 'null' => false,
             ],

@@ -30,6 +30,10 @@ class CreateLivestockVaccinationTable extends Migration
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
             ],
+            'vaccination_remarks' => [
+                'type' => 'TEXT',
+                'null' => true, // Allow NULL values
+            ],
             'vaccination_date' => [
                 'type' => 'DATE',
             ],

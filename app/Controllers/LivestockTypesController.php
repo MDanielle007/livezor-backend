@@ -56,6 +56,18 @@ class LivestockTypesController extends ResourceController
         }
     }
 
+    public function getLivestockTypeName($id)
+    {
+        try {
+            $livestockType = $this->livestockType->getLivestockTypeName($id);
+
+            return $this->respond($livestockType, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     public function updateLivestockType($id)
     {
         try {

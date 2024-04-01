@@ -62,6 +62,6 @@ class CreateLivestockAdvisoriesTable extends Migration
 
     public function down()
     {
-        //
+        $this->forge->dropTable('livestock_advisories');
     }
 }
