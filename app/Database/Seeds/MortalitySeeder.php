@@ -11,7 +11,7 @@ class MortalitySeeder extends Seeder
         $data = [
             [
                 'id' => '1',
-                'livestock_id' => '1',
+                'livestock_id' => '3',
                 'farmer_id' => '2',
                 'cause_of_death' => 'Pneumonia',
                 'mortality_remarks' => '',
@@ -21,7 +21,7 @@ class MortalitySeeder extends Seeder
             ],
             [
                 'id' => '2',
-                'livestock_id' => '2',
+                'livestock_id' => '4',
                 'farmer_id' => '2',
                 'cause_of_death' => 'Heatstroke',
                 'mortality_remarks' => '',

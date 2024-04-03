@@ -12,7 +12,7 @@ class LivestockDewormingModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['dewormer_id', 'livestock_id', 'deworming_reason', 'deworming_remarks', 'deworming_date', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['dewormer_id', 'livestock_id','dosage', 'administration_method', 'deworming_remarks', 'next_deworming_date', 'deworming_date', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -55,8 +55,10 @@ class LivestockDewormingModel extends Model
                 livestock_dewormings.livestock_id as livestockId,
                 livestocks.livestock_tag_id as livestockTagId,
                 livestock_types.livestock_type_name as livestockType,
-                livestock_dewormings.deworming_reason as dewormingReason,
+                livestock_dewormings.dosage as dosage,
+                livestock_dewormings.administration_method as administrationMethod,
                 livestock_dewormings.deworming_remarks as remarks,
+                livestock_dewormings.next_deworming_date as nextDewormingDate,
                 livestock_dewormings.deworming_date as dewormingDate
             ')
                 ->join('livestocks', 'livestocks.id = livestock_dewormings.livestock_id')
@@ -86,8 +88,10 @@ class LivestockDewormingModel extends Model
                 livestock_dewormings.livestock_id as livestockId,
                 livestocks.livestock_tag_id as livestockTagId,
                 livestock_types.livestock_type_name as livestockType,
-                livestock_dewormings.deworming_reason as dewormingReason,
+                livestock_dewormings.dosage as dosage,
+                livestock_dewormings.administration_method as administrationMethod,
                 livestock_dewormings.deworming_remarks as remarks,
+                livestock_dewormings.next_deworming_date as nextDewormingDate,
                 livestock_dewormings.deworming_date as dewormingDate
             ')
                 ->join('livestocks', 'livestocks.id = livestock_dewormings.livestock_id')
@@ -118,8 +122,10 @@ class LivestockDewormingModel extends Model
                 livestock_dewormings.livestock_id as livestockId,
                 livestocks.livestock_tag_id as livestockTagId,
                 livestock_types.livestock_type_name as livestockType,
-                livestock_dewormings.deworming_reason as dewormingReason,
+                livestock_dewormings.dosage as dosage,
+                livestock_dewormings.administration_method as administrationMethod,
                 livestock_dewormings.deworming_remarks as remarks,
+                livestock_dewormings.next_deworming_date as nextDewormingDate,
                 livestock_dewormings.deworming_date as dewormingDate
             ')
                 ->join('livestocks', 'livestocks.id = livestock_dewormings.livestock_id')
@@ -142,8 +148,10 @@ class LivestockDewormingModel extends Model
             $bind = [
                 'dewormer_id' => $data->dewormerId,
                 'livestock_id' => $data->livestockId,
-                'deworming_reason' => $data->dewormingReason,
+                'dosage' => $data->dosage,
+                'administration_method' => $data->administrationMethod,
                 'deworming_remarks' => $data->remarks,
+                'next_deworming_date' => $data->nextDewormingDate,
                 'deworming_date' => $data->dewormingDate
             ];
 
@@ -160,8 +168,10 @@ class LivestockDewormingModel extends Model
             $bind = [
                 'dewormer_id' => $data->dewormerId,
                 'livestock_id' => $data->livestockId,
-                'deworming_reason' => $data->dewormingReason,
+                'dosage' => $data->dosage,
+                'administration_method' => $data->administrationMethod,
                 'deworming_remarks' => $data->remarks,
+                'next_deworming_date' => $data->nextDewormingDate,
                 'deworming_date' => $data->dewormingDate
             ];
 
