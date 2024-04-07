@@ -130,4 +130,104 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
+    public function getOverallLivestockBreedingCount(){
+        try {
+            $livestockBreedingCount = $this->livestockBreeding->getOverallLivestockBreedingCount();
+            return $this->respond(['breedingCount' =>"$livestockBreedingCount"]);
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            return $this->respond(['error' => $th->getMessage()], 200);
+        }
+    }
+
+    public function getOverallLivestockBreedingCountInCurrentYear(){
+        try {
+            $livestockBreedingCount = $this->livestockBreeding->getOverallLivestockBreedingCountInCurrentYear();
+            return $this->respond(['breedingCount' =>"$livestockBreedingCount"]);
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            return $this->respond(['error' => $th->getMessage()], 200);
+        }
+    }
+
+    public function getFarmerOverallLivestockBreedingCount($userId){
+        try {
+            $livestockBreedingCount = $this->livestockBreeding->getFarmerOverallLivestockBreedingCount($userId);
+            return $this->respond(['breedingCount' =>"$livestockBreedingCount"]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockBreedingSuccessPercentage(){
+        try {
+            $successCount = $this->livestockBreeding->getLivestockBreedingCountByResultInCurrentYear("Successful Breeding");
+
+            $livestockBreedings = $this->livestockBreeding->getOverallLivestockBreedingCountInCurrentYear();
+
+            $breedingPercentage = 0;
+            if ($livestockBreedings > 0) {
+                $percentage = ($successCount / $livestockBreedings) * 100;
+
+                if (floor($percentage) == $percentage) {
+                    // Display only whole numbers
+                    $breedingPercentage =  number_format($percentage, 0);
+                } else {
+                    // Display up to two decimal places
+                    $breedingPercentage = number_format($percentage, 2);
+                }
+            }
+
+            return $this->respond(['breedingPercent' =>"$breedingPercentage%"]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockBreedingResultsCount(){
+        try {
+            $successfulCount = $this->livestockBreeding->getLivestockBreedingCountByResultInCurrentYear("Successful Breeding");
+            
+            $unsuccessfulCount = $this->livestockBreeding->getLivestockBreedingCountByResultInCurrentYear("Unsuccessful Breeding");
+
+            $data = [
+                'Successful Breeding' => $successfulCount,
+                'Unsuccessful Breeding' => $unsuccessfulCount
+            ];
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getBreedingsCountLast4Months(){
+        try {
+            $livestockBreedings = $this->livestockBreeding->getBreedingsCountLast4Months();
+            return $this->respond($livestockBreedings);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockTypeBreedingsCount(){
+        try {
+            $livestockBreedings = $this->livestockBreeding->getLivestockTypeBreedingsCount();
+            return $this->respond($livestockBreedings);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getBreedingCountByMonth(){
+        try {
+            $livestockBreedings = $this->livestockBreeding->getBreedingCountByMonth();
+            return $this->respond($livestockBreedings);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
 }

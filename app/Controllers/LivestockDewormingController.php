@@ -91,4 +91,66 @@ class LivestockDewormingController extends ResourceController
             //throw $th;
         }
     }
+
+    public function getOverallLivestockDewormingCount(){
+        try {
+            $livestockDewormingCount = $this->livestockDewormings->getOverallLivestockDewormingCount();
+
+            return $this->respond(['dewormingCount' => "$livestockDewormingCount"]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getFarmerOverallLivestockDewormingCount($userId){
+        try {
+            $livestockDewormingCount = $this->livestockDewormings->getFarmerOverallLivestockDewormingCount($userId);
+
+            return $this->respond(['dewormingCount' => "$livestockDewormingCount"]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getDewormingCountLast4Months(){
+        try {
+            $livestockDewormingCountLast4Months = $this->livestockDewormings->getDewormingCountLast4Months();
+
+            return $this->respond($livestockDewormingCountLast4Months);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getTopLivestockTypeDewormedCount(){
+        try {
+            $livestockDeworming = $this->livestockDewormings->getTopLivestockTypeDewormedCount();
+
+            return $this->respond($livestockDeworming);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getAdministrationMethodsCount(){
+        try {
+            $livestockDeworming = $this->livestockDewormings->getAdministrationMethodsCount();
+
+            return $this->respond($livestockDeworming);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getDewormingCountByMonth(){
+        try {
+            $livestockDeworming = $this->livestockDewormings->getDewormingCountByMonth();
+
+            return $this->respond($livestockDeworming);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
 }

@@ -170,6 +170,17 @@ class LivestocksController extends ResourceController
         }
     }
 
+    public function getFarmerLivestockTypeCountDataByCity(){
+        try {
+            $data = $this->livestock->getFarmerLivestockTypeCountDataByCity();
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     // testing method
     public function getLivestockPrimaryData($id)
     {
@@ -197,7 +208,7 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getAllLivestockTypeAgeClassCount($userId)
+    public function getAllLivestockTypeAgeClassCount()
     {
         try {
             $data = $this->livestock->getAllLivestockTypeAgeClassCount();
@@ -256,6 +267,22 @@ class LivestocksController extends ResourceController
         }
     }
 
+    public function getAllLivestockCountMonitored()
+    {
+        try {
+            $livestockCount = $this->livestock->getAllLivestockCount();
+
+            $data = [
+                'totalLivestockCount' => "$livestockCount"
+            ];
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     public function getFarmerLivestockCount($userId)
     {
         try {
@@ -296,6 +323,58 @@ class LivestocksController extends ResourceController
     {
         try {
             $data = $this->livestock->getAllFarmerLivestocksBySexAndType($userId);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getAllBreedingEligibleLivestocks(){
+        try {
+            $breedingEligibleLivestocks = $this->livestock->getAllBreedingEligibleLivestocks();
+
+            $livestockCount = $this->livestock->getAllLivestockCount();
+
+            $breedingEligiblePercentage = 0;
+            if ($livestockCount > 0) {
+                $percentage = ($breedingEligibleLivestocks / $livestockCount) * 100;
+
+                if (floor($percentage) == $percentage) {
+                    // Display only whole numbers
+                    $breedingEligiblePercentage =  number_format($percentage, 0);
+                } else {
+                    // Display up to two decimal places
+                    $breedingEligiblePercentage = number_format($percentage, 2);
+                }
+            }
+
+            $data = [
+                'livestockBreedingEligibleCount' => "$breedingEligibleLivestocks",
+                'livestockBreedingEligiblePercentage' => $breedingEligiblePercentage."%",
+            ];
+
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockCountByMonthAndType(){
+        try {
+            $data = $this->livestock->getLivestockCountByMonthAndType();
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getLivestockHealthStatusesCount(){
+        try {
+            $data = $this->livestock->getLivestockHealthStatusesCount();
 
             return $this->respond($data);
         } catch (\Throwable $th) {

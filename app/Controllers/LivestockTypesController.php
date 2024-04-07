@@ -23,9 +23,9 @@ class LivestockTypesController extends ResourceController
             $data = $this->request->getJSON();
             $result = $this->livestockType->insertLivestockType($data);
             if (!$result) {
-                return $this->fail($this->livestockType->errors());
+                return $this->respond(['message' => 'New Livestock Type Successfully Added', 'error' => $this->livestockType->errors()], 200);
             }
-            return $this->respond(['message' => 'New Livestock Type Successfully Added', 'result' => $result], 200);
+            return $this->respond(['message' => 'New Livestock Type Successfully Added', 'success' => true], 200);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);

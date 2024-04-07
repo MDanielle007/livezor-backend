@@ -43,11 +43,14 @@ class LivestockAgeClassModel extends Model
     public function getLivestockAgeClasses()
     {
         $livestockAgeClasses = $this->select(
-            'id,
-            livestock_age_classification as livestockAgeClassification,
-            age_class_range as ageClassRange,
-            livestock_type_id as livestockTypeId,'
-        )->findAll();
+            'livestock_age_class.id,
+            livestock_age_class.livestock_age_classification as livestockAgeClassification,
+            livestock_age_class.age_class_range as ageClassRange,
+            livestock_age_class.livestock_type_id as livestockTypeId,
+            livestock_types.livestock_type_name as livestockTypeName'
+        )
+        ->join('livestock_types', 'livestock_types.id = livestock_age_class.livestock_type_id')
+        ->findAll();
 
         return $livestockAgeClasses;
     }

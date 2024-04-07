@@ -44,11 +44,12 @@ class LivestockBreedModel extends Model
     {
         try {
             $livestockBreeds = $this->select(
-                'id,
-                livestock_breed_name as livestockBreedName,
-                livestock_breed_description as livestockBreedDescription,
-                livestock_type_id as livestockTypeId'
-            )->findAll();
+                'livestock_breeds.id,
+                livestock_breeds.livestock_breed_name as livestockBreedName,
+                livestock_breeds.livestock_breed_description as livestockBreedDescription,
+                livestock_breeds.livestock_type_id as livestockTypeId,
+                livestock_types.livestock_type_name as livestockTypeName'
+            )->join('livestock_types','livestock_types.id = livestock_breeds.livestock_type_id')->findAll();
 
             return $livestockBreeds;
         } catch (\Throwable $th) {

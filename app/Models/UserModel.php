@@ -68,30 +68,34 @@ class UserModel extends Model
 
     public function getAllUsers()
     {
-        $users = $this->select(
-            'id,
-            user_id as userId,
-            username,
-            password,
-            email,
-            first_name as firstName,
-            middle_name as middleName,
-            last_name as lastName,
-            date_of_birth as dateOfBirth,
-            gender,
-            civil_status as civilStatus,
-            sitio,
-            barangay,
-            city,
-            province,
-            phone_number as phoneNumber,
-            user_image as userImage,
-            user_role as userRole,
-            user_status as userStatus,
-            last_login_date as lastLoginDate'
-        )->findAll();
+        try {
+            $users = $this->select(
+                'id,
+                user_id as userId,
+                username,
+                password,
+                email,
+                first_name as firstName,
+                middle_name as middleName,
+                last_name as lastName,
+                date_of_birth as dateOfBirth,
+                gender,
+                civil_status as civilStatus,
+                sitio,
+                barangay,
+                city,
+                province,
+                phone_number as phoneNumber,
+                user_image as userImage,
+                user_role as userRole,
+                user_status as userStatus,
+                last_login_date as lastLoginDate'
+            )->findAll();
 
-        return $users;
+            return $users;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function insertUser($data)
@@ -233,18 +237,13 @@ class UserModel extends Model
     public function updateUserPassword($id, $data)
     {
         try {
-            try {
-                $bind = [
-                    'password' => password_hash($data->password, PASSWORD_DEFAULT),
-                ];
+            $bind = [
+                'password' => password_hash($data->password, PASSWORD_DEFAULT),
+            ];
 
-                $result = $this->update($id, $bind);
-                return $result;
-            } catch (\Throwable $th) {
-                return $th->getMessage();
-            }
+            $result = $this->update($id, $bind);
+            return $result;
         } catch (\Throwable $th) {
-            //throw $th;
             return $th->getMessage();
         }
     }
@@ -278,41 +277,95 @@ class UserModel extends Model
 
     public function getAllUserFirebaseToken($userRole)
     {
-        $result = $this->select('firebase_token')->where('user_role', $userRole)->where('firebase_token IS NOT NULL')->findAll();
-        $users = array_column($result, 'firebase_token');
-        return $users;
+        try {
+            $result = $this->select('firebase_token')->where('user_role', $userRole)->where('firebase_token IS NOT NULL')->findAll();
+            $users = array_column($result, 'firebase_token');
+            return $users;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function getUserFirebaseToken($id)
     {
-        $result = $this->select('firebase_token')->where('id', $id)->find();
-        $token = array_column($result, 'firebase_token');
-        return $token;
+        try {
+            $result = $this->select('firebase_token')->where('id', $id)->find();
+            $token = array_column($result, 'firebase_token');
+            return $token;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function getBasicUserInfo()
     {
-        $result = $this->select(
-            'id,
-            first_name as firstName,
-            last_name as lastName,
-            user_role as userRole, 
-            sitio, 
-            barangay, 
-            city, 
-            province, 
-            username,
-            user_id as userId')
-            ->where('user_role', 'Farmer')
-            ->findAll();
-        return $result;
+        try {
+            $result = $this->select(
+                'id,
+                first_name as firstName,
+                last_name as lastName,
+                user_role as userRole, 
+                sitio, 
+                barangay, 
+                city, 
+                province, 
+                username,
+                user_id as userId'
+            )
+                ->where('user_role', 'Farmer')
+                ->findAll();
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
-    public function getUserName($id){
-        $userData = $this->select(
-            'CONCAT(first_name, " ", last_name) as userName'
-        )->find($id);
+    public function getUserName($id)
+    {
+        try {
+            $userData = $this->select(
+                'CONCAT(first_name, " ", last_name) as userName'
+            )->find($id);
+    
+            return $userData;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
 
-        return $userData;
+    public function getFarmerCount()
+    {
+        try {
+            $whereClause = [
+                'user_role' => 'Farmer',
+                'record_status' => 'Accessible',
+            ];
+    
+            $farmerCount = $this->where($whereClause)->countAllResults();
+    
+            return $farmerCount;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getAllFarmersBasicInfo()
+    {
+        try {
+            $whereClause = [
+                'user_role' => 'Farmer',
+                'record_status' => 'Accessible',
+            ];
+
+            $farmers = $this->select('
+                id,
+                user_id as userId,
+                CONCAT(first_name, " ", last_name) as userName
+            ')->where($whereClause)->findAll();
+
+            return $farmers;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 }

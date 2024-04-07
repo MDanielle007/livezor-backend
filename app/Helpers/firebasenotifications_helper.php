@@ -2,7 +2,7 @@
 
 function sendNotification($title, $body, $tokens)
 {
-    $serverKey = 'AAAATCEeJYU:APA91bGgtBQNg3kUAriQOvLjkV44ZsYiIFF1pQSzSraMQ62s5DX2CxzEZ6MJj7R5V1dtU2_FG4M-xu-R2lO0Mxi9pQYEqzdvmnfyhqbQhcksnEro8TvAbJ7rNg9-z06fatyeszuQKNZd';
+    $serverKey = getenv('FIREBASE_SERVER_KEY');;
     $url = 'https://fcm.googleapis.com/fcm/send';
 
     $headers = [

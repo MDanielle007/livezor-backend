@@ -43,19 +43,30 @@ class LivestockBreedingsModel extends Model
     public function getAllLivestockBreedings()
     {
         try {
+            $whereClause = [
+                'livestock_breedings.record_status' => 'Accessible'
+            ];
+
             $livestockBreedings = $this->select(
-                'id,
-                farmer_id as farmerId,
-                livestock_type_id as livestockTypeId,
-                male_livestock_tag_id as maleLivestockTagId,
-                female_livestock_tag_id as femaleLivestockTagId,
-                breeding_result as breedResult,
-                breeding_remarks as remarks,
-                breed_date as breedDate,
-                record_status as recordStatus'
-            )->findAll();
+                'livestock_breedings.id,
+                livestock_breedings.farmer_id as farmerId,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                user_accounts.user_id as farmerUserId,
+                livestock_breedings.livestock_type_id as livestockTypeId,
+                livestock_types.livestock_type_name as livestockType,
+                livestock_breedings.male_livestock_tag_id as maleLivestockTagId,
+                livestock_breedings.female_livestock_tag_id as femaleLivestockTagId,
+                livestock_breedings.breeding_result as breedResult,
+                livestock_breedings.breeding_remarks as remarks,
+                livestock_breedings.breed_date as breedDate'
+            )
+                ->join('user_accounts', 'user_accounts.id = livestock_breedings.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestock_breedings.livestock_type_id')
+                ->where($whereClause)
+                ->findAll();
             return $livestockBreedings;
         } catch (\Throwable $th) {
+            return $th->getMessage();
             //throw $th;
         }
     }
@@ -71,8 +82,7 @@ class LivestockBreedingsModel extends Model
                 female_livestock_tag_id as femaleLivestockTagId,
                 breeding_result as breedResult,
                 breeding_remarks as remarks,
-                breed_date as breedDate,
-                record_status as recordStatus'
+                breed_date as breedDate'
             )->find($id);
             return $livestockBreeding;
         } catch (\Throwable $th) {
@@ -98,8 +108,8 @@ class LivestockBreedingsModel extends Model
                 livestock_breedings.breeding_remarks as remarks,
                 livestock_breedings.breed_date as breedDate'
             )
-            ->join('livestock_types', 'livestock_types.id = livestock_breedings.livestock_type_id')
-            ->where($whereClause)->findAll();
+                ->join('livestock_types', 'livestock_types.id = livestock_breedings.livestock_type_id')
+                ->where($whereClause)->findAll();
             return $livestockBreedings;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -178,11 +188,12 @@ class LivestockBreedingsModel extends Model
     {
         try {
             $livestockBreedings = $this->select(
-                'livestock_breedings.id,
+                'livestock_breedings.id as breeding_id,
                 livestock_breedings.male_livestock_tag_id as parentMaleLivestockTagId,
                 livestock_breedings.female_livestock_tag_id as parentFemaleLivestockTagId,
                 livestocks.livestock_type_id as livestockTypeId,
-                livestocks.livestock_tag_id as offspringLivestockTagId,
+                livestock_types.livestock_type_name as livestockTypeName,
+                IFNULL(livestocks.livestock_tag_id, "untagged") as offspringLivestockTagId,
                 livestock_pregnancies.outcome,
                 livestock_pregnancies.pregnancy_start_date as pregnancyStartDate,
                 livestock_pregnancies.actual_delivery_date as actualDeliveryDate,
@@ -192,13 +203,154 @@ class LivestockBreedingsModel extends Model
                 ->join('livestock_pregnancies', 'livestock_pregnancies.breeding_id = livestock_breedings.id')
                 ->join('livestock_offspring', 'livestock_offspring.pregnancy_id = livestock_pregnancies.id')
                 ->join('livestocks', 'livestocks.id = livestock_offspring.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_breedings.farmer_id')
                 ->findAll();
+            // Add index to each record
+            foreach ($livestockBreedings as $index => $livestockBreeding) {
+                $livestockBreeding['id'] = $index + 1;
+                $livestockBreedings[$index] = $livestockBreeding;
+            }
 
             return $livestockBreedings;
         } catch (\Throwable $th) {
             //throw $th;
             return $th->getMessage();
         }
+    }
+
+    public function getOverallLivestockBreedingCount()
+    {
+        try {
+            $livestockBreedings = $this->where(['record_status' => 'Accessible'])->countAllResults();
+
+            return $livestockBreedings;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getOverallLivestockBreedingCountInCurrentYear()
+    {
+        try {
+            $livestockBreedings = $this->where(['record_status' => 'Accessible', 'YEAR(breed_date)' => date('Y')])->countAllResults();
+
+            return $livestockBreedings;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getFarmerOverallLivestockBreedingCount($userId)
+    {
+        try {
+            $livestockBreedings = $this->where(['record_status' => 'Accessible', 'farmer_id' => $userId])->countAllResults();
+
+            return $livestockBreedings;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockBreedingCountByResult($result)
+    {
+        try {
+            $livestockBreedings = $this->where(['record_status' => 'Accessible', 'breeding_result' => $result])->countAllResults();
+
+            return "$livestockBreedings";
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockBreedingCountByResultInCurrentYear($result)
+    {
+        try {
+            $whereClause = [
+                'record_status' => 'Accessible',
+                'breeding_result' => $result,
+                'YEAR(breed_date)' => date('Y')
+            ];
+            $livestockBreedings = $this->where($whereClause)->countAllResults();
+
+            return "$livestockBreedings";
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getBreedingsCountLast4Months()
+    {
+        try {
+            $currentMonth = date('F');
+            $currentYear = date('Y');
+
+            $months = [];
+            for ($i = 3; $i >= 0; $i--) {
+                $month = date('F', strtotime("-$i months"));
+                $months[] = $month;
+            }
+
+            $breedingCounts = [];
+            foreach ($months as $month) {
+                $count = $this->select('COUNT(*) as breedingCount')
+                    ->where('MONTH(breed_date)', date('m', strtotime($month)))
+                    ->where('YEAR(breed_date)', $currentYear)
+                    ->get()
+                    ->getRowArray();
+
+                $breedingCounts[] = [
+                    'month' => $month,
+                    'breedingCount' => $count['breedingCount'] ?? 0,
+                ];
+            }
+
+            return $breedingCounts;
+        } catch (\Throwable $th) {
+            // Handle exceptions
+            return [];
+        }
+    }
+
+    public function getLivestockTypeBreedingsCount()
+    {
+        try {
+            $whereClause = [
+                'record_status' => 'Accessible',
+                'YEAR(breed_date)' => date('Y')
+            ];
+
+            $livestockBreedings = $this->select('
+            livestock_types.livestock_type_name as livestockTypeName,
+            COUNT(*) as breedingCount
+            ')
+                ->join('livestock_types', 'livestock_types.id = livestock_breedings.livestock_type_id')
+                ->where($whereClause)
+                ->groupBy('livestock_types.livestock_type_name')
+                ->orderBy('breedingCount')
+                ->findAll();
+
+            return $livestockBreedings;
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getBreedingCountByMonth()
+    {
+        // Get the current year
+        $currentYear = date('Y');
+
+        // Build the query
+        $this->select('MONTH(breed_date) AS month, COUNT(*) AS count')
+            ->where("YEAR(breed_date)", $currentYear)
+            ->groupBy('MONTH(breed_date)')
+            ->orderBy('MONTH(breed_date)');
+
+        // Execute the query and return the result
+        return $this->get()->getResult();
     }
 }

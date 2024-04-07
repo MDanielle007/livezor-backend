@@ -22,13 +22,21 @@ class CreateLivestockDewormingTable extends Migration
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'deworming_reason' => [
+            'dosage' => [
                 'type' => 'VARCHAR',
-                'constraint' => 70,
+                'constraint' => 50,
+            ],
+            'administration_method' => [
+                'type' => 'VARCHAR',
+                'constraint' => 50,
             ],
             'deworming_remarks' => [
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
+            ],
+            'next_deworming_date' => [
+                'type' => 'DATE',
+                'null' => true,
             ],
             'deworming_date' => [
                 'type' => 'DATE',

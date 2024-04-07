@@ -20,7 +20,8 @@ class LivestockAdvisoriesController extends ResourceController
         helper('firebasenotifications');
     }
 
-    public function getAllLivestockAdvisories(){
+    public function getAllLivestockAdvisories()
+    {
         try {
             $livestockAdvisories = $this->livestockAdvisories->getAllLivestockAdvisories();
 
@@ -31,7 +32,8 @@ class LivestockAdvisoriesController extends ResourceController
         }
     }
 
-    public function getLivestockAdvisory($id){
+    public function getLivestockAdvisory($id)
+    {
         try {
             $livestockAdvisory = $this->livestockAdvisories->getLivestockAdvisory($id);
 
@@ -42,7 +44,8 @@ class LivestockAdvisoriesController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestockAdvisories($userId){
+    public function getAllFarmerLivestockAdvisories($userId)
+    {
         try {
             $livestockAdvisories = $this->livestockAdvisories->getAllFarmerLivestockAdvisories($userId);
 
@@ -53,7 +56,8 @@ class LivestockAdvisoriesController extends ResourceController
         }
     }
 
-    public function getAllGeneralLivestockAdvisories(){
+    public function getAllGeneralLivestockAdvisories()
+    {
         try {
             $livestockAdvisories = $this->livestockAdvisories->getAllGeneralLivestockAdvisories();
 
@@ -73,22 +77,21 @@ class LivestockAdvisoriesController extends ResourceController
 
             $notifRes = null;
 
-            if($data->isGeneral === true){
+            if ($data->isGeneral === true) {
                 $result = $this->livestockAdvisories->sendLivestockAdvisory($data);
 
                 $farmerTokens = $this->userModel->getAllUserFirebaseToken('Farmer');
                 $notifRes = sendNotification($title, $body, $farmerTokens);
-                return $this->respond(['result' => $result,'message' => 'Livestock Advisory Successfully Sent','notification sent' => $notifRes], 200);
+                return $this->respond(['result' => $result, 'message' => 'Livestock Advisory Successfully Sent', 'notification sent' => $notifRes], 200);
             }
 
             $targetFarmers = $data->targetFarmers;
             foreach ($targetFarmers as $targetFarmer) {
                 $data->targetFarmerId = $targetFarmer;
-                $result = $this->userModel->getUserFirebaseToken($targetFarmer);
+                $farmerTokens = $this->userModel->getUserFirebaseToken($targetFarmer);
 
-                $notifRes = sendNotification($title, $body, $result);
+                $notifRes = sendNotification($title, $body, $farmerTokens);
             }
-
             return $this->respond(['result' => $data, 'message' => 'Livestock Advisory Successfully Sent', 'notification sent' => $notifRes], 200);
         } catch (\Throwable $th) {
             //throw $th;
@@ -96,50 +99,53 @@ class LivestockAdvisoriesController extends ResourceController
         }
     }
 
-    public function updateLivestockAdvisory($id){
+    public function updateLivestockAdvisory($id)
+    {
         try {
             $data = $this->request->getJSON();
-            
+
             $response = $this->livestockAdvisories->updateLivestockAdvisory($id, $data);
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Advisory Successfully Updated'], 200);
+            return $this->respond(['result' => $response, 'message' => 'Livestock Advisory Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function updateLivestockAdvisoryReadStatus($id){
+    public function updateLivestockAdvisoryReadStatus($id)
+    {
         try {
             $data = $this->request->getJSON();
-            
+
             $response = $this->livestockAdvisories->updateLivestockAdvisoryReadStatus($id, $data);
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Advisory Read Status Successfully Updated'], 200);
+            return $this->respond(['result' => $response, 'message' => 'Livestock Advisory Read Status Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function updateLivestockAdvisoryRecordStatus($id){
-        try {
-            $data = $this->request->getJSON();
-            
-            $response = $this->livestockAdvisories->updateLivestockAdvisoryRecordStatus($id, $data);
+    // public function updateLivestockAdvisoryRecordStatus($id)
+    // {
+    //     try {
+    //         $data = $this->request->getJSON();
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Advisory Record Status Successfully Updated'], 200);
-        } catch (\Throwable $th) {
-            //throw $th;
-        }
-    }
+    //         $response = $this->livestockAdvisories->updateLivestockAdvisoryRecordStatus($id, $data);
 
-    public function deleteLivestockAdvisory($id){
-        try {
-            $response = $this->livestockAdvisories->deleteLivestockAdvisory($id);
+    //         return $this->respond(['result' => $response, 'message' => 'Livestock Advisory Record Status Successfully Updated'], 200);
+    //     } catch (\Throwable $th) {
+    //         //throw $th;
+    //     }
+    // }
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Advisory Successfully Deleted'], 200);
-        } catch (\Throwable $th) {
-            //throw $th;
-        }
-    }
+    // public function deleteLivestockAdvisory($id)
+    // {
+    //     try {
+    //         $response = $this->livestockAdvisories->deleteLivestockAdvisory($id);
 
+    //         return $this->respond(['result' => $response, 'message' => 'Livestock Advisory Successfully Deleted'], 200);
+    //     } catch (\Throwable $th) {
+    //         //throw $th;
+    //     }
+    // }
 }

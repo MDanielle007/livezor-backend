@@ -254,6 +254,31 @@ class UserController extends ResourceController
         return $this->respond($userToken[0]['firebase_token'], 200);
     }
 
+    public function getFarmerCount()
+    {
+        try {
+            $farmerCount = $this->userModel->getFarmerCount();
+
+            $data = [
+                'farmerCount' => "$farmerCount"
+            ];
+
+            return $this->respond($data, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getAllFarmersBasicInfo(){
+        try {
+            $farmers = $this->userModel->getAllFarmersBasicInfo();
+
+            return $this->respond($farmers, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
     // testing method
     public function getUserName($id)
     {

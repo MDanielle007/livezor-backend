@@ -122,4 +122,105 @@ class LivestockMortalityController extends ResourceController
             //throw $th;
         }
     }
+
+    public function getOverallLivestockMortalitiesCount(){
+        try {
+            $livestockMortalities = $this->livestockMortality->getOverallLivestockMortalitiesCount();
+
+            return $this->respond(['mortalityCount' => "$livestockMortalities"]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getOverallLivestockMortalitiesCountInCurrentYear(){
+        try {
+            $livestockMortalities = $this->livestockMortality->getOverallLivestockMortalitiesCountInCurrentYear();
+
+            return $this->respond(['mortalityCount' => "$livestockMortalities"]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getFarmerOverallLivestockMortalitiesCount($userId){
+        try {
+            $livestockMortalities = $this->livestockMortality->getFarmerOverallLivestockMortalitiesCount($userId);
+
+            return $this->respond(['mortalityCount' => "$livestockMortalities"]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockMortalitiesCountLastMonth(){
+        try {
+            $livestockMortalitiesCount = $this->livestockMortality->getLivestockMortalitiesCountLastMonth();
+
+            $livestockCount = $this->livestock->getOverallLivestockCount();
+            
+            $mortalityPercentage = 0;
+            if ($livestockCount > 0) {
+                $percentage = ($livestockMortalitiesCount / $livestockCount) * 100;
+
+                if (floor($percentage) == $percentage) {
+                    // Display only whole numbers
+                    $mortalityPercentage =  number_format($percentage, 0);
+                } else {
+                    // Display up to two decimal places
+                    $mortalityPercentage = number_format($percentage, 2);
+                }
+            }
+
+            $data = [
+                'livestockMortalitiesCount' => "$livestockMortalitiesCount",
+                'livestockMortalitiesPercentage' => $mortalityPercentage."%",
+            ];
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond($th->getMessage());
+        }
+    }
+
+    public function getTopMortalityCause(){
+        try {
+            $livestockMortalities = $this->livestockMortality->getTopMortalityCause();
+
+            return $this->respond($livestockMortalities);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getMortalityCountByMonth(){
+        try {
+            $livestockMortalities = $this->livestockMortality->getMortalityCountByMonth();
+
+            return $this->respond($livestockMortalities);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockTypeMortalityCount(){
+        try {
+            $livestockMortalities = $this->livestockMortality->getLivestockTypeMortalityCount();
+
+            return $this->respond($livestockMortalities);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getMortalitiesCountLast4Months(){
+        try {
+            $livestockmortalities = $this->livestockMortality->getMortalitiesCountLast4Months();
+
+            return $this->respond($livestockmortalities);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
 }

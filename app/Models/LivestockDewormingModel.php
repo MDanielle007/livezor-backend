@@ -12,7 +12,7 @@ class LivestockDewormingModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['dewormer_id', 'livestock_id','dosage', 'administration_method', 'deworming_remarks', 'next_deworming_date', 'deworming_date', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['dewormer_id', 'livestock_id', 'dosage', 'administration_method', 'deworming_remarks', 'next_deworming_date', 'deworming_date', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -65,8 +65,8 @@ class LivestockDewormingModel extends Model
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_dewormings.dewormer_id')
                 ->where($whereClause)
-                ->orderBy('livestocks.livestock_tag_id','ASC')
-                ->orderBy('livestock_dewormings.created_at','DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->orderBy('livestock_dewormings.deworming_date', 'DESC')
                 ->findAll();
 
             return $livestockDewormings;
@@ -75,7 +75,8 @@ class LivestockDewormingModel extends Model
         }
     }
 
-    public function getLivestockDeworming($id){
+    public function getLivestockDeworming($id)
+    {
         try {
             $whereClause = [
                 'livestock_dewormings.record_status' => 'Accessible'
@@ -98,8 +99,8 @@ class LivestockDewormingModel extends Model
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_dewormings.dewormer_id')
                 ->where($whereClause)
-                ->orderBy('livestocks.livestock_tag_id','ASC')
-                ->orderBy('livestock_dewormings.created_at','DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->orderBy('livestock_dewormings.created_at', 'DESC')
                 ->find($id);
 
             return $livestockDewormings;
@@ -108,7 +109,8 @@ class LivestockDewormingModel extends Model
         }
     }
 
-    public function getAllFarmerLivestockDewormings($userId){
+    public function getAllFarmerLivestockDewormings($userId)
+    {
         try {
             $whereClause = [
                 'livestock_dewormings.record_status' => 'Accessible',
@@ -132,8 +134,8 @@ class LivestockDewormingModel extends Model
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_dewormings.dewormer_id')
                 ->where($whereClause)
-                ->orderBy('livestocks.livestock_tag_id','ASC')
-                ->orderBy('livestock_dewormings.created_at','DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->orderBy('livestock_dewormings.created_at', 'DESC')
                 ->findAll();
 
             return $livestockDewormings;
@@ -143,7 +145,8 @@ class LivestockDewormingModel extends Model
         }
     }
 
-    public function insertLivestockDeworming($data){
+    public function insertLivestockDeworming($data)
+    {
         try {
             $bind = [
                 'dewormer_id' => $data->dewormerId,
@@ -163,7 +166,8 @@ class LivestockDewormingModel extends Model
         }
     }
 
-    public function updateLivestockDeworming($id, $data){
+    public function updateLivestockDeworming($id, $data)
+    {
         try {
             $bind = [
                 'dewormer_id' => $data->dewormerId,
@@ -175,7 +179,7 @@ class LivestockDewormingModel extends Model
                 'deworming_date' => $data->dewormingDate
             ];
 
-            $result = $this->update($id,$bind);
+            $result = $this->update($id, $bind);
 
             return $result;
         } catch (\Throwable $th) {
@@ -183,21 +187,23 @@ class LivestockDewormingModel extends Model
         }
     }
 
-    public function updateLivestockDewormingRecordStatus($id, $status){
+    public function updateLivestockDewormingRecordStatus($id, $status)
+    {
         try {
             $bind = [
                 'record_status' => $status,
             ];
-    
+
             $result = $this->update($id, $bind);
-    
+
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function deleteLivestockDewormingRecord($id){
+    public function deleteLivestockDewormingRecord($id)
+    {
         try {
             $result = $this->delete($id);
 
@@ -206,4 +212,128 @@ class LivestockDewormingModel extends Model
             //throw $th;
         }
     }
+
+    public function getOverallLivestockDewormingCount()
+    {
+        try {
+            $livestockDewormingCount = $this->where(['record_status' => 'Accessible'])->countAllResults();
+
+            return $livestockDewormingCount;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getFarmerOverallLivestockDewormingCount($userId)
+    {
+        try {
+            $livestockDewormingCount = $this->where(['record_status' => 'Accessible', 'dewormer_id' => $userId])->countAllResults();
+
+            return $livestockDewormingCount;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getDewormingCountLast4Months()
+    {
+        try {
+            $currentMonth = date('F');
+            $currentYear = date('Y');
+
+            $months = [];
+            for ($i = 3; $i >= 0; $i--) {
+                $month = date('F', strtotime("-$i months"));
+                $months[] = $month;
+            }
+
+            $dewormingCounts = [];
+            foreach ($months as $month) {
+                $count = $this->select('COUNT(*) as dewormingCount')
+                    ->where('MONTH(deworming_date)', date('m', strtotime($month)))
+                    ->where('YEAR(deworming_date)', $currentYear)
+                    ->get()
+                    ->getRowArray();
+
+                $dewormingCounts[] = [
+                    'month' => $month,
+                    'dewormingCount' => $count['dewormingCount'] ?? 0,
+                ];
+            }
+
+            return $dewormingCounts;
+        } catch (\Throwable $th) {
+            // Handle exceptions
+            return [];
+        }
+    }
+
+    public function getTopLivestockTypeDewormedCount()
+    {
+        try {
+            $whereClause = [
+                'livestock_dewormings.record_status' => 'Accessible'
+            ];
+
+            $livestockDewormings = $this->select('
+                livestock_types.livestock_type_name as livestockType,
+                COUNT(*) as dewormingCount
+            ')
+                ->join('livestocks', 'livestocks.id = livestock_dewormings.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->groupBy('livestock_types.livestock_type_name')
+                ->orderBy('dewormingCount', 'DESC')
+                ->findAll();
+
+            return $livestockDewormings;
+        } catch (\Throwable $th) {
+        }
+    }
+
+    public function getAdministrationMethodsCount()
+    {
+        try {
+            $whereClause = [
+                'livestock_dewormings.record_status' => 'Accessible'
+            ];
+
+            $livestockDewormings = $this->select('
+                livestock_dewormings.administration_method as administrationMethod,
+                COUNT(*) as dewormingCount
+            ')
+                ->join('livestocks', 'livestocks.id = livestock_dewormings.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->groupBy('livestock_dewormings.administration_method')
+                ->orderBy('dewormingCount', 'DESC')
+                ->findAll();
+
+            return $livestockDewormings;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getDewormingCountByMonth()
+    {
+        try {
+            // Get the current year
+            $currentYear = date('Y');
+
+            // Build the query
+            $this->select('MONTH(deworming_date) AS month, COUNT(*) AS count')
+                ->where("YEAR(deworming_date)", $currentYear)
+                ->groupBy('MONTH(deworming_date)')
+                ->orderBy('MONTH(deworming_date)');
+
+            // Execute the query and return the result
+            return $this->get()->getResult();
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+
 }

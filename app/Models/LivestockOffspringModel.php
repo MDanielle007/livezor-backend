@@ -142,4 +142,17 @@ class LivestockOffspringModel extends Model
 
         return $result;
     }
+
+    public function getLivestockOffspringCount($pregnancyId){
+        $whereClause = [
+            'pregnancy_id' => $pregnancyId,
+           'record_status' => 'Accessible'
+        ];
+
+        $livestockOffspringCount = $this->select('
+            sex, COUNT(*) AS offspringCount
+        ')->where($whereClause)->groupBy('sex')->get()->getResultArray();
+
+        return $livestockOffspringCount;
+    }
 }

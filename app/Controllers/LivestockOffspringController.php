@@ -89,4 +89,14 @@ class LivestockOffspringController extends ResourceController
         return $this->respond(['message' => 'Livestock Offspring Successfully Deleted', 'result' => $result], 200);
     }
 
+    public function getLivestockOffspringCount($pregnancyId){
+        try {
+            $livestockOffspringCount = $this->livestockOffspring->getLivestockOffspringCount($pregnancyId);
+
+            return $this->respond($livestockOffspringCount);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
 }
