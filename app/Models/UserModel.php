@@ -368,4 +368,20 @@ class UserModel extends Model
             //throw $th;
         }
     }
+
+    public function getFarmerCountByCity($city){
+        try {
+            $whereClause = [
+                'user_role' => 'Farmer',
+                'record_status' => 'Accessible',
+                'city' => $city
+            ];
+
+            $userCount = $this->where($whereClause)->countAllResults();
+
+            return $userCount;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
 }

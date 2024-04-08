@@ -170,7 +170,8 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getFarmerLivestockTypeCountDataByCity(){
+    public function getFarmerLivestockTypeCountDataByCity()
+    {
         try {
             $data = $this->livestock->getFarmerLivestockTypeCountDataByCity();
 
@@ -330,7 +331,8 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getAllBreedingEligibleLivestocks(){
+    public function getAllBreedingEligibleLivestocks()
+    {
         try {
             $breedingEligibleLivestocks = $this->livestock->getAllBreedingEligibleLivestocks();
 
@@ -342,7 +344,7 @@ class LivestocksController extends ResourceController
 
                 if (floor($percentage) == $percentage) {
                     // Display only whole numbers
-                    $breedingEligiblePercentage =  number_format($percentage, 0);
+                    $breedingEligiblePercentage = number_format($percentage, 0);
                 } else {
                     // Display up to two decimal places
                     $breedingEligiblePercentage = number_format($percentage, 2);
@@ -351,7 +353,7 @@ class LivestocksController extends ResourceController
 
             $data = [
                 'livestockBreedingEligibleCount' => "$breedingEligibleLivestocks",
-                'livestockBreedingEligiblePercentage' => $breedingEligiblePercentage."%",
+                'livestockBreedingEligiblePercentage' => $breedingEligiblePercentage . "%",
             ];
 
 
@@ -361,7 +363,8 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getLivestockCountByMonthAndType(){
+    public function getLivestockCountByMonthAndType()
+    {
         try {
             $data = $this->livestock->getLivestockCountByMonthAndType();
 
@@ -372,7 +375,8 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getLivestockHealthStatusesCount(){
+    public function getLivestockHealthStatusesCount()
+    {
         try {
             $data = $this->livestock->getLivestockHealthStatusesCount();
 
@@ -381,4 +385,104 @@ class LivestocksController extends ResourceController
             //throw $th;
         }
     }
+
+    public function getLivestockCountByMunicipality($municipality)
+    {
+        try {
+            $livestockTypeCount = $this->livestock->getLivestockTypeCountByMunicipality($municipality);
+
+            $totalLivestockCount = $this->livestock->getLivestockCountByMunicipality($municipality);
+            $data = [
+                'livestock' => $livestockTypeCount,
+                'totalLivestockCount' => $totalLivestockCount
+            ];
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            return $this->respond($th->getMessage());
+        }
+    }
+
+    public function getLivestockCountAllMunicipality()
+    {
+        try {
+
+            $cities = [
+                'Puerto Galera',
+                'San Teodoro',
+                'Baco',
+                'Calapan City',
+                'Naujan',
+                'Victoria',
+                'Socorro',
+                'Pinamalayan',
+                'Gloria',
+                'Bansud',
+                'Bongabong',
+                'Roxas',
+                'Mansalay',
+                'Bulalacao'
+            ];
+
+            $data = [];
+            $i = 1;
+            foreach ($cities as $city) {
+                $livestockTypeCount = $this->livestock->getLivestockTypeCountBycity($city);
+
+                $totalLivestockCount = $this->livestock->getLivestockCountBycity($city);
+
+                $registeredFarmersCount = $this->userModel->getFarmerCountByCity($city);
+                $data[] = [
+                    'id' => $i++,
+                    'livestock' => $livestockTypeCount,
+                    'totalLivestockCount' => $totalLivestockCount,
+                    'city' => $city,
+                    'registeredFarmersCount' => $registeredFarmersCount
+                ];
+            }
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            return $this->respond($th->getMessage());
+        }
+    }
+
+    public function getLivestockProductionCountWholeYear()
+    {
+        try {
+            $data = $this->livestock->getLivestockProductionCountWholeYear();
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            return $this->respond($th->getMessage());
+        }
+    }
+
+    public function getLivestockProductionWholeYear()
+    {
+        try {
+            $livestockTypes = $this->livestockTypes->getAllLivestockTypeIdName();
+
+            $livestock = $this->livestock->getProductionCountByMonthAndType($livestockTypes);
+
+            return $this->respond($livestock);
+        } catch (\Throwable $th) {
+            // Handle exceptions
+            return $th->getMessage();
+        }
+    }
+
+    public function getLivestockProductionSelectedYear($year)
+    {
+        try {
+            $livestockTypes = $this->livestockTypes->getAllLivestockTypeIdName();
+
+            $livestock = $this->livestock->getProductionCountByMonthYearAndType($livestockTypes,$year);
+
+            return $this->respond($livestock);
+        } catch (\Throwable $th) {
+            // Handle exceptions
+            return $th->getMessage();
+        }
+    }
+
 }

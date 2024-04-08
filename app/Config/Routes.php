@@ -67,6 +67,10 @@ $routes->group('api', static function ($routes) {
         $routes->get('livestock-mortalities-count', 'LivestockMortalityController::getOverallLivestockMortalitiesCount');
         $routes->get('livestock-mortalities-count/(:any)', 'LivestockMortalityController::getFarmerOverallLivestockMortalitiesCount/$1');
         $routes->get('livestock-deworming-count/(:any)', 'LivestockDewormingController::getFarmerOverallLivestockDewormingCount/$1');
+        $routes->get('livestock-count-municipality/(:any)', 'LivestocksController::getLivestockCountByMunicipality/$1');
+        $routes->get('livestock-count-municipality', 'LivestocksController::getLivestockCountAllMunicipality');
+        $routes->get('livestock-production-monthly', 'LivestocksController::getLivestockProductionCountByMonthInCurrentYear');
+
 
 
         // User Management endpoint routes
@@ -96,6 +100,9 @@ $routes->group('api', static function ($routes) {
         $routes->put('livestock-health/(:any)', 'LivestocksController::updateLivestockHealthStatus/$1');
         $routes->put('livestock-record-stat/(:any)', 'LivestocksController::updateLivestockRecordStatus/$1');
         $routes->get('all-livestocks-tagid/(:any)', 'LivestocksController::getAllFarmerLivestockTagIDs/$1');
+        $routes->get('livestock-production-year', 'LivestocksController::getLivestockProductionCountWholeYear');
+        $routes->get('livestock-type-production-year', 'LivestocksController::getLivestockProductionWholeYear');
+        $routes->get('livestock-type-production-year/(:any)', 'LivestocksController::getLivestockProductionSelectedYear/$1');
 
 
         // Livestock Vaccination endpoint routes
@@ -107,6 +114,7 @@ $routes->group('api', static function ($routes) {
         $routes->put('update-livestock-vaccination-record-stat/(:any)', 'LivestockVaccinationsController::updateLivestockVaccinationRecordStatus/$1');
         $routes->delete('delete-livestock-vaccination/(:any)', 'LivestockVaccinationsController::deleteLivestockVaccination/$1');
         $routes->get('all-vaccinations-4months', 'LivestockVaccinationsController::getVaccinationCountLast4Months');
+        $routes->get('all-vaccinations-year', 'LivestockVaccinationsController::getVaccinationCountWholeYear');
 
 
         // Livestock Deworming endpoint routes

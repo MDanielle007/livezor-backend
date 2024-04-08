@@ -149,7 +149,7 @@ class LivestockTypeModel extends Model
         }
     }
 
-    public function getAllLivestockIdName(){
+    public function getAllLivestockTypeIdName(){
         try {
             $livestockTypes = $this->select(
                 'id,

@@ -100,7 +100,7 @@ class LivestockTypesController extends ResourceController
     public function getLivestockTypesIdAndName()
     {
         try {
-            $livestockTypes = $this->livestockType->getAllLivestockIdName();
+            $livestockTypes = $this->livestockType->getAllLivestockTypeIdName();
 
             return $this->respond($livestockTypes, 200);
         } catch (\Throwable $th) {

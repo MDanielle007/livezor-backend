@@ -655,4 +655,216 @@ class LivestockModel extends Model
             return $th->getMessage();
         }
     }
+
+
+    public function getLivestockTypeCountByCity($city)
+    {
+        try {
+            $whereClause = [
+                'livestocks.record_status' => 'Accessible',
+                'livestocks.livestock_health_status' => 'Alive',
+                'user_accounts.city' => $city
+            ];
+
+            $livestock = $this->select('
+                ROW_NUMBER() OVER () AS id,
+                livestock_types.livestock_type_name as livestockType, 
+                COUNT(*) as livestockCount
+            ')
+                ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
+                ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->where($whereClause)
+                ->groupBy('livestock_types.livestock_type_name')
+                ->orderBy('livestock_types.livestock_type_name')
+                ->orderBy('livestockCount')
+                ->get()->getResultArray();
+            return $livestock;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getAllLivestockCountCity($city)
+    {
+        try {
+            $whereClause = [
+                'livestocks.record_status' => 'Accessible',
+                'user_accounts.city' => $city
+            ];
+
+            $livestock = $this->select('
+                user_accounts.city,
+                livestock_types.livestock_type_name as livestockType
+            ')
+                ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
+                ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->findAll();
+            return $livestock;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getLivestockCountByCity($city)
+    {
+        try {
+            $whereClause = [
+                'livestocks.record_status' => 'Accessible',
+                'livestocks.livestock_health_status' => 'Alive',
+                'user_accounts.city' => $city
+            ];
+
+            $livestock = $this->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
+                ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+                ->where($whereClause)->countAllResults();
+            return $livestock;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getLivestockProductionCountWholeYear()
+    {
+        try {
+            $currentYear = date('Y');
+
+            $livestockCounts = [];
+            for ($month = 1; $month <= 12; $month++) {
+                $count = $this
+                    ->where('MONTH(date_of_birth)', $month)
+                    ->where('YEAR(date_of_birth)', $currentYear)
+                    ->countAllResults();
+
+                $monthName = date("F", mktime(0, 0, 0, $month, 1));
+
+                $livestockCounts[] = [
+                    'month' => $monthName,
+                    'count' => $count,
+                ];
+            }
+
+            return $livestockCounts;
+        } catch (\Throwable $th) {
+            // Handle exceptions
+            return $th->getMessage();
+        }
+    }
+
+    public function getLivestockTypeCountWholeYear()
+    {
+        try {
+            $currentYear = date('Y');
+
+            $livestockCounts = [];
+            for ($month = 1; $month <= 12; $month++) {
+                $counts = $this
+                    ->select('livestock_types.livestock_type_name as livestockType, COUNT(*) as count')
+                    ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                    ->where('MONTH(date_of_birth)', $month)
+                    ->where('YEAR(date_of_birth)', $currentYear)
+                    ->groupBy('livestock_types.livestock_type_name')
+                    ->findAll();
+
+                $monthName = date("F", mktime(0, 0, 0, $month, 1));
+
+                $livestockCounts[$monthName] = $counts;
+            }
+
+            return $livestockCounts;
+        } catch (\Throwable $th) {
+            // Handle exceptions
+            return $th->getMessage();
+        }
+    }
+
+    public function getLivestockProductionCount($livestockType, $month, $year)
+    {
+        try {
+            $whereClause = [
+                'MONTH(date_of_birth)' => $month,
+                'YEAR(date_of_birth)' => $year,
+                'livestock_type_id' => $livestockType
+            ];
+
+            $count = $this->db->table('livestocks')
+                ->where($whereClause)
+                ->countAllResults();
+
+            return $count;
+        } catch (\Throwable $th) {
+            // Handle exceptions
+            return $th->getMessage();
+        }
+    }
+
+    public function getProductionCountByMonthAndType($livestockTypes)
+    {
+        $productionData = [];
+        $year = date('Y');
+
+        foreach ($livestockTypes as $type) {
+            $productionDataItem = [
+                'livestockType' => $type['livestockTypeName']
+            ];
+
+            $totalCount = 0;
+
+            
+            for ($month = 1; $month <= 12; $month++) {
+                $count = $this->selectCount('id')
+                ->where('MONTH(date_of_birth)', $month)
+                ->where('YEAR(date_of_birth)', $year)
+                ->where('livestock_type_id', $type['id'])
+                ->countAllResults();
+                $monthName = date('M', mktime(0, 0, 0, $month, 1));
+                $productionDataItem[$monthName] = $count;
+
+                $totalCount += $count;
+            }
+            $productionDataItem['id'] = $type['id'];
+            $productionDataItem['totalYearProduction'] = $totalCount;
+            $productionData[] = $productionDataItem;
+        }
+
+        return $productionData;
+    }
+
+    public function getProductionCountByMonthYearAndType($livestockTypes, $year)
+    {
+        $productionData = [];
+
+        foreach ($livestockTypes as $type) {
+            $productionDataItem = [
+                'livestockType' => $type['livestockTypeName']
+            ];
+
+            $totalCount = 0;
+
+            
+            for ($month = 1; $month <= 12; $month++) {
+                $count = $this->selectCount('id')
+                ->where('MONTH(date_of_birth)', $month)
+                ->where('YEAR(date_of_birth)', $year)
+                ->where('livestock_type_id', $type['id'])
+                ->countAllResults();
+                $monthName = date('M', mktime(0, 0, 0, $month, 1));
+                $productionDataItem[$monthName] = $count;
+
+                $totalCount += $count;
+            }
+            $productionDataItem['id'] = $type['id'];
+            $productionDataItem['totalYearProduction'] = $totalCount;
+            $productionData[] = $productionDataItem;
+        }
+
+        return $productionData;
+    }
+
 }

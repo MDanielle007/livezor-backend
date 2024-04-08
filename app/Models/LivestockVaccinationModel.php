@@ -298,4 +298,57 @@ class LivestockVaccinationModel extends Model
         }
     }
 
+    public function getVaccinationCountWholeYear()
+    {
+        try {
+            $currentYear = date('Y');
+
+            $vaccinationCounts = [];
+            for ($month = 1; $month <= 12; $month++) {
+                $count = $this->selectCount('*')
+                    ->where('MONTH(vaccination_date)', $month)
+                    ->where('YEAR(vaccination_date)', $currentYear)
+                    ->countAllResults();
+
+                $monthName = date("F", mktime(0, 0, 0, $month, 1));
+
+                $vaccinationCounts[] = [
+                    'month' => $monthName,
+                    'count' => $count,
+                ];
+            }
+
+            return $vaccinationCounts;
+        } catch (\Throwable $th) {
+            // Handle exceptions
+            return [];
+        }
+    }
+
+    public function getVaccinationCountSelectedYear()
+    {
+        try {
+            $currentYear = date('Y');
+
+            $vaccinationCounts = [];
+            for ($month = 1; $month <= 12; $month++) {
+                $count = $this->selectCount('*')
+                    ->where('MONTH(vaccination_date)', $month)
+                    ->where('YEAR(vaccination_date)', $currentYear)
+                    ->countAllResults();
+
+                $monthName = date("F", mktime(0, 0, 0, $month, 1));
+
+                $vaccinationCounts[] = [
+                    'month' => $monthName,
+                    'count' => $count,
+                ];
+            }
+
+            return $vaccinationCounts;
+        } catch (\Throwable $th) {
+            // Handle exceptions
+            return [];
+        }
+    }
 }

@@ -210,4 +210,15 @@ class LivestockVaccinationsController extends ResourceController
             //throw $th;
         }
     }
+
+    public function getVaccinationCountWholeYear(){
+        try {
+            $vaccinationCountWholeYear = $this->livestockVaccination->getVaccinationCountWholeYear();
+
+            return $this->respond($vaccinationCountWholeYear);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
 }
