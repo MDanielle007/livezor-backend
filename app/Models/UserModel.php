@@ -384,4 +384,28 @@ class UserModel extends Model
             //throw $th;
         }
     }
+
+    public function getFarmerByLivestock($id){
+        try {
+            $whereClause = [
+                'user_accounts.user_role' => 'Farmer',
+                'user_accounts.record_status' => 'Accessible',
+                'farmer_livestocks.ownership_status' => 'Owned',
+                'livestocks.id' => $id
+            ];
+
+            $farmer = $this->select('
+                user_accounts.id,
+                user_accounts.user_id as userId,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as userName
+            ')
+            ->join('farmer_livestocks','farmer_livestocks.farmer_id = user_accounts.id')
+            ->join('livestocks','livestocks.id = farmer_livestocks.livestock_id')
+            ->where($whereClause)->findAll();
+
+            return $farmer;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
 }

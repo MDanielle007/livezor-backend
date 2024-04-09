@@ -345,6 +345,58 @@ class LivestockModel extends Model
         return $livestockId[0]['id'];
     }
 
+    public function getLivestockTagIdById($id)
+    {
+        try {
+            $livestockId = $this->select('livestock_tag_id as livestockTagId')
+                ->find($id);
+
+            return $livestockId['livestockTagId'];
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function getLivestockByVaccination($id)
+    {
+        try {
+            $livestock = $this->select('livestocks.id, livestocks.livestock_tag_id')
+                ->join('livestock_vaccinations', 'livestocks.id = livestock_vaccinations.livestock_id')
+                ->where('livestock_vaccinations.id', $id) // Use the parameter $id here
+                ->get()
+                ->result();
+
+            // Check if any result is found
+            if (!empty($livestock)) {
+                return $livestock[0]; // Access the id property of the first object
+            } else {
+                return null; // Or you can return an appropriate value if no result is found
+            }
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function getLivestockByDeworming($id)
+    {
+        try {
+            $livestock = $this->select('livestocks.id, livestocks.livestock_tag_id')
+                ->join('livestock_dewormings', 'livestocks.id = livestock_dewormings.livestock_id')
+                ->where('livestock_dewormings.id', $id) // Use the parameter $id here
+                ->get()
+                ->result();
+
+            // Check if any result is found
+            if (!empty($livestock)) {
+                return $livestock[0]; // Access the id property of the first object
+            } else {
+                return null; // Or you can return an appropriate value if no result is found
+            }
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
     public function getAllLivestockTypeAgeClassCount()
     {
         try {
@@ -816,13 +868,13 @@ class LivestockModel extends Model
 
             $totalCount = 0;
 
-            
+
             for ($month = 1; $month <= 12; $month++) {
                 $count = $this->selectCount('id')
-                ->where('MONTH(date_of_birth)', $month)
-                ->where('YEAR(date_of_birth)', $year)
-                ->where('livestock_type_id', $type['id'])
-                ->countAllResults();
+                    ->where('MONTH(date_of_birth)', $month)
+                    ->where('YEAR(date_of_birth)', $year)
+                    ->where('livestock_type_id', $type['id'])
+                    ->countAllResults();
                 $monthName = date('M', mktime(0, 0, 0, $month, 1));
                 $productionDataItem[$monthName] = $count;
 
@@ -847,13 +899,13 @@ class LivestockModel extends Model
 
             $totalCount = 0;
 
-            
+
             for ($month = 1; $month <= 12; $month++) {
                 $count = $this->selectCount('id')
-                ->where('MONTH(date_of_birth)', $month)
-                ->where('YEAR(date_of_birth)', $year)
-                ->where('livestock_type_id', $type['id'])
-                ->countAllResults();
+                    ->where('MONTH(date_of_birth)', $month)
+                    ->where('YEAR(date_of_birth)', $year)
+                    ->where('livestock_type_id', $type['id'])
+                    ->countAllResults();
                 $monthName = date('M', mktime(0, 0, 0, $month, 1));
                 $productionDataItem[$monthName] = $count;
 

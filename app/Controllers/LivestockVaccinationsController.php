@@ -3,8 +3,10 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\FarmerAuditModel;
 use App\Models\LivestockModel;
 use App\Models\LivestockVaccinationModel;
+use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -12,11 +14,15 @@ class LivestockVaccinationsController extends ResourceController
 {
     private $livestockVaccination;
     private $livestock;
+    private $farmerAudit;
+    private $userModel;
 
     public function __construct()
     {
         $this->livestockVaccination = new LivestockVaccinationModel();
         $this->livestock = new LivestockModel();
+        $this->farmerAudit = new FarmerAuditModel();
+        $this->userModel = new UserModel();
     }
 
     public function getAllLivestockVaccinations(){
@@ -72,10 +78,23 @@ class LivestockVaccinationsController extends ResourceController
 
             $response = $this->livestockVaccination->insertLivestockVaccination($data);
 
+            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+            $vaccine = $data->vaccinationName;
+
+            $data->farmerId = $data->vaccineAdministratorId;
+            $data->action = "Add";
+            $data->title = "Adminster Vaccination";
+            $data->description = "Administer $vaccine to Livestock $livestockTagId";
+            $data->entityAffected = "Vaccination";
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+
             return $this->respond(['success' => true,'message' => 'Livestock Vaccination Successfully Added'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
+            return $th->getMessage();
         }
     }    
 
@@ -84,6 +103,17 @@ class LivestockVaccinationsController extends ResourceController
             $data = $this->request->getJSON();
 
             $response = $this->livestockVaccination->updateLivestockVaccination($id, $data);
+
+            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+            $data->farmerId = $data->vaccineAdministratorId;
+            $data->livestockId;
+            $data->action = "Edit";
+            $data->title = "Update Vaccination Details";
+            $data->description = "Update Vaccination of Livestock $livestockTagId";
+            $data->entityAffected = "Vaccination";
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
 
             return $this->respond(['success' => true,'message' => 'Livestock Vaccination Successfully Updated'], 200);
 
@@ -98,6 +128,18 @@ class LivestockVaccinationsController extends ResourceController
 
             $response = $this->livestockVaccination->updateLivestockVaccinationRecordStatus($id, $data->recordStatus);
 
+            $livestock = $this->livestock->getLivestockByVaccination($id);
+            $livestockTagId = $livestock['livestock_tag_id'];
+
+            $data->farmerId = $data->vaccineAdministratorId;
+            $data->livestockId = $livestock['id'];
+            $data->action = $data->recordStatus == 'Archived' ? "Archived" : "Edit";
+            $data->title = $data->recordStatus == 'Archived' ? "Archived Vaccination Record" : "Unarchived Vaccination Record";
+            $data->description = $data->recordStatus == 'Archived' ? "Archived Vaccination of Livestock $livestockTagId" : "Unarchived Vaccination of Livestock $livestockTagId";
+            $data->entityAffected = "Vaccination";
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+
             return $this->respond(['result' => $response,'message' => 'Livestock Vaccination Record Status Successfully Updated'], 200);
 
         } catch (\Throwable $th) {
@@ -108,6 +150,16 @@ class LivestockVaccinationsController extends ResourceController
     public function deleteLivestockVaccination($id){
         try {
             $response = $this->livestockVaccination->deleteLivestockVaccination($id);
+
+            $livestock = $this->livestock->getLivestockByVaccination($id);
+            $livestockTagId = $livestock['livestock_tag_id'];
+            $data = new \stdClass();
+            $data->livestockId = $livestock['id'];
+            $data->farmerId = $this->userModel->getFarmerByLivestock($id);
+            $data->action = "Delete";
+            $data->title = "Delete Vaccination Record";
+            $data->description = "Delete Vaccination of Livestock $livestockTagId";
+            $data->entityAffected = "Livestock";
 
             return $this->respond(['result' => $response,'message' => 'Livestock Vaccination Successfully Deleted'], 200);
 

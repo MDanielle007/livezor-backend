@@ -116,6 +116,28 @@ class LivestockBreedingsModel extends Model
         }
     }
 
+    public function getLivestockByBreeding($id)
+    {
+        try {
+            $livestock = $this->select('
+                male_livestock_tag_id as maleLivestockTagId,
+                female_livestock_tag_id as femaleLivestockTagId
+            ')
+                ->where('id', $id) // Use the parameter $id here
+                ->get()
+                ->result();
+
+            // Check if any result is found
+            if (!empty($livestock)) {
+                return $livestock[0]; // Access the id property of the first object
+            } else {
+                return null; // Or you can return an appropriate value if no result is found
+            }
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
     public function insertLivestockBreeding($data)
     {
         try {

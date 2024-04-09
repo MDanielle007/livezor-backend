@@ -53,7 +53,7 @@ class FarmerAuditModel extends Model
                 entity_affected as entityAffected,
                 timestamp,
                 record_status as recordStatus'
-            )->findAll();
+            )->orderBy('timestamp', 'DESC')->findAll();
             return $auditTrails;
         } catch (\Throwable $th) {
             //throw $th;
@@ -71,8 +71,9 @@ class FarmerAuditModel extends Model
                 title,
                 description,
                 entity_affected as entityAffected,
-                timestamp'
-            )->where('farmer_id', $id)->orderBy('entity_affected', 'DESC')->findAll();
+                timestamp,
+                record_status as recordStatus'
+            )->where('farmer_id', $id)->orderBy('timestamp', 'DESC')->findAll();
             return $auditTrails;
         } catch (\Throwable $th) {
             //throw $th;

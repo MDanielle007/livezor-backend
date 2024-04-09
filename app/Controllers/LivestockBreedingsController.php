@@ -3,9 +3,11 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\FarmerAuditModel;
 use App\Models\LivestockBreedingsModel;
 use App\Models\LivestockModel;
 use App\Models\LivestockPregnancyModel;
+use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -14,15 +16,20 @@ class LivestockBreedingsController extends ResourceController
     private $livestockBreeding;
     private $livestockPregnancy;
     private $livestock;
+    private $userModel;
+    private $farmerAudit;
 
     public function __construct()
     {
         $this->livestockBreeding = new LivestockBreedingsModel();
         $this->livestockPregnancy = new LivestockPregnancyModel();
         $this->livestock = new LivestockModel();
+        $this->userModel = new UserModel();
+        $this->farmerAudit = new FarmerAuditModel();
     }
 
-    public function getAllLivestockBreedings(){
+    public function getAllLivestockBreedings()
+    {
         try {
             $livestockBreedings = $this->livestockBreeding->getAllLivestockBreedings();
 
@@ -33,7 +40,8 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function getLivestockBreeding($id){
+    public function getLivestockBreeding($id)
+    {
         try {
             $livestockBreeding = $this->livestockBreeding->getLivestockBreeding($id);
 
@@ -44,7 +52,8 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestockBreedings($userId){
+    public function getAllFarmerLivestockBreedings($userId)
+    {
         try {
             $livestockBreedings = $this->livestockBreeding->getAllFarmerLivestockBreedings($userId);
 
@@ -55,15 +64,33 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function insertLivestockBreeding(){
+    public function insertLivestockBreeding()
+    {
         try {
             $data = $this->request->getJSON();
 
             $breedingId = $this->livestockBreeding->insertLivestockBreeding($data);
 
+            $data->action = "Add";
+            $data->title = "Breed Livestock";
+            $data->entityAffected = "Breeding";
+
+            $maleLivestockTagId = $data->maleLivestockTagId;
+            $femaleLivestockTagId = $data->femaleLivestockTagId;
+
+            $maleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->maleLivestockTagId, $data->farmerId);
+
+            $data->description = "Breed Livestock $maleLivestockTagId and $femaleLivestockTagId";
+            $data->livestockId = $maleLivestock;
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+
+            $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
+            $data->livestockId = $femaleLivestock;
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+
             $result = null;
 
-            if($data->breedResult == 'Successful Breeding'){
+            if ($data->breedResult == 'Successful Breeding') {
                 $femaleLivestockId = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
 
                 $data->breedingId = $breedingId;
@@ -74,52 +101,94 @@ class LivestockBreedingsController extends ResourceController
             }
 
 
-            return $this->respond(['success' => true,'message' => 'Livestock Breeding Successfully Added'], 200);
+            return $this->respond(['success' => true, 'message' => 'Livestock Breeding Successfully Added'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);
         }
-    }    
+    }
 
-    public function updateLivestockBreeding($id){
+    public function updateLivestockBreeding($id)
+    {
         try {
             $data = $this->request->getJSON();
 
             $response = $this->livestockBreeding->updateLivestockBreeding($id, $data);
 
-            return $this->respond(['success' => true,'message' => 'Livestock Breeding Successfully Updated'], 200);
+            $data->action = "Edit";
+            $data->title = "Updated Livestock Breeding";
+            $data->entityAffected = "Breeding";
+
+            $maleLivestockTagId = $data->maleLivestockTagId;
+            $femaleLivestockTagId = $data->femaleLivestockTagId;
+
+            $data->description = "Updated Livestock Breeding of Livestock $maleLivestockTagId and $femaleLivestockTagId";
+            $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
+            $data->livestockId = $femaleLivestock;
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+
+            return $this->respond(['success' => true, 'message' => 'Livestock Breeding Successfully Updated'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function updateLivestockBreedingRecordStatus($id){
+    public function updateLivestockBreedingRecordStatus($id)
+    {
         try {
             $data = $this->request->getJSON();
 
             $response = $this->livestockBreeding->updateLivestockBreedingRecordStatus($id, $data->recordStatus);
+            
+            $data->farmerId = $data->userId;
+            $data->action = $data->recordStatus == 'Archive' ? 'Archive' : "Edit";
+            $data->title = $data->recordStatus == 'Archived' ? 'Archived Livestock Breeding Record' : "Updated Livestock Breeding Record";
+            $data->entityAffected = $data->recordStatus == 'Archived' ? 'Archived' : "Breeding";
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Breeding Record Status Successfully Updated'], 200);
+            $maleLivestockTagId = $data->maleLivestockTagId;
+            $femaleLivestockTagId = $data->femaleLivestockTagId;
+
+            $data->description = $data->recordStatus == 'Archived' ? "Archived Livestock Breeding of Livestock $maleLivestockTagId and $femaleLivestockTagId" : "Updated Livestock Breeding of Livestock $maleLivestockTagId and $femaleLivestockTagId";
+            $data->livestockId = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+
+            return $this->respond(['result' => $response, 'message' => 'Livestock Breeding Record Status Successfully Updated'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function deleteLivestockBreeding($id){
+    public function deleteLivestockBreeding($id)
+    {
         try {
             $response = $this->livestockBreeding->deleteLivestockBreeding($id);
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Breeding Successfully Deleted'], 200);
+            $livestock = $this->livestockBreeding->getLivestockByBreeding($id);
+
+            $data = new \stdClass();
+            $data->farmerId = $data->userId;
+            $data->action = "Delete";
+            $data->title = "Dee Livestock Breeding";
+            $data->entityAffected = "Breeding";
+
+            $maleLivestockTagId = $livestock['maleLivestockTagId'];
+            $femaleLivestockTagId = $livestock['femaleLivestockTagId'];
+
+            $data->description = "Updated Livestock Breeding of Livestock $maleLivestockTagId and $femaleLivestockTagId";
+            $data->livestockId = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->userId);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            return $this->respond(['result' => $response, 'message' => 'Livestock Breeding Successfully Deleted'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function getAllBreedingParentOffspringData(){
+    public function getAllBreedingParentOffspringData()
+    {
         try {
             $livestockBreedings = $this->livestockBreeding->getAllBreedingParentOffspringData();
             return $this->respond($livestockBreedings);
@@ -130,10 +199,11 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function getOverallLivestockBreedingCount(){
+    public function getOverallLivestockBreedingCount()
+    {
         try {
             $livestockBreedingCount = $this->livestockBreeding->getOverallLivestockBreedingCount();
-            return $this->respond(['breedingCount' =>"$livestockBreedingCount"]);
+            return $this->respond(['breedingCount' => "$livestockBreedingCount"]);
         } catch (\Throwable $th) {
             //throw $th;
 
@@ -141,10 +211,11 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function getOverallLivestockBreedingCountInCurrentYear(){
+    public function getOverallLivestockBreedingCountInCurrentYear()
+    {
         try {
             $livestockBreedingCount = $this->livestockBreeding->getOverallLivestockBreedingCountInCurrentYear();
-            return $this->respond(['breedingCount' =>"$livestockBreedingCount"]);
+            return $this->respond(['breedingCount' => "$livestockBreedingCount"]);
         } catch (\Throwable $th) {
             //throw $th;
 
@@ -152,16 +223,18 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function getFarmerOverallLivestockBreedingCount($userId){
+    public function getFarmerOverallLivestockBreedingCount($userId)
+    {
         try {
             $livestockBreedingCount = $this->livestockBreeding->getFarmerOverallLivestockBreedingCount($userId);
-            return $this->respond(['breedingCount' =>"$livestockBreedingCount"]);
+            return $this->respond(['breedingCount' => "$livestockBreedingCount"]);
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function getLivestockBreedingSuccessPercentage(){
+    public function getLivestockBreedingSuccessPercentage()
+    {
         try {
             $successCount = $this->livestockBreeding->getLivestockBreedingCountByResultInCurrentYear("Successful Breeding");
 
@@ -173,23 +246,24 @@ class LivestockBreedingsController extends ResourceController
 
                 if (floor($percentage) == $percentage) {
                     // Display only whole numbers
-                    $breedingPercentage =  number_format($percentage, 0);
+                    $breedingPercentage = number_format($percentage, 0);
                 } else {
                     // Display up to two decimal places
                     $breedingPercentage = number_format($percentage, 2);
                 }
             }
 
-            return $this->respond(['breedingPercent' =>"$breedingPercentage%"]);
+            return $this->respond(['breedingPercent' => "$breedingPercentage%"]);
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function getLivestockBreedingResultsCount(){
+    public function getLivestockBreedingResultsCount()
+    {
         try {
             $successfulCount = $this->livestockBreeding->getLivestockBreedingCountByResultInCurrentYear("Successful Breeding");
-            
+
             $unsuccessfulCount = $this->livestockBreeding->getLivestockBreedingCountByResultInCurrentYear("Unsuccessful Breeding");
 
             $data = [
@@ -203,7 +277,8 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function getBreedingsCountLast4Months(){
+    public function getBreedingsCountLast4Months()
+    {
         try {
             $livestockBreedings = $this->livestockBreeding->getBreedingsCountLast4Months();
             return $this->respond($livestockBreedings);
@@ -212,7 +287,8 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function getLivestockTypeBreedingsCount(){
+    public function getLivestockTypeBreedingsCount()
+    {
         try {
             $livestockBreedings = $this->livestockBreeding->getLivestockTypeBreedingsCount();
             return $this->respond($livestockBreedings);
@@ -221,7 +297,8 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function getBreedingCountByMonth(){
+    public function getBreedingCountByMonth()
+    {
         try {
             $livestockBreedings = $this->livestockBreeding->getBreedingCountByMonth();
             return $this->respond($livestockBreedings);

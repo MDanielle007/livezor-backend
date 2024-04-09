@@ -107,6 +107,16 @@ class LivestocksController extends ResourceController
             $data = $this->request->getJSON();
 
             $response = $this->livestock->updateLivestock($id, $data);
+            
+            $livestockTagId = $data->livestockTagId;
+
+            $data->livestockId = $id;
+            $data->action = "Edit";
+            $data->title = " Edit Livestock Record";
+            $data->description = "Updated details for Livestock $livestockTagId";
+            $data->entityAffected = "Livestock";
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
 
             return $this->respond(['success' => $response, 'message' => 'Livestock Successfully Updated'], 200);
         } catch (\Throwable $th) {
@@ -120,7 +130,17 @@ class LivestocksController extends ResourceController
         try {
             $data = $this->request->getJSON();
 
+            $livestockTagId = $data->livestockTagId;
+            
+            $data->livestockId = $id;
+            $data->action = "Edit";
+            $data->title = " Edit Livestock Record";
+            $data->description = "Updated Livestock $livestockTagId's Health Status";
+            $data->entityAffected = "Livestock";
+
             $response = $this->livestock->updateLivestockHealthStatus($id, $data);
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
 
             return $this->respond(['result' => $response, 'message' => 'Livestock Health Status Successfully Updated'], 200);
         } catch (\Throwable $th) {
@@ -135,6 +155,16 @@ class LivestocksController extends ResourceController
 
             $response = $this->livestock->updateLivestockRecordStatus($id, $data->recordStatus);
 
+            $livestockTagId = $data->livestockTagId;
+            
+            $data->livestockId = $id;
+            $data->action = $data->recordStatus == 'Archived' ? "Archived" : "Edit";
+            $data->title = $data->recordStatus == 'Archived' ? "Archived Livestock Record" : "Unarchived Livestock Record";
+            $data->description = $data->recordStatus == 'Archived' ? "Archived Livestock $livestockTagId" : "Unarchived Livestock $livestockTagId";
+            $data->entityAffected = "Livestock";
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+
             return $this->respond(['result' => $response, 'message' => 'Livestock Record Status Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
@@ -145,6 +175,17 @@ class LivestocksController extends ResourceController
     {
         try {
             $response = $this->livestock->deleteLivestock($id);
+
+            $livestockTagId = $this->livestock->getLivestockTagIdById($id);
+
+            $data = new \stdClass();
+            $data->farmerId = $this->userModel->getFarmerByLivestock($id);
+            $data->action = "Delete";
+            $data->title = "Delete Livestock Record";
+            $data->description = "Delete Livestock $livestockTagId";
+            $data->entityAffected = "Livestock";
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
 
             return $this->respond(['result' => $response, 'message' => 'Livestock Successfully Deleted'], 200);
         } catch (\Throwable $th) {

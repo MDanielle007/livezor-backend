@@ -3,8 +3,10 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\FarmerAuditModel;
 use App\Models\LivestockModel;
 use App\Models\LivestockMortalityModel;
+use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -12,11 +14,15 @@ class LivestockMortalityController extends ResourceController
 {
     private $livestockMortality;
     private $livestock;
+    private $userModel;
+    private $farmerAudit;
 
     public function __construct()
     {
         $this->livestockMortality = new LivestockMortalityModel();
         $this->livestock = new LivestockModel();
+        $this->userModel = new UserModel();
+        $this->farmerAudit = new FarmerAuditModel();
     }
 
     public function getAllLivestockMortalities()
@@ -72,6 +78,18 @@ class LivestockMortalityController extends ResourceController
             $data = $this->request->getJSON();
 
             $response = $this->livestockMortality->insertLivestockMortality($data);
+
+            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+            $data->farmerId;
+            $data->livestockId;
+            $data->action = "Add";
+            $data->title = "Report Livestock Mortality";
+            $data->description = "Report Livestock Mortality of Livestock $livestockTagId";
+            $data->entityAffected = "Mortality";
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+
             $data->livestockHealthStatus = 'Dead';
             $result = $this->livestock->updateLivestockHealthStatus($data->livestockId, $data);
 
