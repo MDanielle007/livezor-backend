@@ -108,6 +108,16 @@ class LivestockMortalityController extends ResourceController
 
             $response = $this->livestockMortality->updateLivestockMortality($id, $data);
 
+            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+            $data->farmerId;
+            $data->livestockId;
+            $data->action = "Edit";
+            $data->title = "Updated Livestock Mortality";
+            $data->description = "Updated Livestock Mortality of Livestock $livestockTagId";
+            $data->entityAffected = "Mortality";
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
             return $this->respond(['success' => $response, 'message' => 'Livestock Mortality Successfully Updated'], 200);
 
         } catch (\Throwable $th) {
@@ -122,6 +132,16 @@ class LivestockMortalityController extends ResourceController
 
             $response = $this->livestockMortality->updateLivestockMortalityRecordStatus($id, $data->recordStatus);
 
+            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+            $data->farmerId;
+            $data->livestockId;
+            $data->action = $data->recordStatus ? "Archived" : "Edit";
+            $data->title = $data->recordStatus ? "Archived Livestock Mortality" : "Unarchived Livestock Mortality";
+            $data->description = $data->recordStatus ? "Archived Livestock Mortality of Livestock $livestockTagId" : "Unarchived Livestock Mortality of Livestock $livestockTagId";
+            $data->entityAffected = "Mortality";
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
             return $this->respond(['result' => $response, 'message' => 'Livestock Mortality Record Status Successfully Updated'], 200);
 
         } catch (\Throwable $th) {
@@ -134,6 +154,19 @@ class LivestockMortalityController extends ResourceController
         try {
             $response = $this->livestockMortality->deleteLivestockMortality($id);
 
+            $livestock = $this->livestock->getLivestockByDeworming($id);
+            $livestockTagId = $livestock['livestock_tag_id'];
+
+            $data = new \stdClass();
+            $data->farmerId = $data->userId;;
+            $data->livestockId = $livestock['id'];
+            $data->action = "Delete";
+            $data->title = "Deleted Livestock Mortality";
+            $data->description = "Deleted Livestock Mortality of Livestock $livestockTagId";
+            $data->entityAffected = "Mortality";
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            
             return $this->respond(['result' => $response, 'message' => 'Livestock Mortality Successfully Deleted'], 200);
 
         } catch (\Throwable $th) {

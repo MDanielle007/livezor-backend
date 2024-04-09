@@ -77,29 +77,20 @@ class LivestockPregnancyController extends ResourceController
             $data->birthDate = $data->actualDeliveryDate;
             $data->acquiredDate = $data->actualDeliveryDate;
             $data->breedingEligibility = 'Not Age-Suited';
-            $data->pasokSaIfOne = false;
-            $data->pasokSaIfTwo = false;
-            $data->pasokSaForOne = false;
 
 
             if ($data->maleOffsprings > 0) {
-                $data->pasokSaIfOne = true;
                 $data->sex = 'Male';
                 for ($i = 1; $i <= $data->maleOffsprings; $i++) {
-                    $data->pasokSaForOne = false;
 
                     $livestockId = $this->livestock->insertLivestock($data);
-                    $data->res = $livestockId;
                     $data->livestockId = $livestockId;
                     $result = $this->livestockOffspring->insertLivestockOffspring($data);
                     $result = $this->farmerLivestock->associateFarmerLivestock($data);
-                    $data->pasokSaForOne = true;
-
                 }
             }
 
             if ($data->femaleOffsprings > 0) {
-                $data->pasokSaIfTwo = true;
                 $data->sex = 'Female';
                 for ($i = 1; $i <= $data->femaleOffsprings; $i++) {
                     $livestockId = $this->livestock->insertLivestock($data);

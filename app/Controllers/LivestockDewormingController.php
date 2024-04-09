@@ -25,7 +25,8 @@ class LivestockDewormingController extends ResourceController
         $this->farmerAudit = new FarmerAuditModel();
     }
 
-    public function getAllLivestockDewormings(){
+    public function getAllLivestockDewormings()
+    {
         try {
             $livestockDewormings = $this->livestockDewormings->getAllLivestockDewormings();
 
@@ -35,7 +36,8 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
-    public function getLivestockDeworming($id){
+    public function getLivestockDeworming($id)
+    {
         try {
             $livestockDeworming = $this->livestockDewormings->getLivestockDeworming($id);
 
@@ -45,7 +47,8 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestockDewormings($userId){
+    public function getAllFarmerLivestockDewormings($userId)
+    {
         try {
             $livestockDewormings = $this->livestockDewormings->getAllFarmerLivestockDewormings($userId);
 
@@ -55,7 +58,8 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
-    public function insertLivestockDeworming(){
+    public function insertLivestockDeworming()
+    {
         try {
             $data = $this->request->getJSON();
 
@@ -74,13 +78,45 @@ class LivestockDewormingController extends ResourceController
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
 
-            return $this->respond(['success' =>$response, 'message' => 'Livestock Deworming Successfully Added'],200);
+            return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function updateLivestockDeworming($id){
+    public function insertMultipleLivestockDeworming()
+    {
+        try {
+            $data = $this->request->getJSON();
+
+            $livestock = $data->livestock;
+            $data->action = "Add";
+            $data->title = "Adminster Deworming";
+            $data->entityAffected = "Deworming";
+
+            foreach ($livestock as $ls) {
+                $response = $this->livestockDewormings->insertLivestockDeworming($data);
+
+                $data->livestockId = $ls;
+                $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+                $dosage = $data->dosage;
+                $administrationMethod = $data->administrationMethod;
+
+                $data->description = "Deworm $administrationMethod $dosage to Livestock $livestockTagId";
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            }
+
+            return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Added'], 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage(), 'message' => 'Livestock Deworming Successfully Added'], 200);
+        }
+    }
+
+    public function updateLivestockDeworming($id)
+    {
         try {
             $data = $this->request->getJSON();
 
@@ -96,13 +132,14 @@ class LivestockDewormingController extends ResourceController
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
 
-            return $this->respond(['success' =>$response, 'message' => 'Livestock Deworming Successfully Updated'],200);
+            return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
-    
-    public function updateLivestockDewormingRecordStatus($id){
+
+    public function updateLivestockDewormingRecordStatus($id)
+    {
         try {
             $data = $this->request->getJSON();
 
@@ -120,34 +157,36 @@ class LivestockDewormingController extends ResourceController
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
 
-            return $this->respond(['success' =>$response, 'message' => 'Livestock Deworming Record Status Successfully Updated'],200);
+            return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Record Status Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function deleteLivestockDewormingRecord($id){
+    public function deleteLivestockDewormingRecord($id)
+    {
         try {
             $response = $this->livestockDewormings->deleteLivestockDewormingRecord($id);
 
             $livestock = $this->livestock->getLivestockByDeworming($id);
             $livestockTagId = $livestock['livestock_tag_id'];
-            
+
             $data = new \stdClass();
-            $data->farmerId = $data->dewormerId;
+            $data->farmerId = $data->userId;
             $data->livestockId = $livestock['id'];
-            $data->action =  "Delete";
-            $data->title = "Unarchived Deworming Record";
-            $data->description = "Unarchived Deworming of Livestock $livestockTagId";
+            $data->action = "Delete";
+            $data->title = "Deleted Deworming Record";
+            $data->description = "Deleted Deworming of Livestock $livestockTagId";
             $data->entityAffected = "Deworming";
 
-            return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Deleted'],200);
+            return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Deleted'], 200);
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function getOverallLivestockDewormingCount(){
+    public function getOverallLivestockDewormingCount()
+    {
         try {
             $livestockDewormingCount = $this->livestockDewormings->getOverallLivestockDewormingCount();
 
@@ -157,7 +196,8 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
-    public function getFarmerOverallLivestockDewormingCount($userId){
+    public function getFarmerOverallLivestockDewormingCount($userId)
+    {
         try {
             $livestockDewormingCount = $this->livestockDewormings->getFarmerOverallLivestockDewormingCount($userId);
 
@@ -167,7 +207,8 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
-    public function getDewormingCountLast4Months(){
+    public function getDewormingCountLast4Months()
+    {
         try {
             $livestockDewormingCountLast4Months = $this->livestockDewormings->getDewormingCountLast4Months();
 
@@ -177,7 +218,8 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
-    public function getTopLivestockTypeDewormedCount(){
+    public function getTopLivestockTypeDewormedCount()
+    {
         try {
             $livestockDeworming = $this->livestockDewormings->getTopLivestockTypeDewormedCount();
 
@@ -188,7 +230,8 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
-    public function getAdministrationMethodsCount(){
+    public function getAdministrationMethodsCount()
+    {
         try {
             $livestockDeworming = $this->livestockDewormings->getAdministrationMethodsCount();
 
@@ -198,7 +241,8 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
-    public function getDewormingCountByMonth(){
+    public function getDewormingCountByMonth()
+    {
         try {
             $livestockDeworming = $this->livestockDewormings->getDewormingCountByMonth();
 

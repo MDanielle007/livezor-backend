@@ -141,18 +141,22 @@ class LivestockVaccinationModel extends Model
 
     public function insertLivestockVaccination($data)
     {
-        $bind = [
-            'vaccine_administrator_id' => $data->vaccineAdministratorId,
-            'livestock_id' => $data->livestockId,
-            'vaccination_name' => $data->vaccinationName,
-            'vaccination_description' => $data->vaccinationDescription,
-            'vaccination_remarks' => $data->remarks,
-            'vaccination_date' => $data->vaccinationDate
-        ];
-
-        $result = $this->insert($bind);
-
-        return $result;
+        try {
+            $bind = [
+                'vaccine_administrator_id' => $data->vaccineAdministratorId,
+                'livestock_id' => $data->livestockId,
+                'vaccination_name' => $data->vaccinationName,
+                'vaccination_description' => $data->vaccinationDescription,
+                'vaccination_remarks' => $data->remarks,
+                'vaccination_date' => $data->vaccinationDate
+            ];
+    
+            $result = $this->insert($bind);
+    
+            return $result;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
     }
 
     public function updateLivestockVaccination($id, $data)

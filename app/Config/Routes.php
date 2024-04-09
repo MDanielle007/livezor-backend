@@ -96,6 +96,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('livestock/(:any)', 'LivestocksController::getLivestock/$1');
         $routes->post('add-livestock', 'LivestocksController::addLivestock');
         $routes->post('add-farmer-livestock', 'LivestocksController::addFarmerLivestock');
+        $routes->post('add-livestock-multiple', 'LivestocksController::addMultipleFarmerLivestock');
         $routes->put('update-livestock/(:any)', 'LivestocksController::updateLivestock/$1');
         $routes->put('livestock-health/(:any)', 'LivestocksController::updateLivestockHealthStatus/$1');
         $routes->put('livestock-record-stat/(:any)', 'LivestocksController::updateLivestockRecordStatus/$1');
@@ -110,6 +111,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('all-farmer-livestock-vaccinations/(:any)', 'LivestockVaccinationsController::getAllFarmerCompleteLivestockVaccinations/$1');
         $routes->get('livestock-vaccination/(:any)', 'LivestockVaccinationsController::getLivestockVaccination/$1');
         $routes->post('add-livestock-vaccination', 'LivestockVaccinationsController::insertLivestockVaccination');
+        $routes->post('add-livestock-vaccination-multiple', 'LivestockVaccinationsController::insertMultipleLivestockVaccination');
         $routes->put('update-livestock-vaccination/(:any)', 'LivestockVaccinationsController::updateLivestockVaccination/$1');
         $routes->put('update-livestock-vaccination-record-stat/(:any)', 'LivestockVaccinationsController::updateLivestockVaccinationRecordStatus/$1');
         $routes->delete('delete-livestock-vaccination/(:any)', 'LivestockVaccinationsController::deleteLivestockVaccination/$1');
@@ -122,6 +124,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('all-farmer-livestock-dewormings/(:any)', 'LivestockDewormingController::getAllFarmerLivestockDewormings/$1');
         $routes->get('livestock-deworming/(:any)', 'LivestockDewormingController::getLivestockDeworming/$1');
         $routes->post('add-livestock-deworming', 'LivestockDewormingController::insertLivestockDeworming');
+        $routes->post('add-livestock-deworming-multiple', 'LivestockDewormingController::insertMultipleLivestockDeworming');
         $routes->put('update-livestock-deworming/(:any)', 'LivestockDewormingController::updateLivestockDeworming/$1');
         $routes->put('update-livestock-deworming-record-stat/(:any)', 'LivestockDewormingController::updateLivestockDewormingRecordStatus/$1');
         $routes->delete('update-livestock-deworming-record-stat/(:any)', 'LivestockDewormingController::updateLivestockDewormingRecordStatus/$1');
@@ -235,6 +238,7 @@ $routes->group('api', static function ($routes) {
 
         // Farmer Livestocks endpoint routes
         $routes->post('add-livestock', 'LivestocksController::addFarmerLivestock');
+        $routes->post('add-livestock-multiple', 'LivestocksController::addMultipleFarmerLivestock');
         $routes->get('all-livestocks/(:any)', 'LivestocksController::getFarmerAllLivestocks/$1');
         $routes->get('all-livestocks-tagid/(:any)', 'LivestocksController::getAllFarmerLivestockTagIDs/$1');
         $routes->put('update-livestock/(:any)', 'LivestocksController::updateLivestock/$1');
@@ -244,11 +248,13 @@ $routes->group('api', static function ($routes) {
         // Farmer Livestock Vaccinations endpoint routes
         $routes->get('all-livestock-vaccinations/(:any)', 'LivestockVaccinationsController::getAllFarmerCompleteLivestockVaccinations/$1');
         $routes->post('add-livestock-vaccination', 'LivestockVaccinationsController::insertLivestockVaccination');
+        $routes->post('add-livestock-vaccination-multiple', 'LivestockVaccinationsController::insertMultipleLivestockVaccination');
         $routes->put('update-livestock-vaccination/(:any)', 'LivestockVaccinationsController::updateLivestockVaccination/$1');
         $routes->put('update-livestock-vaccination-record-stat/(:any)', 'LivestockVaccinationsController::updateLivestockVaccinationRecordStatus/$1');
 
         $routes->get('all-livestock-dewormings/(:any)', 'LivestockDewormingController::getAllFarmerLivestockDewormings/$1');
         $routes->post('add-livestock-deworming', 'LivestockDewormingController::insertLivestockDeworming');
+        $routes->post('add-livestock-deworming-multiple', 'LivestockDewormingController::insertMultipleLivestockDeworming');
         $routes->put('update-livestock-deworming/(:any)', 'LivestockDewormingController::updateLivestockDeworming/$1');
         $routes->put('update-livestock-deworming-record-stat/(:any)', 'LivestockDewormingController::updateLivestockDewormingRecordStatus/$1');
 

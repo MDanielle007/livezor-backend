@@ -101,13 +101,60 @@ class LivestocksController extends ResourceController
         }
     }
 
+    public function addMultipleFarmerLivestock()
+    {
+        try {
+            $data = $this->request->getJSON();
+
+            $data->breedingEligibility = "Not Age-Suited";
+
+            $data->action = "Add";
+            $data->title = "Add New Livestock";
+            $data->entityAffected = "Livestock";
+
+            if ($data->maleLivestockCount > 0) {
+                $data->sex = 'Male';
+                for ($i = 1; $i <= $data->maleLivestockCount; $i++) {
+
+                    $livestockId = $this->livestock->insertLivestock($data);
+                    $data->livestockId = $livestockId;
+                    $result = $this->farmerLivestock->associateFarmerLivestock($data);
+
+                    $livestockType = $this->livestockTypes->getLivestockTypeName($data->livestockTypeId);
+
+                    $data->description = "Add New Livestock $livestockType";
+                    $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+                }
+            }
+
+            if ($data->femaleLivestockCount > 0) {
+                $data->sex = 'Female';
+                for ($i = 1; $i <= $data->femaleLivestockCount; $i++) {
+
+                    $livestockId = $this->livestock->insertLivestock($data);
+                    $data->livestockId = $livestockId;
+                    $result = $this->farmerLivestock->associateFarmerLivestock($data);
+                    $livestockType = $this->livestockTypes->getLivestockTypeName($data->livestockTypeId);
+
+                    $data->description = "Add New Livestock $livestockType";
+                    $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+                }
+            }
+
+            return $this->respond(['success' => true, 'message' => 'Livestock Successfully Added'], 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => 'Failed to add livestock','errMsg' => $th->getMessage()]);
+        }
+    }
+
     public function updateLivestock($id)
     {
         try {
             $data = $this->request->getJSON();
 
             $response = $this->livestock->updateLivestock($id, $data);
-            
+
             $livestockTagId = $data->livestockTagId;
 
             $data->livestockId = $id;
@@ -131,7 +178,7 @@ class LivestocksController extends ResourceController
             $data = $this->request->getJSON();
 
             $livestockTagId = $data->livestockTagId;
-            
+
             $data->livestockId = $id;
             $data->action = "Edit";
             $data->title = " Edit Livestock Record";
@@ -156,7 +203,7 @@ class LivestocksController extends ResourceController
             $response = $this->livestock->updateLivestockRecordStatus($id, $data->recordStatus);
 
             $livestockTagId = $data->livestockTagId;
-            
+
             $data->livestockId = $id;
             $data->action = $data->recordStatus == 'Archived' ? "Archived" : "Edit";
             $data->title = $data->recordStatus == 'Archived' ? "Archived Livestock Record" : "Unarchived Livestock Record";
@@ -517,7 +564,7 @@ class LivestocksController extends ResourceController
         try {
             $livestockTypes = $this->livestockTypes->getAllLivestockTypeIdName();
 
-            $livestock = $this->livestock->getProductionCountByMonthYearAndType($livestockTypes,$year);
+            $livestock = $this->livestock->getProductionCountByMonthYearAndType($livestockTypes, $year);
 
             return $this->respond($livestock);
         } catch (\Throwable $th) {

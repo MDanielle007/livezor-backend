@@ -25,7 +25,8 @@ class LivestockVaccinationsController extends ResourceController
         $this->userModel = new UserModel();
     }
 
-    public function getAllLivestockVaccinations(){
+    public function getAllLivestockVaccinations()
+    {
         try {
             $livestockVaccinations = $this->livestockVaccination->getAllLivestockVaccinations();
 
@@ -37,7 +38,8 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function getLivestockVaccination($id){
+    public function getLivestockVaccination($id)
+    {
         try {
             $livestockVaccination = $this->livestockVaccination->getLivestockVaccination($id);
 
@@ -48,7 +50,8 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestockVaccinations($userId){
+    public function getAllFarmerLivestockVaccinations($userId)
+    {
         try {
             $livestockVaccinations = $this->livestockVaccination->getAllFarmerLivestockVaccinations($userId);
 
@@ -59,7 +62,8 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function getAllFarmerCompleteLivestockVaccinations($userId){
+    public function getAllFarmerCompleteLivestockVaccinations($userId)
+    {
         try {
             $livestockVaccinations = $this->livestockVaccination->getAllFarmerCompleteLivestockVaccinations($userId);
 
@@ -72,7 +76,8 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function insertLivestockVaccination(){
+    public function insertLivestockVaccination()
+    {
         try {
             $data = $this->request->getJSON();
 
@@ -90,15 +95,48 @@ class LivestockVaccinationsController extends ResourceController
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
 
-            return $this->respond(['success' => true,'message' => 'Livestock Vaccination Successfully Added'], 200);
+            return $this->respond(['success' => true, 'message' => 'Livestock Vaccination Successfully Added'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
-            return $th->getMessage();
+            return $this->respond(['error' => $th->getMessage(), 'message' => 'Failed Livestock Vaccination'], 200);
         }
-    }    
+    }
 
-    public function updateLivestockVaccination($id){
+    public function insertMultipleLivestockVaccination()
+    {
+        try {
+            $data = $this->request->getJSON();
+
+            $livestock = $data->livestock;
+            $data->farmerId = $data->vaccineAdministratorId;
+            $data->action = "Add";
+            $data->title = "Adminster Vaccination";
+            $data->entityAffected = "Vaccination";
+
+
+            foreach ($livestock as $ls) {
+                $data->livestockId = $ls;
+
+                $response = $this->livestockVaccination->insertLivestockVaccination($data);
+
+                $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+                $vaccine = $data->vaccinationName;
+
+                $data->description = "Administer $vaccine to Livestock $livestockTagId";
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            }
+            return $this->respond(['success' => true, 'message' => 'Livestock Vaccination Successfully Added'], 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage(), 'message' => 'Failed Livestock Vaccination'], 200);
+        }
+    }
+
+    public function updateLivestockVaccination($id)
+    {
         try {
             $data = $this->request->getJSON();
 
@@ -115,14 +153,15 @@ class LivestockVaccinationsController extends ResourceController
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
 
-            return $this->respond(['success' => true,'message' => 'Livestock Vaccination Successfully Updated'], 200);
+            return $this->respond(['success' => true, 'message' => 'Livestock Vaccination Successfully Updated'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function updateLivestockVaccinationRecordStatus($id){
+    public function updateLivestockVaccinationRecordStatus($id)
+    {
         try {
             $data = $this->request->getJSON();
 
@@ -140,14 +179,15 @@ class LivestockVaccinationsController extends ResourceController
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Vaccination Record Status Successfully Updated'], 200);
+            return $this->respond(['result' => $response, 'message' => 'Livestock Vaccination Record Status Successfully Updated'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function deleteLivestockVaccination($id){
+    public function deleteLivestockVaccination($id)
+    {
         try {
             $response = $this->livestockVaccination->deleteLivestockVaccination($id);
 
@@ -161,14 +201,15 @@ class LivestockVaccinationsController extends ResourceController
             $data->description = "Delete Vaccination of Livestock $livestockTagId";
             $data->entityAffected = "Livestock";
 
-            return $this->respond(['result' => $response,'message' => 'Livestock Vaccination Successfully Deleted'], 200);
+            return $this->respond(['result' => $response, 'message' => 'Livestock Vaccination Successfully Deleted'], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function getOverallLivestockVaccinationCount(){
+    public function getOverallLivestockVaccinationCount()
+    {
         try {
             $livestockVaccinationCount = $this->livestockVaccination->getOverallLivestockVaccinationCount();
 
@@ -177,9 +218,10 @@ class LivestockVaccinationsController extends ResourceController
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);
         }
-    }    
+    }
 
-    public function getFarmerOverallLivestockVaccinationCount($userId){
+    public function getFarmerOverallLivestockVaccinationCount($userId)
+    {
         try {
             $livestockVaccinationCount = $this->livestockVaccination->getFarmerOverallLivestockVaccinationCount($userId);
 
@@ -190,7 +232,8 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function getLivestockVaccinationCountInCurrentMonth(){
+    public function getLivestockVaccinationCountInCurrentMonth()
+    {
         try {
             $livestockVaccinationCount = $this->livestockVaccination->getLivestockVaccinationCountInCurrentMonth();
 
@@ -201,19 +244,20 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function getLivestockVaccinationPercetageInCurrentMonth(){
+    public function getLivestockVaccinationPercetageInCurrentMonth()
+    {
         try {
             $livestockVaccinationCount = $this->livestockVaccination->getLivestockVaccinationCountInCurrentMonth();
 
             $livestockCount = $this->livestock->getAllLivestockCount();
-            
+
             $vaccinationPercentage = 0;
             if ($livestockCount > 0) {
                 $percentage = ($livestockVaccinationCount / $livestockCount) * 100;
 
                 if (floor($percentage) == $percentage) {
                     // Display only whole numbers
-                    $vaccinationPercentage =  number_format($percentage, 0);
+                    $vaccinationPercentage = number_format($percentage, 0);
                 } else {
                     // Display up to two decimal places
                     $vaccinationPercentage = number_format($percentage, 2);
@@ -222,7 +266,7 @@ class LivestockVaccinationsController extends ResourceController
 
             $data = [
                 'livestockVaccinationCount' => "$livestockVaccinationCount",
-                'livestockVaccinationPercentage' => $vaccinationPercentage."%",
+                'livestockVaccinationPercentage' => $vaccinationPercentage . "%",
             ];
 
             return $this->respond($data);
@@ -232,7 +276,8 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function getTopVaccines(){
+    public function getTopVaccines()
+    {
         try {
             $topVaccines = $this->livestockVaccination->getTopVaccines();
 
@@ -242,7 +287,8 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function getVaccinationCountByMonth(){
+    public function getVaccinationCountByMonth()
+    {
         try {
             $vaccinationCountByMonth = $this->livestockVaccination->getVaccinationCountByMonth();
 
@@ -253,7 +299,8 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function getVaccinationCountLast4Months(){
+    public function getVaccinationCountLast4Months()
+    {
         try {
             $vaccinationCountLast4Months = $this->livestockVaccination->getVaccinationCountLast4Months();
 
@@ -263,7 +310,8 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function getVaccinationCountWholeYear(){
+    public function getVaccinationCountWholeYear()
+    {
         try {
             $vaccinationCountWholeYear = $this->livestockVaccination->getVaccinationCountWholeYear();
 

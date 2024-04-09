@@ -121,6 +121,7 @@ class LivestockPregnancyModel extends Model
                 'breeding_id' => $data->breedingId,
                 'livestock_id' => $data->livestockId,
                 'pregnancy_start_date' => $data->pregnancyStartDate,
+                'expected_delivery_date' => $data->expectedDeliveryDate,
             ];
 
             if (isset($data->pregnancyNotes)) {

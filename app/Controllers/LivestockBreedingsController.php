@@ -7,6 +7,7 @@ use App\Models\FarmerAuditModel;
 use App\Models\LivestockBreedingsModel;
 use App\Models\LivestockModel;
 use App\Models\LivestockPregnancyModel;
+use App\Models\LivestockTypeModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -18,6 +19,7 @@ class LivestockBreedingsController extends ResourceController
     private $livestock;
     private $userModel;
     private $farmerAudit;
+    private $livestockType;
 
     public function __construct()
     {
@@ -26,6 +28,7 @@ class LivestockBreedingsController extends ResourceController
         $this->livestock = new LivestockModel();
         $this->userModel = new UserModel();
         $this->farmerAudit = new FarmerAuditModel();
+        $this->livestockType = new LivestockTypeModel();
     }
 
     public function getAllLivestockBreedings()
@@ -70,7 +73,6 @@ class LivestockBreedingsController extends ResourceController
             $data = $this->request->getJSON();
 
             $breedingId = $this->livestockBreeding->insertLivestockBreeding($data);
-
             $data->action = "Add";
             $data->title = "Breed Livestock";
             $data->entityAffected = "Breeding";
@@ -87,6 +89,7 @@ class LivestockBreedingsController extends ResourceController
             $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
             $data->livestockId = $femaleLivestock;
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $livestockType = $this->livestockType->getLivestockTypeName($data->livestockId);
 
             $result = null;
 
@@ -106,6 +109,30 @@ class LivestockBreedingsController extends ResourceController
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    private function calculateExpectedDeliveryDate($breedDate, $livestockType)
+    {
+        // Define gestation periods for different livestock types (in days)
+        $gestationPeriods = [
+            'Sheep' => 150,
+            'Cattle' => 280,
+            'Pig' => 114,
+            'Goat' => 150,
+            'Carabao' => 309,
+            // Add more livestock types and their corresponding gestation periods here
+        ];
+
+        // Check if the provided livestock type exists in the gestation periods array
+        if (array_key_exists($livestockType, $gestationPeriods)) {
+            // Calculate the expected delivery date
+            $gestationPeriod = $gestationPeriods[$livestockType];
+            $expectedDeliveryDate = date('Y-m-d', strtotime($breedDate . ' + ' . $gestationPeriod . ' days'));
+            return $expectedDeliveryDate;
+        } else {
+            // If the provided livestock type is not found, return null or throw an exception
+            return null; // or throw new Exception('Livestock type not found');
         }
     }
 
@@ -141,7 +168,7 @@ class LivestockBreedingsController extends ResourceController
             $data = $this->request->getJSON();
 
             $response = $this->livestockBreeding->updateLivestockBreedingRecordStatus($id, $data->recordStatus);
-            
+
             $data->farmerId = $data->userId;
             $data->action = $data->recordStatus == 'Archive' ? 'Archive' : "Edit";
             $data->title = $data->recordStatus == 'Archived' ? 'Archived Livestock Breeding Record' : "Updated Livestock Breeding Record";

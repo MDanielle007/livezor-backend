@@ -82,13 +82,19 @@ class LivestockModel extends Model
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->where($whereClause)
+                ->orderBy('user_accounts.first_name', 'ASC')
+                ->orderBy('user_accounts.last_name', 'ASC')
+                ->orderBy('livestock_types.livestock_type_name', 'ASC')
                 ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->orderBy('livestock_age_class.id', 'ASC')
+                ->orderBy('livestocks.date_of_birth', 'DESC')
+                ->orderBy('livestocks.created_at', 'DESC')
                 ->findAll();
 
             return $livestocks;
         } catch (\Throwable $th) {
             // Handle exceptions
-            return [];
+            return $th->getMessage();
         }
     }
 
@@ -142,10 +148,6 @@ class LivestockModel extends Model
                 'livestock_age_class_id' => $data->livestockAgeClassId,
                 'sex' => $data->sex,
                 'date_of_birth' => $data->dateOfBirth,
-                'age_days' => $data->ageDays,
-                'age_weeks' => $data->ageWeeks,
-                'age_months' => $data->ageMonths,
-                'age_years' => $data->ageYears,
                 'breeding_eligibility' => $data->breedingEligibility,
             ];
 
@@ -383,6 +385,26 @@ class LivestockModel extends Model
             $livestock = $this->select('livestocks.id, livestocks.livestock_tag_id')
                 ->join('livestock_dewormings', 'livestocks.id = livestock_dewormings.livestock_id')
                 ->where('livestock_dewormings.id', $id) // Use the parameter $id here
+                ->get()
+                ->result();
+
+            // Check if any result is found
+            if (!empty($livestock)) {
+                return $livestock[0]; // Access the id property of the first object
+            } else {
+                return null; // Or you can return an appropriate value if no result is found
+            }
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function getLivestockByMortality($id)
+    {
+        try {
+            $livestock = $this->select('livestocks.id, livestocks.livestock_tag_id')
+                ->join('livestock_mortalities', 'livestocks.id = livestock_mortalities.livestock_id')
+                ->where('livestock_mortalities.id', $id) // Use the parameter $id here
                 ->get()
                 ->result();
 
