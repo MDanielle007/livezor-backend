@@ -70,8 +70,8 @@ $routes->group('api', static function ($routes) {
         $routes->get('livestock-count-municipality/(:any)', 'LivestocksController::getLivestockCountByMunicipality/$1');
         $routes->get('livestock-count-municipality', 'LivestocksController::getLivestockCountAllMunicipality');
         $routes->get('livestock-production-monthly', 'LivestocksController::getLivestockProductionCountByMonthInCurrentYear');
-
-
+        $routes->get('livestock-type-count-municipality/(:any)', 'LivestocksController::getLivestockTypeCountAllMunicipality/$1');
+        
 
         // User Management endpoint routes
         $routes->post('upload', 'UserController::uploadUserImage');
@@ -85,6 +85,7 @@ $routes->group('api', static function ($routes) {
         $routes->put('update-user-record-stat/(:any)', 'UserController::updateUserRecordStatus/$1');
         $routes->delete('delete-user/(:any)', 'UserController::deleteUser/$1');
         $routes->get('get-farmers-basic', 'UserController::getAllFarmersBasicInfo');
+        $routes->get('get-all-farmers-type-count', 'UserController::getAllFarmerLivestockTypeCount');
 
         $routes->get('get-admin-tokens', 'UserController::getAllAdminFirebaseToken');
         $routes->get('get-farmer-tokens', 'UserController::getAllFarmerFirebaseToken');
@@ -282,7 +283,7 @@ $routes->group('api', static function ($routes) {
         $routes->put('update-livestock-mortality-record-stat/(:any)', 'LivestockMortalityController::updateLivestockMortalityRecordStatus/$1');
 
         // Farmer User Management endpoint routes
-        $routes->get('get-farmer-profile/(:any)', 'UserController::getUser/$1');
+        $routes->get('get-farmer-profile/(:any)', 'UserController::getFarmerUserInfo/$1');
         $routes->put('update-user-personal-info/(:any)', 'UserController::updateUserPersonalInfo/$1');
 
         $routes->get('get-audit-trails/(:any)', 'AuditTrailController::getFarmerAuditTrailLogs/$1');

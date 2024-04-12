@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\LivestockModel;
 use \Firebase\JWT\JWT;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\UserModel;
@@ -11,10 +12,12 @@ use App\Models\UserModel;
 class UserController extends ResourceController
 {
     private $userModel;
+    private $livestock;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
+        $this->livestock = new LivestockModel();
     }
 
     public function index()
@@ -71,11 +74,16 @@ class UserController extends ResourceController
 
     public function userLogOut()
     {
-        $userId = $this->request->getJsonVar('id');
+        try {
+            $userId = $this->request->getJsonVar('id');
 
-        $result = $this->userModel->setUserLogout($userId);
+            $result = $this->userModel->setUserLogout($userId);
 
-        return $this->respond(['message' => 'User Logged Out Successfully', 'result' => $result], 200);
+            return $this->respond(['message' => 'Logged Out Successfully', 'success' => $result], 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['message' => 'Failed to logout', 'error' => $th->getMessage()], 200);
+        }
     }
 
     public function registerUser()
@@ -126,11 +134,16 @@ class UserController extends ResourceController
         // Extract initials from first and last names
         $initials = substr($firstName, 0, 1) . substr($lastName, 0, 1);
 
-        // Generate a random number
-        $randomNumber = mt_rand(1000, 9999); // Generate a random 4-digit number
+        // Get current date and time components
+        $year = date('Y');
+        $month = date('m');
+        $day = date('d');
+        $hour = date('H');
+        $minute = date('i');
+
 
         // Concatenate the parts to form the user ID
-        $userID = $userTypeCode . '-' . strtoupper($initials) . $randomNumber;
+        $userID = $userTypeCode . '-' . strtoupper($initials) . $year . $month . $day . $hour . $minute;;
 
         return $userID;
     }
@@ -269,7 +282,8 @@ class UserController extends ResourceController
         }
     }
 
-    public function getAllFarmersBasicInfo(){
+    public function getAllFarmersBasicInfo()
+    {
         try {
             $farmers = $this->userModel->getAllFarmersBasicInfo();
 
@@ -286,6 +300,33 @@ class UserController extends ResourceController
             $userName = $this->userModel->getUserName($id);
 
             return $this->respond(['message' => $userName]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getAllFarmerLivestockTypeCount()
+    {
+        try {
+            $farmers = $this->userModel->getFarmerNameAddress();
+
+            foreach ($farmers as &$farmer) {
+                $farmer['livestock'] = $this->livestock->getFarmerEachLivestockTypeCountData($farmer['id']);
+            }
+
+            return $this->respond($farmers, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getFarmerUserInfo($id)
+    {
+        try {
+            $farmer = $this->userModel->getFarmerUserInfo($id);
+            return $this->respond($farmer, 200);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);

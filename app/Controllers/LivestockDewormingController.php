@@ -90,6 +90,7 @@ class LivestockDewormingController extends ResourceController
             $data = $this->request->getJSON();
 
             $livestock = $data->livestock;
+            $data->farmerId = $data->dewormerId;
             $data->action = "Add";
             $data->title = "Adminster Deworming";
             $data->entityAffected = "Deworming";

@@ -60,7 +60,8 @@ class UserModel extends Model
     public function setUserLogout($userId)
     {
         $bind = [
-            'user_status' => 'Inactive'
+            'user_status' => 'Inactive',
+            'firebase_token' => null
         ];
 
         return $this->where('id', $userId)->set($bind)->update();
@@ -153,6 +154,41 @@ class UserModel extends Model
                 user_status as userStatus,
                 last_login_date as lastLoginDate'
             )->find($id);
+
+            return $user;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getFarmerUserInfo($id)
+    {
+        try {
+            $whereClause = [
+                'user_role' => 'Farmer',
+               'record_status' => 'Accessible',
+            ];
+
+            $user = $this->select(
+                'id,
+                user_id as userId,
+                username,
+                email,
+                first_name as firstName,
+                middle_name as middleName,
+                last_name as lastName,
+                date_of_birth as dateOfBirth,
+                gender,
+                civil_status as civilStatus,
+                sitio,
+                barangay,
+                city,
+                province,
+                phone_number as phoneNumber,
+                user_image as userImage,
+                user_role as userRole,'
+            )->where($whereClause)->find($id);
 
             return $user;
         } catch (\Throwable $th) {
@@ -401,6 +437,32 @@ class UserModel extends Model
             ')
             ->join('farmer_livestocks','farmer_livestocks.farmer_id = user_accounts.id')
             ->join('livestocks','livestocks.id = farmer_livestocks.livestock_id')
+            ->where($whereClause)->findAll();
+
+            return $farmer;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getFarmerNameAddress(){
+        try {
+            $whereClause = [
+                'user_role' => 'Farmer',
+                'record_status' => 'Accessible',
+            ];
+
+            $farmer = $this->select('
+                id,
+                user_id as userId,
+                CONCAT(first_name, " ", last_name) as fullName,
+                user_role as userRole,
+                sitio,
+                barangay,
+                city,
+                province,
+                user_image as userImage
+            ')
             ->where($whereClause)->findAll();
 
             return $farmer;

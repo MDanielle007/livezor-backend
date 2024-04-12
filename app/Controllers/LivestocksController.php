@@ -514,7 +514,7 @@ class LivestocksController extends ResourceController
             $data = [];
             $i = 1;
             foreach ($cities as $city) {
-                $livestockTypeCount = $this->livestock->getLivestockTypeCountBycity($city);
+                $livestockTypeCount = $this->livestock->getAllLivestockTypeCountByCity($city);
 
                 $totalLivestockCount = $this->livestock->getLivestockCountBycity($city);
 
@@ -525,6 +525,42 @@ class LivestocksController extends ResourceController
                     'totalLivestockCount' => $totalLivestockCount,
                     'city' => $city,
                     'registeredFarmersCount' => $registeredFarmersCount
+                ];
+            }
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            return $this->respond($th->getMessage());
+        }
+    }
+
+    public function getLivestockTypeCountAllMunicipality($livestockTypeId)
+    {
+        try {
+
+            $cities = [
+                'Puerto Galera',
+                'San Teodoro',
+                'Baco',
+                'Calapan City',
+                'Naujan',
+                'Victoria',
+                'Socorro',
+                'Pinamalayan',
+                'Gloria',
+                'Bansud',
+                'Bongabong',
+                'Roxas',
+                'Mansalay',
+                'Bulalacao'
+            ];
+
+            $data = [];
+            foreach ($cities as $city) {
+                $livestockTypeCount = $this->livestock->getLivestockTypeCountBycity($city,$livestockTypeId);
+                $data[] = [
+                    'livestock' => $livestockTypeCount,
+                    'city' => $city,
                 ];
             }
 

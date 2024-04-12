@@ -290,8 +290,10 @@ class LivestockModel extends Model
                 'farmer_livestocks.farmer_id' => $id
             ];
 
-            $mappingData = $this->select('lt.livestock_type_name AS livestockType, COUNT(*) AS livestockCount')
-                ->join('livestock_types lt', 'lt.id = livestocks.livestock_type_id')
+            $mappingData = $this->select('
+                lt.livestock_type_name AS livestockType, 
+                COUNT(*) AS livestockCount
+            ')->join('livestock_types lt', 'lt.id = livestocks.livestock_type_id')
                 ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
                 ->groupBy('lt.livestock_type_name')
                 ->where($whereClause)
@@ -731,13 +733,44 @@ class LivestockModel extends Model
     }
 
 
-    public function getLivestockTypeCountByCity($city)
+    public function getAllLivestockTypeCountByCity($city)
     {
         try {
             $whereClause = [
                 'livestocks.record_status' => 'Accessible',
                 'livestocks.livestock_health_status' => 'Alive',
                 'user_accounts.city' => $city
+            ];
+
+            $livestock = $this->select('
+                ROW_NUMBER() OVER () AS id,
+                livestock_types.livestock_type_name as livestockType, 
+                COUNT(*) as livestockCount
+            ')
+                ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
+                ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->where($whereClause)
+                ->groupBy('livestock_types.livestock_type_name')
+                ->orderBy('livestock_types.livestock_type_name')
+                ->orderBy('livestockCount')
+                ->get()->getResultArray();
+            return $livestock;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getLivestockTypeCountByCity($city, $livestockTypeId)
+    {
+        try {
+            $whereClause = [
+                'livestocks.record_status' => 'Accessible',
+                'livestocks.livestock_health_status' => 'Alive',
+                'user_accounts.city' => $city,
+                'livestock_types.id' => $livestockTypeId
             ];
 
             $livestock = $this->select('
