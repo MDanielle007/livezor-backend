@@ -12,7 +12,7 @@ class LivestockAgeClassModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['livestock_age_classification', 'age_class_range', 'is_offspring', 'livestock_type_id', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['livestock_age_classification', 'age_class_range',  'age_min_days', 'age_max_days', 'is_offspring', 'livestock_type_id', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -50,6 +50,23 @@ class LivestockAgeClassModel extends Model
             livestock_types.livestock_type_name as livestockTypeName'
         )
         ->join('livestock_types', 'livestock_types.id = livestock_age_class.livestock_type_id')
+        ->where('livestock_types.category','Livestock')
+        ->findAll();
+
+        return $livestockAgeClasses;
+    }
+
+    public function getPoultryAgeClasses()
+    {
+        $livestockAgeClasses = $this->select(
+            'livestock_age_class.id,
+            livestock_age_class.livestock_age_classification as livestockAgeClassification,
+            livestock_age_class.age_class_range as ageClassRange,
+            livestock_age_class.livestock_type_id as livestockTypeId,
+            livestock_types.livestock_type_name as livestockTypeName'
+        )
+        ->join('livestock_types', 'livestock_types.id = livestock_age_class.livestock_type_id')
+        ->where('livestock_types.category','Poultry')
         ->findAll();
 
         return $livestockAgeClasses;
@@ -72,6 +89,9 @@ class LivestockAgeClassModel extends Model
         $bind = [
             'livestock_age_classification' => $data->livestockAgeClassification,
             'age_class_range' => $data->ageClassRange,
+            'age_min_days' => $data->ageMinDays,
+            'age_max_days' => $data->ageMaxDays,
+            'is_offspring' => $data->isOffspring,
             'livestock_type_id' => $data->livestockTypeId,
         ];
         $result = $this->insert($bind);
@@ -83,6 +103,9 @@ class LivestockAgeClassModel extends Model
         $bind = [
             'livestock_age_classification' => $data->livestockAgeClassification,
             'age_class_range' => $data->ageClassRange,
+            'age_min_days' => $data->ageMinDays,
+            'age_max_days' => $data->ageMaxDays,
+            'is_offspring' => $data->isOffspring,
             'livestock_type_id' => $data->livestockTypeId,
         ];
 

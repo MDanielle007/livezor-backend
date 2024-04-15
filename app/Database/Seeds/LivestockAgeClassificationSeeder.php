@@ -252,7 +252,7 @@ class LivestockAgeClassificationSeeder extends Seeder
                 'livestock_age_classification' => 'Yearling',
                 'age_class_range' => '1-2 years',
                 'age_min_days' => 365, // 1 year = 365 days
-                'age_max_days' => 730, // 2 years = 730 days
+                'age_max_days' => 730, 
                 'is_offspring' => false,
                 'livestock_type_id'=> '5',
                 'created_at' => date('Y-m-d H:i:s'),
@@ -261,7 +261,7 @@ class LivestockAgeClassificationSeeder extends Seeder
             [
                 'livestock_age_classification' => 'Mature Goat',
                 'age_class_range' => '2-4 years',
-                'age_min_days' => 730, // 2 years = 730 days
+                'age_min_days' => 730, 
                 'age_max_days' => 1460, // 4 years = 1460 days
                 'is_offspring' => false,
                 'livestock_type_id'=> '5',
@@ -304,7 +304,7 @@ class LivestockAgeClassificationSeeder extends Seeder
                 'livestock_age_classification' => 'Ewe Lamb',
                 'age_class_range' => '1-2 years',
                 'age_min_days' => 365, // 1 year = 365 days
-                'age_max_days' => 730, // 2 years = 730 days
+                'age_max_days' => 730, 
                 'is_offspring' => false,
                 'livestock_type_id'=> '6',
                 'created_at' => date('Y-m-d H:i:s'),
@@ -314,7 +314,7 @@ class LivestockAgeClassificationSeeder extends Seeder
                 'livestock_age_classification' => 'Wether Lamb',
                 'age_class_range' => '1-2 years',
                 'age_min_days' => 365, // 1 year = 365 days
-                'age_max_days' => 730, // 2 years = 730 days
+                'age_max_days' => 730, 
                 'is_offspring' => false,
                 'livestock_type_id'=> '6',
                 'created_at' => date('Y-m-d H:i:s'),
@@ -323,7 +323,7 @@ class LivestockAgeClassificationSeeder extends Seeder
             [
                 'livestock_age_classification' => 'Ewe',
                 'age_class_range' => '2 years and above',
-                'age_min_days' => 730, // 2 years = 730 days
+                'age_min_days' => 730, 
                 'age_max_days' => null, // No maximum age limit
                 'is_offspring' => false,
                 'livestock_type_id'=> '6',
@@ -333,7 +333,7 @@ class LivestockAgeClassificationSeeder extends Seeder
             [
                 'livestock_age_classification' => 'Ram',
                 'age_class_range' => '2 years and above',
-                'age_min_days' => 730, // 2 years = 730 days
+                'age_min_days' => 730, 
                 'age_max_days' => null, // No maximum age limit
                 'is_offspring' => false,
                 'livestock_type_id'=> '6',
@@ -341,6 +341,173 @@ class LivestockAgeClassificationSeeder extends Seeder
                 'updated_at' => date('Y-m-d H:i:s')
             ],
 
+            // Duck
+            [
+                'livestock_age_classification' => 'Ducklings',
+                'age_class_range' => '0 - 7 days',
+                'age_min_days' => 0, 
+                'age_max_days' => 7, 
+                'is_offspring' => true,
+                'livestock_type_id'=> '7',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Grower/Juveniles',
+                'age_class_range' => '8 days - 20 weeks',
+                'age_min_days' => 8, 
+                'age_max_days' => 140, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '7',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Young Adults',
+                'age_class_range' => '21 Weeks - 32 weeks',
+                'age_min_days' => 147, 
+                'age_max_days' => 224, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '7',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Adult Ducks',
+                'age_class_range' => '33 weeks and above',
+                'age_min_days' => 231, 
+                'age_max_days' => null, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '7',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+
+            // Turkey
+            [
+                'livestock_age_classification' => 'Turkey Poults',
+                'age_class_range' => '0 - 4 weeks',
+                'age_min_days' => 0, 
+                'age_max_days' => 28, 
+                'is_offspring' => true,
+                'livestock_type_id'=> '8',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Growers/Juveniles',
+                'age_class_range' => '5 - 16 weeks',
+                'age_min_days' => 29, 
+                'age_max_days' => 112, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '8',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Young Adults',
+                'age_class_range' => '17 - 28 weeks',
+                'age_min_days' => 113, 
+                'age_max_days' => 196, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '8',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Adult Turkeys',
+                'age_class_range' => '29 weeks and above',
+                'age_min_days' => 195, 
+                'age_max_days' => null, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '8',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+
+            // Goose
+            [
+                'livestock_age_classification' => 'Goslings',
+                'age_class_range' => '0 - 4 weeks',
+                'age_min_days' => 0, 
+                'age_max_days' => 28, 
+                'is_offspring' => true,
+                'livestock_type_id'=> '9',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Juveniles',
+                'age_class_range' => '5 - 20 weeks',
+                'age_min_days' => 29, 
+                'age_max_days' => 140, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '9',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Young Adults',
+                'age_class_range' => '21 - 32 weeks',
+                'age_min_days' => 147, 
+                'age_max_days' => 224, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '9',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Adult Goose',
+                'age_class_range' => '33 weeks and above',
+                'age_min_days' => 225, 
+                'age_max_days' => null, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '9',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+
+            // Quail
+            [
+                'livestock_age_classification' => 'Chicks/Hatchlings',
+                'age_class_range' => '0 - 1 weeks',
+                'age_min_days' => 0, 
+                'age_max_days' => 7, 
+                'is_offspring' => true,
+                'livestock_type_id'=> '10',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Juveniles',
+                'age_class_range' => '2 - 5 weeks',
+                'age_min_days' => 8, 
+                'age_max_days' => 35, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '10',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Young Adult',
+                'age_class_range' => '6 - 8 weeks',
+                'age_min_days' => 36, 
+                'age_max_days' => 56, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '10',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            [
+                'livestock_age_classification' => 'Adult Quail',
+                'age_class_range' => '9 weeks and above',
+                'age_min_days' => 57, 
+                'age_max_days' => null, 
+                'is_offspring' => false,
+                'livestock_type_id'=> '10',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
         ];
 
         $this->db->table('livestock_age_class')->insertBatch($livestockAgeClasses);

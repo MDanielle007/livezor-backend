@@ -12,7 +12,7 @@ class LivestockTypeModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['livestock_type_name', 'livestock_type_uses', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['livestock_type_name', 'livestock_type_uses', 'category', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -64,7 +64,9 @@ class LivestockTypeModel extends Model
                 'id,
                 livestock_type_name as livestockTypeName,
                 livestock_type_uses as livestockTypeUses'
-            )->findAll();
+            )
+            ->where('category','Livestock')
+            ->findAll();
     
             return $livestockTypes;
         } catch (\Throwable $th) {
@@ -79,7 +81,43 @@ class LivestockTypeModel extends Model
                 'id,
                 livestock_type_name as livestockTypeName,
                 livestock_type_uses as livestockTypeUses'
-            )->find($id);
+            )
+            ->where('category','Livestock')
+            ->find($id);
+    
+            return $livestockType;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getPoultryTypes()
+    {
+        try {
+            $livestockTypes = $this->select(
+                'id,
+                livestock_type_name as livestockTypeName,
+                livestock_type_uses as livestockTypeUses'
+            )
+            ->where('category','Poultry')
+            ->findAll();
+    
+            return $livestockTypes;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getPoultryType($id)
+    {
+        try {
+            $livestockType = $this->select(
+                'id,
+                livestock_type_name as livestockTypeName,
+                livestock_type_uses as livestockTypeUses'
+            )
+            ->where('category','Poultry')
+            ->find($id);
     
             return $livestockType;
         } catch (\Throwable $th) {
@@ -110,7 +148,8 @@ class LivestockTypeModel extends Model
         try {
             $bind = [
                 'livestock_type_name' => $data->livestockTypeName,
-                'livestock_type_uses' => $data->livestockTypeUses
+                'livestock_type_uses' => $data->livestockTypeUses,
+                'category' => $data->category
             ];
             $result = $this->insert($bind);
             return $result;
@@ -125,7 +164,8 @@ class LivestockTypeModel extends Model
         try {
             $bind = [
                 'livestock_type_name' => $data->livestockTypeName,
-                'livestock_type_uses' => $data->livestockTypeUses
+                'livestock_type_uses' => $data->livestockTypeUses,
+                'category' => $data->category
             ];
     
             $result = $this->update($id, $bind);
@@ -154,11 +194,28 @@ class LivestockTypeModel extends Model
             $livestockTypes = $this->select(
                 'id,
                 livestock_type_name as livestockTypeName'
-            )->findAll();
+            )
+            ->where('category','Livestock')
+            ->findAll();
     
             return $livestockTypes;
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
+
+    public function getAllPoultryTypeIdName(){
+        try {
+            $livestockTypes = $this->select(
+                'id,
+                livestock_type_name as livestockTypeName'
+            )
+            ->where('category','Poultry')
+            ->findAll();
+    
+            return $livestockTypes;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }   
 }

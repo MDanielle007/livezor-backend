@@ -49,7 +49,28 @@ class LivestockBreedModel extends Model
                 livestock_breeds.livestock_breed_description as livestockBreedDescription,
                 livestock_breeds.livestock_type_id as livestockTypeId,
                 livestock_types.livestock_type_name as livestockTypeName'
-            )->join('livestock_types','livestock_types.id = livestock_breeds.livestock_type_id')->findAll();
+            )->join('livestock_types','livestock_types.id = livestock_breeds.livestock_type_id')
+            ->where('livestock_types.category','Livestock')
+            ->findAll();
+
+            return $livestockBreeds;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getPoultryBreeds()
+    {
+        try {
+            $livestockBreeds = $this->select(
+                'livestock_breeds.id,
+                livestock_breeds.livestock_breed_name as livestockBreedName,
+                livestock_breeds.livestock_breed_description as livestockBreedDescription,
+                livestock_breeds.livestock_type_id as livestockTypeId,
+                livestock_types.livestock_type_name as livestockTypeName'
+            )->join('livestock_types','livestock_types.id = livestock_breeds.livestock_type_id')
+            ->where('livestock_types.category','Poultry')
+            ->findAll();
 
             return $livestockBreeds;
         } catch (\Throwable $th) {

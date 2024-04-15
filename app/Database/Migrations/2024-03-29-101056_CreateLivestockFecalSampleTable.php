@@ -22,11 +22,11 @@ class CreateLivestockFecalSampleTable extends Migration
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'fecal_sample_file' => [
+            'livestock_observation' => [
                 'type' => 'VARCHAR',
                 'constraint' => 70,
             ],
-            'remarks' => [
+            'findings' => [
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
             ],

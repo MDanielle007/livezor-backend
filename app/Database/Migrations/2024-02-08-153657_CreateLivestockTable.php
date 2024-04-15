@@ -32,6 +32,10 @@ class CreateLivestockTable extends Migration
                 'type' => 'INT',
                 'constraint' => 11,
             ],
+            'category' => [
+                'type' => "ENUM",
+                "constraint" => ["Livestock", "Poultry"]
+            ],
             'age_days' => [
                 'type' => 'INT',
                 'default' => 0,

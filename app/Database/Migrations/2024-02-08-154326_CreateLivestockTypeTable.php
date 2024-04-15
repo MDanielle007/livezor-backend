@@ -22,6 +22,10 @@ class CreateLivestockTypeTable extends Migration
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
             ],
+            'category' => [
+                'type' => "ENUM",
+                "constraint" => ["Livestock", "Poultry"]
+            ],
             'created_at' => [
                 'type' => 'DATETIME',
                 'null' => true,

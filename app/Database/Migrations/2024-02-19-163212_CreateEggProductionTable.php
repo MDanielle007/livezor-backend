@@ -22,6 +22,11 @@ class CreateEggProductionTable extends Migration
                 'type' => 'INT',
                 'constraint' => 11,
             ],
+            'batch_group_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => true,
+            ],
             'eggs_produced' => [
                 'type' => 'INT',
                 'constraint' => 11,

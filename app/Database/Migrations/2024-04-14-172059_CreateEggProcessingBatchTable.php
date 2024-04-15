@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateLivestockBloodSampleTable extends Migration
+class CreateEggProcessingBatchTable extends Migration
 {
     public function up()
     {
@@ -17,21 +17,38 @@ class CreateLivestockBloodSampleTable extends Migration
             'user_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
+                'null' => true,
             ],
-            'livestock_id' => [
+            'egg_batch_group_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'livestock_observation' => [
-                'type' => 'VARCHAR',
-                'constraint' => 70,
+            'batch_date' => [
+                'type' => 'DATE',
+                'null' => false,
             ],
-            'findings' => [
+            'machine' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
+            ],
+            'total_eggs' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'default' => 0,
+            ],
+            'mortalities' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'default' => 0,
+            ],
+            'produced_poultry' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'default' => 0,
+            ],
+            'remarks' => [
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
-            ],
-            'blood_sample_date' => [
-                'type' => 'DATE',
             ],
             'record_status' => [
                 'type' => 'ENUM',
@@ -53,11 +70,11 @@ class CreateLivestockBloodSampleTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('livestock_blood_samples');
+        $this->forge->createTable('egg_processing_batch');
     }
 
     public function down()
     {
-        $this->forge->dropTable('livestock_blood_samples');
+        $this->forge->dropTable('egg_processing_batch');
     }
 }

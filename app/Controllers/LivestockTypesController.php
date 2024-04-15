@@ -21,9 +21,10 @@ class LivestockTypesController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
+            $data->category = "Livestock";
             $result = $this->livestockType->insertLivestockType($data);
             if (!$result) {
-                return $this->respond(['message' => 'New Livestock Type Successfully Added', 'error' => $this->livestockType->errors()], 200);
+                return $this->respond(['message' => 'New Livestock Type Failed', 'error' => $this->livestockType->errors()], 200);
             }
             return $this->respond(['message' => 'New Livestock Type Successfully Added', 'success' => true], 200);
         } catch (\Throwable $th) {
@@ -72,6 +73,7 @@ class LivestockTypesController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
+            $data->category = "Livestock";
             $result = $this->livestockType->updateLivestockType($id, $data);
             if (!$result) {
                 return $this->fail($this->livestockType->errors());

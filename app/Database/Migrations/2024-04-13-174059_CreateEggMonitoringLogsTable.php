@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateLivestockBloodSampleTable extends Migration
+class CreateEggMonitoringLogsTable extends Migration
 {
     public function up()
     {
@@ -14,24 +14,31 @@ class CreateLivestockBloodSampleTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
+            'record_owner' => [
+                'type' => 'ENUM',
+                'constraint' => ['Farmer', 'DA'],
+                'default' => 'DA',
+            ],
             'user_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
+                'null' => true,
             ],
-            'livestock_id' => [
+            'egg_process_batch_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
             ],
-            'livestock_observation' => [
-                'type' => 'VARCHAR',
-                'constraint' => 70,
+            'action'=>[
+                'type' => 'ENUM',
+                'constraint' => ['Setting', 'Checking', 'Extracting'],
             ],
-            'findings' => [
+            'date_conducted' => [
+                'type' => 'DATE',
+                'null' => false,
+            ],
+            'remarks' => [
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
-            ],
-            'blood_sample_date' => [
-                'type' => 'DATE',
             ],
             'record_status' => [
                 'type' => 'ENUM',
@@ -53,11 +60,11 @@ class CreateLivestockBloodSampleTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('livestock_blood_samples');
+        $this->forge->createTable('egg_monitoring_logs');
     }
 
     public function down()
     {
-        $this->forge->dropTable('livestock_blood_samples');
+        $this->forge->dropTable('egg_monitoring_logs');
     }
 }

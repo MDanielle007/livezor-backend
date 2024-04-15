@@ -10,6 +10,7 @@ class AddForeignKeyEggProductionTable extends Migration
     {
         $this->forge->addForeignKey('farmer_id', 'user_accounts', 'id');
         $this->forge->addForeignKey('livestock_id', 'livestocks', 'id');
+        $this->forge->addForeignKey('batch_group_id', 'egg_production_batch_group','id');
         $this->forge->processIndexes('livestock_egg_productions');
     }
 

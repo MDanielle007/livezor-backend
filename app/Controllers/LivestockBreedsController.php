@@ -24,7 +24,7 @@ class LivestockBreedsController extends ResourceController
         try {
             $data = $this->request->getJSON();
             $response = $this->livestockBreed->insertLivestockBreed($data);
-            return $this->respond(['message' => 'New Livestock Breed Successfully Added', 'result' => $response], 200);
+            return $this->respond(['message' => 'New Livestock Breed Successfully Added', 'success' => $response], 200);
         } catch (\Throwable $th) {
             //throw $th;
         }
@@ -36,6 +36,16 @@ class LivestockBreedsController extends ResourceController
             $livestockBreeds = $this->livestockBreed->getLivestockBreeds();
 
             return $this->respond($livestockBreeds, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getPoultryBreeds(){
+        try {
+            $poultryBreeds = $this->livestockBreed->getPoultryBreeds();
+
+            return $this->respond($poultryBreeds, 200);
         } catch (\Throwable $th) {
             //throw $th;
         }

@@ -65,7 +65,7 @@ class LivestocksController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
-
+            $data->category = "Livestock";
             $response = $this->livestock->insertLivestock($data);
 
             return $this->respond(['result' => $response, 'message' => 'Livestock Successfully Added'], 200);
@@ -78,7 +78,7 @@ class LivestocksController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
-
+            $data->category = "Livestock";
             $livestockId = $this->livestock->insertLivestock($data);
 
             $data->livestockId = $livestockId;
@@ -105,7 +105,7 @@ class LivestocksController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
-
+            $data->category = "Livestock";
             $data->breedingEligibility = "Not Age-Suited";
 
             $data->action = "Add";
@@ -152,7 +152,7 @@ class LivestocksController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
-
+            $data->category = "Livestock";
             $response = $this->livestock->updateLivestock($id, $data);
 
             $livestockTagId = $data->livestockTagId;
@@ -270,19 +270,6 @@ class LivestocksController extends ResourceController
         }
     }
 
-    // testing method
-    public function getLivestockPrimaryData($id)
-    {
-        try {
-            $livestock = $this->livestock->getLivestockPrimaryData($id);
-
-            return $this->respond($livestock);
-        } catch (\Throwable $th) {
-            //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
-        }
-    }
-
     public function getFarmerLivestockIdByTag()
     {
         try {
@@ -340,18 +327,6 @@ class LivestocksController extends ResourceController
 
             return $this->respond($data);
         } catch (\Throwable $th) {
-            return $this->respond(['error' => $th->getMessage()]);
-        }
-    }
-
-    public function getAllLivestockCount()
-    {
-        try {
-            $data = $this->livestock->getAllLivestockCount();
-
-            return $this->respond($data);
-        } catch (\Throwable $th) {
-            //throw $th;
             return $this->respond(['error' => $th->getMessage()]);
         }
     }
@@ -474,12 +449,12 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getLivestockCountByMunicipality($municipality)
+    public function getAllLivestockTypeCountByCity($city)
     {
         try {
-            $livestockTypeCount = $this->livestock->getLivestockTypeCountByMunicipality($municipality);
+            $livestockTypeCount = $this->livestock->getAllLivestockTypeCountByCity($city);
 
-            $totalLivestockCount = $this->livestock->getLivestockCountByMunicipality($municipality);
+            $totalLivestockCount = $this->livestock->getLivestockCountBycity($city);
             $data = [
                 'livestock' => $livestockTypeCount,
                 'totalLivestockCount' => $totalLivestockCount
@@ -490,7 +465,7 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getLivestockCountAllMunicipality()
+    public function getLivestockCountAllCity()
     {
         try {
 
@@ -534,7 +509,7 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getLivestockTypeCountAllMunicipality($livestockTypeId)
+    public function getLivestockTypeCountAllCity($livestockTypeId)
     {
         try {
 
