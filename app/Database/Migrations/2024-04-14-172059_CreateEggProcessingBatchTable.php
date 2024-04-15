@@ -50,6 +50,11 @@ class CreateEggProcessingBatchTable extends Migration
                 'type' => 'TEXT',
                 'null' => true, // Allow NULL values
             ],
+            'status' => [
+                'type' => 'ENUM',
+                'constraint' => ['Processing', 'Finished'],
+                'default' => 'Processing',
+            ],
             'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],

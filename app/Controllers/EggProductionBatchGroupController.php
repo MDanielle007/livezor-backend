@@ -16,31 +16,36 @@ class EggProductionBatchGroupController extends ResourceController
         $this->eggProdBatch = new EggProductionBatchGroupModel();
     }
 
-    public function getAllEggProductionBatchGroups(){
+    public function getAllEggProductionBatchGroups()
+    {
         $eggProdBatchGroups = $this->eggProdBatch->getAllEggProductionBatchGroups();
 
         return $this->respond($eggProdBatchGroups);
     }
 
-    public function getEggProductionBatchGroup($id = null){
+    public function getEggProductionBatchGroup($id = null)
+    {
         $eggProdBatchGroup = $this->eggProdBatch->getEggProductionBatchGroup($id);
 
         return $this->respond($eggProdBatchGroup);
     }
 
-    public function getAllActiveEggProductionBatchGroups(){
+    public function getAllActiveEggProductionBatchGroups()
+    {
         $eggProdBatchGroups = $this->eggProdBatch->getAllActiveEggProductionBatchGroups();
 
         return $this->respond($eggProdBatchGroups);
     }
 
-    public function checkEggProductionBatch($batchName){
+    public function checkEggProductionBatch($batchName)
+    {
         $result = $this->eggProdBatch->checkEggProductionBatch($batchName);
 
         return $this->respond($result);
     }
 
-    public function insertEggProductionBatchGroup(){
+    public function insertEggProductionBatchGroup()
+    {
         $data = $this->request->getJSON();
 
         $result = $this->eggProdBatch->insertEggProductionBatch($data);
@@ -48,7 +53,8 @@ class EggProductionBatchGroupController extends ResourceController
         return $this->respond($result);
     }
 
-    public function updateEggProductionBatch($id){
+    public function updateEggProductionBatch($id)
+    {
         $data = $this->request->getJSON();
 
         $result = $this->eggProdBatch->updateEggProductionBatch($id, $data);
@@ -56,7 +62,8 @@ class EggProductionBatchGroupController extends ResourceController
         return $this->respond($result);
     }
 
-    public function updateEggProductionBatchStatus($id){
+    public function updateEggProductionBatchStatus($id)
+    {
         $data = $this->request->getJSON();
 
         $result = $this->eggProdBatch->updateEggProductionBatchStatus($id, $data->batchStatus);
@@ -64,9 +71,22 @@ class EggProductionBatchGroupController extends ResourceController
         return $this->respond($result);
     }
 
-    public function deleteEggProductionBatch($id){
+    public function deleteEggProductionBatch($id)
+    {
         $result = $this->eggProdBatch->deleteEggProductionBatch($id);
 
         return $this->respond($result);
+    }
+
+    public function getAllActiveBatchWithEggsProduced()
+    {
+        try {
+            $result = $this->eggProdBatch->getAllActiveBatchWithEggsProduced();
+
+            return $this->respond($result);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
     }
 }

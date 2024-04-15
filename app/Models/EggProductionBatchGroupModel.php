@@ -69,18 +69,26 @@ class EggProductionBatchGroupModel extends Model
     }
 
     public function getAllActiveBatchWithEggsProduced(){
-        $whereClause = [
-            'batch_status' => 'Active',
-        ];
-
-        $eggProductionBatchGroups = $this->select('
-            id,
-            batch_name as batchName,
-        ')
-            
-        ->where($whereClause)->findAll();
-
-        return $eggProductionBatchGroups;
+        try {
+            $whereClause = [
+                'batch_status' => 'Active',
+            ];
+    
+            $eggProductionBatchGroups = $this->select('
+                egg_production_batch_group.id,
+                egg_production_batch_group.batch_name as batchName,
+                SUM(livestock_egg_productions.eggs_produced) as count
+            ')
+            ->join('livestock_egg_productions','livestock_egg_productions.batch_group_id = egg_production_batch_group.id')
+            ->where($whereClause)
+            ->groupBy('egg_production_batch_group.id')
+            ->findAll();
+    
+            return $eggProductionBatchGroups;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
     }
 
     public function checkEggProductionBatch($batchName)
@@ -99,6 +107,8 @@ class EggProductionBatchGroupModel extends Model
             return $this->select('id')->find($batchName);
         }
     }
+
+
 
     public function insertEggProductionBatch($data)
     {

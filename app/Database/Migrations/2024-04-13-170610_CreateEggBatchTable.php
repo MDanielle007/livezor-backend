@@ -30,7 +30,7 @@ class CreateEggBatchTable extends Migration
             ],
             'batch_status' => [
                 'type' => 'ENUM',
-                'constraint' => ['Active', 'Inactive'],
+                'constraint' => ['Active', 'Processing','Inactive'],
                 'default' => 'Active',
             ],
             'record_status' => [

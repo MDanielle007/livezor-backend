@@ -213,7 +213,13 @@ $routes->group('api', static function ($routes) {
         $routes->get('eggprods-distribution-month', 'LivestockEggProductionController::getEggProductionCountByMonth');
         $routes->get('eggprod-current-year-count', 'LivestockEggProductionController::getCurrentYearEggProductionCount');
         $routes->get('poultry-type-eggprod-count', 'LivestockEggProductionController::getTopPoultryTypeEggProducedCount');
+        $routes->get('active-eggprod-batch-count', 'EggProductionBatchGroupController::getAllActiveBatchWithEggsProduced');
 
+        $routes->get('all-eggprocessing-batch', 'EggProcessingBatchController::getEggProcessingBatches');
+        $routes->post('add-eggprocessing-batch', 'EggProcessingBatchController::insertEggProcessingBatch');
+        $routes->put('update-eggprocessing-batch/(:any)', 'EggProcessingBatchController::updateEggProcessingBatch/$1');
+
+        $routes->get('all-eggmonitoring-logs', 'EggProcessingBatchController::getAllEggMonitoringLogs');
 
         // Livestock Mortality endpoint routes
         $routes->get('all-livestock-mortalities', 'LivestockMortalityController::getAllLivestockMortalities');

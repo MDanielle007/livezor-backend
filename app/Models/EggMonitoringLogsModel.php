@@ -12,7 +12,7 @@ class EggMonitoringLogsModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['record_owner', 'user_id', 'egg_batch_group_id', 'action', 'date_conducted', 'remarks', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['record_owner', 'user_id', 'egg_process_batch_id', 'action', 'date_conducted', 'remarks', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -42,9 +42,28 @@ class EggMonitoringLogsModel extends Model
 
     public function getAllEggMonitoringLogs()
     {
-        $eggMonitoringLogs = $this->findAll();
+        try {
+            $eggMonitoringLogs = $this->distinct()->select('
+            egg_monitoring_logs.id,
+            egg_production_batch_group.batch_name as batchName,
+            livestock_types.livestock_type_name as livestockType,
+            egg_monitoring_logs.action,
+            egg_monitoring_logs.remarks,
+            egg_monitoring_logs.date_conducted as dateConducted
+        ')
+                ->join('egg_processing_batch', 'egg_processing_batch.id = egg_monitoring_logs.egg_process_batch_id')
+                ->join('egg_production_batch_group', 'egg_production_batch_group.id = egg_processing_batch.egg_batch_group_id')
+                ->join('livestock_egg_productions', 'livestock_egg_productions.batch_group_id = egg_production_batch_group.id')
+                ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
 
-        return $eggMonitoringLogs;
+                ->findAll();
+
+            return $eggMonitoringLogs;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
     }
 
     public function getEggMonitoringLog($id)
@@ -57,12 +76,12 @@ class EggMonitoringLogsModel extends Model
     public function insertEggMonitoringLog($data)
     {
         $bind = [
-            'record_owner' => $this->recordOwner,
-            'user_id' => $this->userId,
-            'egg_batch_group_id' => $this->eggBatchGroupId,
-            'action' => $this->action,
-            'date_conducted' => $this->dateConducted,
-            'remarks' => $this->remarks,
+            'record_owner' => $data->recordOwner,
+            'user_id' => $data->userId,
+            'egg_process_batch_id' => $data->eggProcessBatchId,
+            'action' => $data->action,
+            'date_conducted' => $data->dateConducted,
+            'remarks' => $data->remarks,
         ];
 
         $result = $this->insert($bind);
@@ -70,14 +89,15 @@ class EggMonitoringLogsModel extends Model
         return $result;
     }
 
-    public function updateEggMonitoringLog($id, $data){
+    public function updateEggMonitoringLog($id, $data)
+    {
         $bind = [
-            'record_owner' => $this->recordOwner,
-            'user_id' => $this->userId,
-            'egg_batch_group_id' => $this->eggBatchGroupId,
-            'action' => $this->action,
-            'date_conducted' => $this->dateConducted,
-            'remarks' => $this->remarks,
+            'record_owner' => $data->recordOwner,
+            'user_id' => $data->userId,
+            'egg_batch_group_id' => $data->eggBatchGroupId,
+            'action' => $data->action,
+            'date_conducted' => $data->dateConducted,
+            'remarks' => $data->remarks,
         ];
 
         $result = $this->update($id, $bind);
@@ -85,7 +105,8 @@ class EggMonitoringLogsModel extends Model
         return $result;
     }
 
-    public function deleteEggMonitoringLog($id){
+    public function deleteEggMonitoringLog($id)
+    {
         $result = $this->delete($id);
         return $result;
     }
