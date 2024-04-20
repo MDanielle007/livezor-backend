@@ -69,6 +69,7 @@ class LivestockPregnancyController extends ResourceController
 
             $offspringAgeClass = $this->livestockAgeClass->getLivestockTypeOffspring($data->livestockTypeId);
             $data->livestockAgeClassId = $offspringAgeClass['id'];
+            $data->category = "Livestock";
             $data->ageDays = 0;
             $data->ageWeeks = 0;
             $data->ageMonths = 0;
@@ -101,7 +102,7 @@ class LivestockPregnancyController extends ResourceController
                 }
             }
 
-            return $this->respond(['success' => true, 'message' => 'Livestock Pregnancy Successfully Added','data' => $data], 200);
+            return $this->respond(['success' => true, 'message' => 'Livestock Pregnancy Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);

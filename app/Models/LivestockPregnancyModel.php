@@ -94,6 +94,7 @@ class LivestockPregnancyModel extends Model
                 livestock_pregnancies.breeding_id as breedingId,
                 livestock_pregnancies.livestock_id as livestockId,
                 livestocks.livestock_tag_id as livestockTagId,
+                livestocks.livestock_type_id as livestockTypeId,
                 livestock_types.livestock_type_name as livestockTypeName,
                 livestock_pregnancies.outcome as outcome,
                 livestock_pregnancies.pregnancy_start_date as pregnancyStartDate,

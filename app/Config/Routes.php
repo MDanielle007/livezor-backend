@@ -65,6 +65,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('livestock-distribution-month', 'LivestocksController::getLivestockCountByMonthAndType');
         $routes->get('top-vaccine', 'LivestockVaccinationsController::getTopVaccines');
         $routes->get('vaccination-distribution-month', 'LivestockVaccinationsController::getVaccinationCountByMonth');
+        $routes->get('vaccination-poultry-distribution-month', 'LivestockVaccinationsController::getPoultryVaccinationCountByMonth');
         $routes->get('top-mortality', 'LivestockMortalityController::getTopMortalityCause');
         $routes->get('mortality-distribution-month', 'LivestockMortalityController::getMortalityCountByMonth');
         $routes->get('livestock-vaccination-count', 'LivestockVaccinationsController::getOverallLivestockVaccinationCount');
@@ -139,6 +140,7 @@ $routes->group('api', static function ($routes) {
 
         // Livestock Vaccination endpoint routes
         $routes->get('all-livestock-vaccinations', 'LivestockVaccinationsController::getAllLivestockVaccinations');
+        $routes->get('all-poultry-vaccinations', 'LivestockVaccinationsController::getAllPoultryVaccinations');
         $routes->get('all-farmer-livestock-vaccinations/(:any)', 'LivestockVaccinationsController::getAllFarmerCompleteLivestockVaccinations/$1');
         $routes->get('livestock-vaccination/(:any)', 'LivestockVaccinationsController::getLivestockVaccination/$1');
         $routes->post('add-livestock-vaccination', 'LivestockVaccinationsController::insertLivestockVaccination');

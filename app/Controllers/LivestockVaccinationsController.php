@@ -38,6 +38,18 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
+    public function getAllPoultryVaccinations(){
+        try {
+            $livestockVaccinations = $this->livestockVaccination->getAllPoultryVaccinations();
+
+            return $this->respond($livestockVaccinations);
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     public function getLivestockVaccination($id)
     {
         try {
@@ -293,6 +305,17 @@ class LivestockVaccinationsController extends ResourceController
             $vaccinationCountByMonth = $this->livestockVaccination->getVaccinationCountByMonth();
 
             return $this->respond($vaccinationCountByMonth);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getPoultryVaccinationCountByMonth(){
+        try {
+            $poultryVaccinationCountByMonth = $this->livestockVaccination->getPoultryVaccinationCountByMonth();
+
+            return $this->respond($poultryVaccinationCountByMonth);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);

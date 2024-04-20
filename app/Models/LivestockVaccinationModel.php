@@ -43,7 +43,36 @@ class LivestockVaccinationModel extends Model
     public function getAllLivestockVaccinations()
     {
         $whereClause = [
-            'livestock_vaccinations.record_status' => 'Accessible'
+            'livestock_vaccinations.record_status' => 'Accessible',
+            'livestocks.category' => 'Livestock'
+        ];
+
+        $livestockVaccinations = $this->select(
+            'livestock_vaccinations.id,
+            livestock_vaccinations.vaccine_administrator_id as vaccineAdministratorId,
+            CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as vaccineAdministratorName,
+            livestock_vaccinations.livestock_id as livestockId,
+            livestocks.livestock_tag_id as livestockTagId,
+            livestock_types.livestock_type_name as livestockType,
+            livestock_vaccinations.vaccination_name as vaccinationName,
+            livestock_vaccinations.vaccination_description as vaccinationDescription,
+            livestock_vaccinations.vaccination_remarks as remarks,
+            livestock_vaccinations.vaccination_date as vaccinationDate'
+        )->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+            ->where($whereClause)
+            ->orderBy('livestock_vaccinations.vaccination_date', 'DESC')
+            ->orderBy('livestocks.livestock_tag_id', 'ASC')
+            ->findAll();
+        return $livestockVaccinations;
+    }
+
+    public function getAllPoultryVaccinations()
+    {
+        $whereClause = [
+            'livestock_vaccinations.record_status' => 'Accessible',
+            'livestocks.category' => 'Poultry'
         ];
 
         $livestockVaccinations = $this->select(
@@ -150,9 +179,9 @@ class LivestockVaccinationModel extends Model
                 'vaccination_remarks' => $data->remarks,
                 'vaccination_date' => $data->vaccinationDate
             ];
-    
+
             $result = $this->insert($bind);
-    
+
             return $result;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -260,10 +289,29 @@ class LivestockVaccinationModel extends Model
         $currentYear = date('Y');
 
         // Build the query
-        $this->select('MONTH(vaccination_date) AS month, COUNT(*) AS count')
-            ->where("YEAR(vaccination_date)", $currentYear)
-            ->groupBy('MONTH(vaccination_date)')
-            ->orderBy('MONTH(vaccination_date)');
+        $this->select('MONTH(livestock_vaccinations.vaccination_date) AS month, COUNT(*) AS count')
+            ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+            ->where("YEAR(livestock_vaccinations.vaccination_date)", $currentYear)
+            ->where('livestocks.category','Livestock')
+            ->groupBy('MONTH(livestock_vaccinations.vaccination_date)')
+            ->orderBy('MONTH(livestock_vaccinations.vaccination_date)');
+
+        // Execute the query and return the result
+        return $this->get()->getResult();
+    }
+
+    public function getPoultryVaccinationCountByMonth()
+    {
+        // Get the current year
+        $currentYear = date('Y');
+
+        // Build the query
+        $this->select('MONTH(livestock_vaccinations.vaccination_date) AS month, COUNT(*) AS count')
+            ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+            ->where("YEAR(livestock_vaccinations.vaccination_date)", $currentYear)
+            ->where('livestocks.category','Poultry')
+            ->groupBy('MONTH(livestock_vaccinations.vaccination_date)')
+            ->orderBy('MONTH(livestock_vaccinations.vaccination_date)');
 
         // Execute the query and return the result
         return $this->get()->getResult();

@@ -99,12 +99,13 @@ class LivestockBreedingsController extends ResourceController
                 $data->breedingId = $breedingId;
                 $data->livestockId = $femaleLivestockId;
                 $data->pregnancyStartDate = $data->breedDate;
+                $data->expectedDeliveryDate = $this->calculateExpectedDeliveryDate($data->breedDate, $livestockType);
 
                 $result = $this->livestockPregnancy->insertLivestockPregnancyByBreeding($data);
             }
 
 
-            return $this->respond(['success' => true, 'message' => 'Livestock Breeding Successfully Added'], 200);
+            return $this->respond(['success' => true, 'message' => 'Livestock Breeding Successfully Added', 'result' => $result], 200);
 
         } catch (\Throwable $th) {
             //throw $th;
