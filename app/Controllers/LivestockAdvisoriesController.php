@@ -37,10 +37,19 @@ class LivestockAdvisoriesController extends ResourceController
         try {
             $livestockAdvisory = $this->livestockAdvisories->getLivestockAdvisory($id);
 
+            $farmerId = $livestockAdvisory['targetFarmerId'] ?? null;
+
+            if ($farmerId && $livestockAdvisory['advisoryType'] == 'Farmer') {
+                $farmer = $this->userModel->getUserName($farmerId);
+                $livestockAdvisory['farmer'] = $farmer['userName'];
+            }
+
+
             return $this->respond($livestockAdvisory);
 
         } catch (\Throwable $th) {
             //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
         }
     }
 
@@ -73,8 +82,12 @@ class LivestockAdvisoriesController extends ResourceController
         try {
             $data = $this->request->getJSON();
             $title = $data->subject;
-            $body = $data->content;
+            $body = strip_tags($data->content);
 
+            $notifData = (object) [
+                'title' => $title,
+                'body' => $body
+            ];
             $notifRes = null;
 
             if ($data->isGeneral === true) {
@@ -82,7 +95,6 @@ class LivestockAdvisoriesController extends ResourceController
 
                 $farmerTokens = $this->userModel->getAllUserFirebaseToken('Farmer');
                 $notifRes = sendNotification($title, $body, $farmerTokens);
-                return $this->respond(['result' => $result, 'message' => 'Livestock Advisory Successfully Sent', 'notification sent' => $notifRes], 200);
             }
 
             $targetFarmers = $data->targetFarmers;
@@ -91,8 +103,9 @@ class LivestockAdvisoriesController extends ResourceController
                 $farmerTokens = $this->userModel->getUserFirebaseToken($targetFarmer);
 
                 $notifRes = sendNotification($title, $body, $farmerTokens);
+                $result = $this->livestockAdvisories->sendLivestockAdvisory($data);
             }
-            return $this->respond(['result' => $data, 'message' => 'Livestock Advisory Successfully Sent', 'notification sent' => $notifRes], 200);
+            return $this->respond(['result' => $data, 'message' => 'Livestock Advisory Successfully Sent', 'notification sent' => $notifRes, 'notification data' => $notifData], 200);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['result' => $th->getMessage()]);
@@ -122,6 +135,7 @@ class LivestockAdvisoriesController extends ResourceController
             return $this->respond(['result' => $response, 'message' => 'Livestock Advisory Read Status Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            return $this->respond(['result' => $th->getMessage()]);
         }
     }
 

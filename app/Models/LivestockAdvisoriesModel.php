@@ -42,17 +42,22 @@ class LivestockAdvisoriesModel extends Model
 
     public function getAllLivestockAdvisories()
     {
-        $livestockAdvisories = $this->select(
-            'id,
-            subject,
-            content,
-            target_farmer_id as targetFarmerId,
-            is_general as isGeneral,
-            date_published as datePublished,
-            is_read as isRead,
-            record_status as recordStatus'
-        )->findAll();
-        return $livestockAdvisories;
+        try {
+            $livestockAdvisories = $this->select(
+                'id,
+                subject,
+                content,
+                target_farmer_id as targetFarmerId,
+                is_general as isGeneral,
+                IF(is_general, "General", "Farmer") as advisoryType,
+                date_published as datePublished
+            ')->orderBy('date_published', 'DESC')->findAll();
+
+            return $livestockAdvisories;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
     }
 
     public function getLivestockAdvisory($id)
@@ -63,9 +68,9 @@ class LivestockAdvisoriesModel extends Model
             content,
             target_farmer_id as targetFarmerId,
             is_general as isGeneral,
+            IF(is_general, "General", "Farmer") as advisoryType,
             date_published as datePublished,
-            is_read as isRead,
-            record_status as recordStatus'
+            is_read as isRead'
         )->find($id);
         return $livestockAdvisory;
     }
@@ -76,25 +81,24 @@ class LivestockAdvisoriesModel extends Model
             'id,
             subject,
             content,
-            target_farmer_id as targetFarmerId,
-            is_general as isGeneral,
+            IF(is_general, "General", "Farmer") as advisoryType,
             date_published as datePublished,
             is_read as isRead'
-        )->where('target_farmer_id', $userid)->findAll();
+        )->where('target_farmer_id', $userid)->orderBy('date_published','DESC')->findAll();
         return $livestockAdvisories;
     }
 
     public function getAllGeneralLivestockAdvisories()
     {
         $livestockAdvisories = $this
-        ->select(
-            'id,
+            ->select(
+                'id,
             subject,
             content,
             date_published as datePublished,
             is_read as isRead,
             record_status as recordStatus'
-        )->where('is_general', 1)->findAll();
+            )->where('is_general', 1)->findAll();
         return $livestockAdvisories;
     }
 

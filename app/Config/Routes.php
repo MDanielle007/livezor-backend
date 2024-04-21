@@ -241,7 +241,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('all-livestock-advisories', 'LivestockAdvisoriesController::getAllLivestockAdvisories');
         $routes->get('all-farmer-livestock-advisories/(:any)', 'LivestockAdvisoriesController::getAllFarmerLivestockAdvisories/$1');
         $routes->get('all-general-livestock-advisories', 'LivestockAdvisoriesController::getAllGeneralLivestockAdvisories');
-        $routes->get('get-livestock-advisory/$1', 'LivestockAdvisoriesController::getLivestockAdvisory/$1');
+        $routes->get('get-livestock-advisory/(:any)', 'LivestockAdvisoriesController::getLivestockAdvisory/$1');
         $routes->post('send-livestock-advisory', 'LivestockAdvisoriesController::sendLivestockAdvisories');
         $routes->put('update-livestock-advisory/(:any)', 'LivestockAdvisoriesController::updateLivestockAdvisory/$1');
         $routes->put('update-livestock-advisory-read/(:any)', 'LivestockAdvisoriesController::updateLivestockAdvisoryReadStatus/$1');
