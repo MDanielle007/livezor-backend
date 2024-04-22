@@ -10,7 +10,7 @@ class FarmerAuditModel extends Model
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $useSoftDeletes = false;
+    protected $useSoftDeletes = true;
     protected $protectFields = true;
     protected $allowedFields = ['livestock_id', 'farmer_id', 'action', 'title', 'description', 'entity_affected', 'timestamp', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 

@@ -10,7 +10,7 @@ class LivestockEggProductionModel extends Model
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $useSoftDeletes = false;
+    protected $useSoftDeletes = true;
     protected $protectFields = true;
     protected $allowedFields = ['farmer_id', 'livestock_id', 'batch_group_id', 'eggs_produced', 'remarks', 'date_of_production', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 

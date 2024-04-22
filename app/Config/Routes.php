@@ -237,6 +237,24 @@ $routes->group('api', static function ($routes) {
         $routes->get('all-mortality-4months', 'LivestockMortalityController::getMortalitiesCountLast4Months');
 
 
+        // Livestock Fecal Sample endpoint routes
+        $routes->get('all-livestock-fecalsamples', 'LivestockFecalSampleController::getAllLivestockFecalSample');
+        $routes->get('all-farmer-livestock-fecalsamples/(:any)', 'LivestockFecalSampleController::getAllFarmerLivestockFecalSamples/$1');
+        $routes->get('livestock-fecalsamples/(:any)', 'LivestockFecalSampleController::getLivestockFecalSample/$1');
+        $routes->post('add-livestock-fecalsamples', 'LivestockFecalSampleController::insertLivestockFecalSample');
+        $routes->post('add-livestock-fecalsamples-multiple', 'LivestockFecalSampleController::insertMultipleLivestockFecalSample');
+        $routes->put('update-livestock-fecalsamples/(:any)', 'LivestockFecalSampleController::updateLivestockFecalSample/$1');
+        $routes->delete('delete-livestock-fecalsamples/(:any)', 'LivestockFecalSampleController::deleteLivestockFecalSample/$1');
+        $routes->get('livestock-fecalsamples-count', 'LivestockFecalSampleController::getOverallLivestockFecalSampleCount');
+        $routes->get('livestock-fecalsamples-count/(:any)', 'LivestockFecalSampleController::getFarmerOverallLivestockFecalSampleCount/$1');
+        $routes->get('recent-livestock-fecalsample', 'LivestockFecalSampleController::getRecentLivestockFecalSample');
+        $routes->get('top-observation-fecalsample', 'LivestockFecalSampleController::getTopLivestockObservations');
+        $routes->get('top-findings-fecalsample', 'LivestockFecalSampleController::getTopFecalSampleFindings');
+        $routes->get('all-fecalsample-4months', 'LivestockFecalSampleController::getFecalCountLast4Months');
+        $routes->get('fecalsample-distribution-month', 'LivestockFecalSampleController::getFecalSampleCountByMonth');
+
+
+
         // Livestock Advisories endpoint routes
         $routes->get('all-livestock-advisories', 'LivestockAdvisoriesController::getAllLivestockAdvisories');
         $routes->get('all-farmer-livestock-advisories/(:any)', 'LivestockAdvisoriesController::getAllFarmerLivestockAdvisories/$1');

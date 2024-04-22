@@ -10,7 +10,7 @@ class LivestockOffspringModel extends Model
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
-    protected $useSoftDeletes   = false;
+    protected $useSoftDeletes   = true;
     protected $protectFields    = true;
     protected $allowedFields    = ['pregnancy_id', 'livestock_id', 'birth_date', 'sex', 'offspring_notes', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 

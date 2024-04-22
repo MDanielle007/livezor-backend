@@ -10,7 +10,7 @@ class EggInventoryModel extends Model
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
-    protected $useSoftDeletes = false;
+    protected $useSoftDeletes = true;
     protected $protectFields = true;
     protected $allowedFields = ['farmer_id', 'livestock_type_id', 'total_eggs', 'eggs_for_sale', 'eggs_for_reproduction', 'last_updated', 'record_status'];
 
