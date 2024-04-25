@@ -254,6 +254,21 @@ $routes->group('api', static function ($routes) {
         $routes->get('fecalsample-distribution-month', 'LivestockFecalSampleController::getFecalSampleCountByMonth');
 
 
+        // Livestock Blood Sample endpoint routes
+        $routes->get('all-livestock-bloodsamples', 'LivestockBloodSampleController::getAllLivestockBloodSamples');
+        $routes->get('all-farmer-livestock-bloodsamples/(:any)', 'LivestockBloodSampleController::getAllFarmerLivestockBloodSamples/$1');
+        $routes->get('livestock-bloodsamples/(:any)', 'LivestockBloodSampleController::getLivestockBloodSample/$1');
+        $routes->post('add-livestock-bloodsamples', 'LivestockBloodSampleController::insertLivestockBloodSample');
+        $routes->post('add-livestock-bloodsamples-multiple', 'LivestockBloodSampleController::insertMultipleLivestockBloodSample');
+        $routes->put('update-livestock-bloodsamples/(:any)', 'LivestockBloodSampleController::updateLivestockBloodSample/$1');
+        $routes->delete('delete-livestock-bloodsamples/(:any)', 'LivestockBloodSampleController::deleteLivestockBloodSample/$1');
+        $routes->get('livestock-bloodsamples-count', 'LivestockBloodSampleController::getOverallLivestockBloodSampleCount');
+        $routes->get('livestock-bloodsamples-count/(:any)', 'LivestockBloodSampleController::getFarmerOverallLivestockBloodSampleCount/$1');
+        $routes->get('recent-livestock-bloodsample', 'LivestockBloodSampleController::getRecentLivestockBloodSample');
+        $routes->get('top-observation-bloodsample', 'LivestockBloodSampleController::getTopLivestockObservations');
+        $routes->get('top-findings-bloodsample', 'LivestockBloodSampleController::getTopBloodSampleFindings');
+        $routes->get('all-bloodsample-4months', 'LivestockBloodSampleController::getBloodCountLast4Months');
+        $routes->get('bloodsample-distribution-month', 'LivestockBloodSampleController::getBloodSampleCountByMonth');
 
         // Livestock Advisories endpoint routes
         $routes->get('all-livestock-advisories', 'LivestockAdvisoriesController::getAllLivestockAdvisories');
