@@ -71,6 +71,28 @@ class LivestockBreedingsModel extends Model
         }
     }
 
+    public function getReportData($selectClause, $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_breedings.record_status' => 'Accessible',
+                'livestock_breedings.breed_date >=' => $minDate,
+                'livestock_breedings.breed_date <=' => $maxDate
+            ];
+
+            $livestockBreedings = $this->select($selectClause)
+                ->join('user_accounts', 'user_accounts.id = livestock_breedings.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestock_breedings.livestock_type_id')
+                ->where($whereClause)
+                ->orderBy('livestock_breedings.breed_date', 'DESC')
+                ->findAll();
+
+            return $livestockBreedings;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
     public function getLivestockBreeding($id)
     {
         try {

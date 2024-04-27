@@ -43,6 +43,20 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
+    public function getLivestockBreedingReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+
+            $auditTrails = $this->livestockBreeding->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($auditTrails);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
     public function getLivestockBreeding($id)
     {
         try {

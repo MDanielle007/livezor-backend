@@ -6,41 +6,42 @@ use CodeIgniter\Model;
 
 class LivestockBloodSampleModel extends Model
 {
-    protected $table            = 'livestock_blood_samples';
-    protected $primaryKey       = 'id';
+    protected $table = 'livestock_blood_samples';
+    protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'array';
-    protected $useSoftDeletes   = true;
-    protected $protectFields    = true;
-    protected $allowedFields    = ['user_id', 'livestock_id', 'livestock_observation', 'findings', 'blood_sample_date', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $returnType = 'array';
+    protected $useSoftDeletes = true;
+    protected $protectFields = true;
+    protected $allowedFields = ['user_id', 'livestock_id', 'livestock_observation', 'findings', 'blood_sample_date', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
     // Dates
     protected $useTimestamps = true;
-    protected $dateFormat    = 'datetime';
-    protected $createdField  = 'created_at';
-    protected $updatedField  = 'updated_at';
-    protected $deletedField  = 'deleted_at';
+    protected $dateFormat = 'datetime';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
+    protected $deletedField = 'deleted_at';
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
-    protected $skipValidation       = false;
+    protected $validationRules = [];
+    protected $validationMessages = [];
+    protected $skipValidation = false;
     protected $cleanValidationRules = true;
 
     // Callbacks
     protected $allowCallbacks = true;
-    protected $beforeInsert   = [];
-    protected $afterInsert    = [];
-    protected $beforeUpdate   = [];
-    protected $afterUpdate    = [];
-    protected $beforeFind     = [];
-    protected $afterFind      = [];
-    protected $beforeDelete   = [];
-    protected $afterDelete    = [];
+    protected $beforeInsert = [];
+    protected $afterInsert = [];
+    protected $beforeUpdate = [];
+    protected $afterUpdate = [];
+    protected $beforeFind = [];
+    protected $afterFind = [];
+    protected $beforeDelete = [];
+    protected $afterDelete = [];
 
-    public function getAllLivestockBloodSamples(){
+    public function getAllLivestockBloodSamples()
+    {
         try {
             $whereClause = [
                 'livestocks.category' => 'Livestock',
@@ -68,6 +69,33 @@ class LivestockBloodSampleModel extends Model
                 ->findAll();
 
             return $livestockBloodSamples;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getReportData($selectClause, $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestocks.category' => 'Livestock',
+                'livestock_blood_samples.record_status' => 'Accessible',
+                'livestock_blood_samples.blood_sample_date >=' => $minDate,
+                'livestock_blood_samples.blood_sample_date <=' => $maxDate
+            ];
+
+            $data = $this->select($selectClause)
+                ->join('livestocks', 'livestocks.id = livestock_blood_samples.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_blood_samples.user_id')
+                ->where($whereClause)
+                ->orderBy('livestock_blood_samples.blood_sample_date', 'DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $data;
         } catch (\Throwable $th) {
             //throw $th;
         }
@@ -157,7 +185,7 @@ class LivestockBloodSampleModel extends Model
         }
     }
 
-    public function updateLivestockBloodSample($id,$data)
+    public function updateLivestockBloodSample($id, $data)
     {
         try {
             $bind = [
@@ -168,7 +196,7 @@ class LivestockBloodSampleModel extends Model
                 'blood_sample_date' => $data->bloodSampleDate,
             ];
 
-            $result = $this->update($id,$bind);
+            $result = $this->update($id, $bind);
 
             return $result;
         } catch (\Throwable $th) {
@@ -201,8 +229,8 @@ class LivestockBloodSampleModel extends Model
         } catch (\Throwable $th) {
             //throw $th;
         }
-    } 
-    
+    }
+
     public function getOverallLivestockBloodSampleCount()
     {
         try {
@@ -238,10 +266,10 @@ class LivestockBloodSampleModel extends Model
             livestock_blood_samples.findings,
             livestock_blood_samples.blood_sample_date as sampleDate
         ')
-        ->join('livestocks', 'livestocks.id = livestock_blood_samples.livestock_id')
-        ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-        ->orderBy('livestock_blood_samples.created_at', 'DESC')
-        ->first();
+            ->join('livestocks', 'livestocks.id = livestock_blood_samples.livestock_id')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            ->orderBy('livestock_blood_samples.created_at', 'DESC')
+            ->first();
 
         return $livestockBloodSample;
     }
@@ -331,7 +359,7 @@ class LivestockBloodSampleModel extends Model
         $this->select('MONTH(livestock_blood_samples.blood_sample_date) AS month, COUNT(*) AS count')
             ->join('livestocks', 'livestocks.id = livestock_blood_samples.livestock_id')
             ->where("YEAR(livestock_blood_samples.blood_sample_date)", $currentYear)
-            ->where('livestocks.category','Livestock')
+            ->where('livestocks.category', 'Livestock')
             ->groupBy('MONTH(livestock_blood_samples.blood_sample_date)')
             ->orderBy('MONTH(livestock_blood_samples.blood_sample_date)');
 

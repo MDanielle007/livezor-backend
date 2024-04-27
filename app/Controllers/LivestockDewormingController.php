@@ -36,6 +36,21 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
+    public function getLivestockDewormingReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+
+            $livestockDewormings = $this->livestockDewormings->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($livestockDewormings);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     public function getLivestockDeworming($id)
     {
         try {

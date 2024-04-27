@@ -44,17 +44,50 @@ class FarmerAuditModel extends Model
     {
         try {
             $auditTrails = $this->select(
-                'id,
-                livestock_id as livestockId,
-                farmer_id as farmerId,
-                action,
-                title,
-                description,
-                entity_affected as entityAffected,
-                timestamp,
-                record_status as recordStatus'
-            )->orderBy('timestamp', 'DESC')->findAll();
+                'farmer_audit.id,
+                farmer_audit.livestock_id as livestockId,
+                COALESCE(NULLIF(livestocks.livestock_tag_id, ""), "Untagged") as livestockTagId,
+                livestocks.livestock_type_id as livestockTypeId,
+                livestock_types.livestock_type_name as livestockTypeName,
+                farmer_audit.farmer_id as farmerId,
+                user_accounts.user_id as farmerUserId,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                farmer_audit.action,
+                farmer_audit.title,
+                farmer_audit.description,
+                farmer_audit.entity_affected as entityAffected,
+                farmer_audit.timestamp,
+                farmer_audit.record_status as recordStatus'
+            )
+            ->join('user_accounts','user_accounts.id = farmer_audit.farmer_id')
+            ->join('livestocks', 'livestocks.id = farmer_audit.livestock_id')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            ->orderBy('timestamp', 'DESC')->findAll();
             return $auditTrails;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getReportData($selectClause, $minDate, $maxDate){
+        try {
+            $whereClause = [
+                'farmer_audit.record_status' => 'Accessible',
+                'farmer_audit.timestamp >=' => $minDate,
+                'farmer_audit.timestamp <=' => $maxDate
+            ];
+
+            $data = $this
+            ->select($selectClause)
+            ->join('user_accounts','user_accounts.id = farmer_audit.farmer_id')
+            ->join('livestocks', 'livestocks.id = farmer_audit.livestock_id')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+            ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+            ->where($whereClause)
+            ->orderBy('farmer_audit.timestamp', 'DESC')->findAll();
+
+            return $data;
         } catch (\Throwable $th) {
             //throw $th;
         }

@@ -56,15 +56,38 @@ class LivestockEggProductionModel extends Model
             livestock_egg_productions.remarks as remarks,
             livestock_egg_productions.date_of_production as dateOfProduction'
         )
-        ->join('user_accounts', 'user_accounts.id = livestock_egg_productions.farmer_id')
-        ->join('egg_production_batch_group','egg_production_batch_group.id = livestock_egg_productions.batch_group_id')
-        ->join('livestocks','livestocks.id = livestock_egg_productions.livestock_id')
-        ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-        ->orderBy('livestock_egg_productions.date_of_production', 'DESC')
-        ->findAll();
+            ->join('user_accounts', 'user_accounts.id = livestock_egg_productions.farmer_id')
+            ->join('egg_production_batch_group', 'egg_production_batch_group.id = livestock_egg_productions.batch_group_id')
+            ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            ->orderBy('livestock_egg_productions.date_of_production', 'DESC')
+            ->findAll();
         return $eggProductions;
     }
 
+    public function getReportData($selectClause, $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_egg_productions.record_status' => 'Accessible',
+                'livestock_egg_productions.date_of_production >=' => $minDate,
+                'livestock_egg_productions.date_of_production <=' => $maxDate
+            ];
+
+            $data = $this->select($selectClause)
+                ->join('user_accounts', 'user_accounts.id = livestock_egg_productions.farmer_id')
+                ->join('egg_production_batch_group', 'egg_production_batch_group.id = livestock_egg_productions.batch_group_id')
+                ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->orderBy('livestock_egg_productions.date_of_production', 'DESC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
     public function getEggProduction($id)
     {
         $eggProduction = $this->select(
@@ -97,13 +120,13 @@ class LivestockEggProductionModel extends Model
             livestock_egg_productions.remarks as remarks,
             livestock_egg_productions.date_of_production as dateOfProduction'
         )
-        ->join('user_accounts', 'user_accounts.id = livestock_egg_productions.farmer_id')
-        ->join('egg_production_batch_group','egg_production_batch_group.id = livestock_egg_productions.batch_group_id')
-        ->join('livestocks','livestocks.id = livestock_egg_productions.livestock_id')
-        ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-        ->where($whereClause)
-        ->orderBy('livestock_egg_productions.date_of_production', 'DESC')
-        ->findAll();
+            ->join('user_accounts', 'user_accounts.id = livestock_egg_productions.farmer_id')
+            ->join('egg_production_batch_group', 'egg_production_batch_group.id = livestock_egg_productions.batch_group_id')
+            ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            ->where($whereClause)
+            ->orderBy('livestock_egg_productions.date_of_production', 'DESC')
+            ->findAll();
         return $eggProductions;
     }
 
@@ -138,7 +161,8 @@ class LivestockEggProductionModel extends Model
         return $result;
     }
 
-    public function setEggProductionBatch($id, $batchId){
+    public function setEggProductionBatch($id, $batchId)
+    {
         $bind = [
             'batch_group_id' => $batchId
         ];
@@ -201,9 +225,9 @@ class LivestockEggProductionModel extends Model
             $whereClause = [
                 'YEAR(date_of_production)' => date('Y'),
             ];
-    
+
             $livestockVaccinationCount = $this->select('SUM(eggs_produced) as count')->where($whereClause)->get()->getResult();
-    
+
             // Check if any result is returned
             if (!empty($livestockVaccinationCount)) {
                 // Access the first element of the result array and retrieve the 'count' property

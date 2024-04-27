@@ -44,13 +44,13 @@ class EggMonitoringLogsModel extends Model
     {
         try {
             $eggMonitoringLogs = $this->distinct()->select('
-            egg_monitoring_logs.id,
-            egg_production_batch_group.batch_name as batchName,
-            livestock_types.livestock_type_name as livestockType,
-            egg_monitoring_logs.action,
-            egg_monitoring_logs.remarks,
-            egg_monitoring_logs.date_conducted as dateConducted
-        ')
+                egg_monitoring_logs.id,
+                egg_production_batch_group.batch_name as batchName,
+                livestock_types.livestock_type_name as livestockType,
+                egg_monitoring_logs.action,
+                egg_monitoring_logs.remarks,
+                egg_monitoring_logs.date_conducted as dateConducted
+            ')
                 ->join('egg_processing_batch', 'egg_processing_batch.id = egg_monitoring_logs.egg_process_batch_id')
                 ->join('egg_production_batch_group', 'egg_production_batch_group.id = egg_processing_batch.egg_batch_group_id')
                 ->join('livestock_egg_productions', 'livestock_egg_productions.batch_group_id = egg_production_batch_group.id')
@@ -63,6 +63,30 @@ class EggMonitoringLogsModel extends Model
         } catch (\Throwable $th) {
             //throw $th;
             return $th->getMessage();
+        }
+    }
+
+    public function getReportData($selectClause, $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'egg_monitoring_logs.record_status' => 'Accessible',
+                'egg_monitoring_logs.date_conducted >=' => $minDate,
+                'egg_monitoring_logs.date_conducted <=' => $maxDate
+            ];
+
+            $data = $this->select($selectClause)
+                ->join('egg_processing_batch', 'egg_processing_batch.id = egg_monitoring_logs.egg_process_batch_id')
+                ->join('egg_production_batch_group', 'egg_production_batch_group.id = egg_processing_batch.egg_batch_group_id')
+                ->join('livestock_egg_productions', 'livestock_egg_productions.batch_group_id = egg_production_batch_group.id')
+                ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
         }
     }
 

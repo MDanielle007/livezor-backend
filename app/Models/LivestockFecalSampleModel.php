@@ -74,6 +74,32 @@ class LivestockFecalSampleModel extends Model
         }
     }
 
+    public function getReportData($selectClause, $minDate, $maxDate){
+        try {
+            $whereClause = [
+                'livestocks.category' => 'Livestock',
+                'livestock_fecal_samples.record_status' => 'Accessible',
+                'livestock_fecal_samples.fecal_sample_date >=' => $minDate,
+                'livestock_fecal_samples.fecal_sample_date <=' => $maxDate
+            ];
+            
+            $livestockFecalSamples = $this->select($selectClause)
+                ->join('livestocks', 'livestocks.id = livestock_fecal_samples.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_fecal_samples.user_id')
+                ->where($whereClause)
+                ->orderBy('livestock_fecal_samples.fecal_sample_date', 'DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $livestockFecalSamples;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
     public function getAllFarmerLivestockFecalSamples($userId)
     {
         try {

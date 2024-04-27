@@ -31,6 +31,37 @@ class EggProcessingBatchController extends ResourceController
         }
     }
 
+    public function getLivestockEggProcessingBatchReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+
+            $eggProBatches = $this->eggProcessBatches->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($eggProBatches);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getEggMonitoringLogsReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+
+            $eggMonitoringLogs = $this->eggMonitoringLog->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($eggMonitoringLogs);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+
     public function getEggProcessingBatch($id)
     {
         try {

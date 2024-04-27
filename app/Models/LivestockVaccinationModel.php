@@ -96,6 +96,33 @@ class LivestockVaccinationModel extends Model
         return $livestockVaccinations;
     }
 
+    public function getReportData($category, $selectClause, $minDate, $maxDate){
+        try {
+            $whereClause = [
+                'livestock_vaccinations.record_status' => 'Accessible',
+                'livestocks.category' => $category,
+                'livestock_vaccinations.vaccination_date >=' => $minDate,
+                'livestock_vaccinations.vaccination_date <=' => $maxDate
+            ];
+
+            $data = $this
+            ->select($selectClause)
+            ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+            ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+            ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+            ->where($whereClause)
+            ->orderBy('livestock_vaccinations.vaccination_date', 'DESC')
+            ->orderBy('livestocks.livestock_tag_id', 'ASC')
+            ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
     public function getLivestockVaccination($id)
     {
         $whereClause = [

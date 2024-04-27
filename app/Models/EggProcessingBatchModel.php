@@ -12,7 +12,7 @@ class EggProcessingBatchModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['user_id', 'egg_batch_group_id', 'batch_date', 'machine', 'total_eggs', 'mortalities', 'produced_poultry', 'remarks', 'status','record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['user_id', 'egg_batch_group_id', 'batch_date', 'machine', 'total_eggs', 'mortalities', 'produced_poultry', 'remarks', 'status', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -62,10 +62,10 @@ class EggProcessingBatchModel extends Model
             ')
                 ->join('egg_production_batch_group', 'egg_production_batch_group.id = egg_processing_batch.egg_batch_group_id')
                 ->join('livestock_egg_productions', 'livestock_egg_productions.batch_group_id = egg_production_batch_group.id')
-                ->join('livestocks','livestocks.id = livestock_egg_productions.livestock_id')
-                ->join('livestock_types','livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->where($whereClause)
-                ->orderBy('egg_processing_batch.id','DESC')
+                ->orderBy('egg_processing_batch.id', 'DESC')
                 ->get()->getResult();
 
             return $eggProBatch;
@@ -75,7 +75,32 @@ class EggProcessingBatchModel extends Model
         }
     }
 
-    public function getEggProcessingBatch($id){
+    public function getReportData($selectClause, $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'egg_processing_batch.record_status' => 'Accessible',
+                'egg_processing_batch.batch_date >=' => $minDate,
+                'egg_processing_batch.batch_date <=' => $maxDate
+            ];
+
+            $reportData = $this->select($selectClause)
+                ->join('egg_production_batch_group', 'egg_production_batch_group.id = egg_processing_batch.egg_batch_group_id')
+                ->join('livestock_egg_productions', 'livestock_egg_productions.batch_group_id = egg_production_batch_group.id')
+                ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->get()->getResult();
+
+            return $reportData;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getEggProcessingBatch($id)
+    {
         try {
             $whereClause = [
                 'egg_processing_batch.record_status' => 'Accessible',
@@ -97,8 +122,8 @@ class EggProcessingBatchModel extends Model
             ')
                 ->join('egg_production_batch_group', 'egg_production_batch_group.id = egg_processing_batch.egg_batch_group_id')
                 ->join('livestock_egg_productions', 'livestock_egg_productions.batch_group_id = egg_production_batch_group.id')
-                ->join('livestocks','livestocks.id = livestock_egg_productions.livestock_id')
-                ->join('livestock_types','livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->where($whereClause)
                 ->findAll();
 
@@ -109,7 +134,8 @@ class EggProcessingBatchModel extends Model
         }
     }
 
-    public function insertEggProcessingBatch($data){
+    public function insertEggProcessingBatch($data)
+    {
         try {
             $bind = [
                 'user_id' => $data->userId,
@@ -129,7 +155,8 @@ class EggProcessingBatchModel extends Model
         }
     }
 
-    public function updateEggProcessingBatch($id, $data){
+    public function updateEggProcessingBatch($id, $data)
+    {
         try {
             $bind = [
                 'user_id' => $data->userId,
@@ -141,7 +168,7 @@ class EggProcessingBatchModel extends Model
                 'produced_poultry' => $data->producedPoultry
             ];
 
-            $result = $this->update($id,$bind);
+            $result = $this->update($id, $bind);
 
             return $result;
         } catch (\Throwable $th) {

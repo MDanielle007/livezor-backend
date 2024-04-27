@@ -38,6 +38,22 @@ class PoultryController extends ResourceController
         }
     }
 
+    public function getPoultryReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+            $category = 'Poultry';
+
+            $poultries = $this->poultry->getReportData($category, $selectClause, $minDate, $maxDate);
+
+            return $this->respond($poultries);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     public function getPoultry($id){
         try {
             $poultry = $this->poultry->getPoultryById($id);

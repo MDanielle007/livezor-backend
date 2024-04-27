@@ -25,6 +25,20 @@ class LivestockBloodSampleController extends ResourceController
         }
     }
 
+    public function getBloodSampleReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+            $livestocks = $this->livestockBloodSample->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($livestocks);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     public function getAllFarmerLivestockBloodSamples($userId)
     {
         try {

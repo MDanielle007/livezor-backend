@@ -35,12 +35,27 @@ class LivestockEggProductionController extends ResourceController
     public function getEggProduction($id)
     {
         try {
-            $livestockVaccination = $this->livestockEggProduction->getEggProduction($id);
+            $livestockEggProductions = $this->livestockEggProduction->getEggProduction($id);
 
-            return $this->respond($livestockVaccination);
+            return $this->respond($livestockEggProductions);
 
         } catch (\Throwable $th) {
             //throw $th;
+        }
+    }
+
+    public function getLivestockEggProductionReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+
+            $livestockEggProductions = $this->livestockEggProduction->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($livestockEggProductions);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
         }
     }
 

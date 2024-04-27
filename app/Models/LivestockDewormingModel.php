@@ -75,6 +75,33 @@ class LivestockDewormingModel extends Model
         }
     }
 
+    public function getReportData($selectClause, $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_dewormings.record_status' => 'Accessible',
+                'livestock_dewormings.deworming_date >=' => $minDate,
+                'livestock_dewormings.deworming_date <=' => $maxDate
+            ];
+
+            $data = $this->select($selectClause)
+                ->join('livestocks', 'livestocks.id = livestock_dewormings.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_dewormings.dewormer_id')
+                ->where($whereClause)
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->orderBy('livestock_dewormings.deworming_date', 'DESC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
     public function getLivestockDeworming($id)
     {
         try {

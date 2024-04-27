@@ -28,6 +28,21 @@ class AuditTrailController extends ResourceController
         }
     }
 
+    public function getAuditReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+
+            $auditTrails = $this->auditTrails->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($auditTrails);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     public function getFarmerAuditTrailLogs($id)
     {
         try {

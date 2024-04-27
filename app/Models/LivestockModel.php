@@ -55,7 +55,7 @@ class LivestockModel extends Model
                 livestocks.livestock_type_id as livestockTypeId,
                 livestock_types.livestock_type_name as livestockTypeName,
                 livestocks.livestock_breed_id as livestockBreedId,
-                COALESCE(NULLIF(livestocks.livestock_breed_id, ""), "Unknown") as livestockBreedName,
+                COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
                 livestocks.livestock_age_class_id as livestockAgeClassId,
                 livestock_age_class.livestock_age_classification as livestockAgeClassification,
                 livestocks.age_days as ageDays,
@@ -82,6 +82,7 @@ class LivestockModel extends Model
                 ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
                 ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->where($whereClause)
                 ->orderBy('user_accounts.first_name', 'ASC')
@@ -96,6 +97,38 @@ class LivestockModel extends Model
             return $livestocks;
         } catch (\Throwable $th) {
             // Handle exceptions
+            return $th->getMessage();
+        }
+    }
+
+    public function getReportData($category ,$selectClause, $minDate, $maxDate){
+        try {
+            $whereClause = [
+                'livestocks.record_status' => 'Accessible',
+                'livestocks.category' => $category,
+                'livestocks.date_of_birth >=' => $minDate,
+                'livestocks.date_of_birth <=' => $maxDate
+            ];
+
+            $data = $this
+                ->select($selectClause)
+                ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
+                ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->where($whereClause)
+                ->orderBy('user_accounts.first_name', 'ASC')
+                ->orderBy('user_accounts.last_name', 'ASC')
+                ->orderBy('livestock_types.livestock_type_name', 'ASC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->orderBy('livestock_age_class.id', 'ASC')
+                ->orderBy('livestocks.date_of_birth', 'DESC')
+                ->orderBy('livestocks.created_at', 'DESC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
             return $th->getMessage();
         }
     }

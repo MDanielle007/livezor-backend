@@ -25,6 +25,21 @@ class LivestockFecalSampleController extends ResourceController
             //throw $th;
         }
     }
+    
+    public function getFecalSampleReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+
+            $livestockFecalSamples = $this->livestockFecalSamples->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($livestockFecalSamples);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
 
     public function getLivestockFecalSample($id)
     {

@@ -37,6 +37,21 @@ class LivestockPregnancyController extends ResourceController
         }
     }
 
+    public function getLivestockPregnancyReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+
+            $livestockPregnancies = $this->livestockPregnancy->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($livestockPregnancies);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     public function getLivestockPregnancy($id){
         try {
             $livestockPregnancy = $this->livestockPregnancy->getLivestockPregnancy($id);

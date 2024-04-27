@@ -70,6 +70,30 @@ class LivestockPregnancyModel extends Model
         }
     }
 
+    public function getReportData($selectClause, $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_pregnancies.record_status' => 'Accessible',
+                'livestock_pregnancies.pregnancy_start_date >=' => $minDate,
+                'livestock_pregnancies.pregnancy_start_date <=' => $maxDate
+            ];
+
+            $livestockPregnancies = $this->select($selectClause)
+                ->join('livestock_breedings', 'livestock_breedings.id = livestock_pregnancies.breeding_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_breedings.farmer_id')
+                ->join('livestocks', 'livestocks.id = livestock_pregnancies.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->findAll();
+            return $livestockPregnancies;
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            return $th->getMessage();
+        }
+    }
+
     public function getLivestockPregnancy($id)
     {
         try {

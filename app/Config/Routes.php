@@ -115,6 +115,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('livestock-production-year', 'LivestocksController::getLivestockProductionCountWholeYear');
         $routes->get('livestock-type-production-year', 'LivestocksController::getLivestockProductionWholeYear');
         $routes->get('livestock-type-production-year/(:any)', 'LivestocksController::getLivestockProductionSelectedYear/$1');
+        $routes->get('get-livestock-report-data', 'LivestocksController::getLivestockReportData');
 
         // Poultry endpoints routes
         $routes->get('all-poultries', 'PoultryController::getAllPoultries');
@@ -137,6 +138,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('poultry-count-city', 'PoultryController::getPoultryCountAllCity');
         $routes->get('poultry-type-count-city/(:any)', 'PoultryController::getPoultryTypeCountAllCity/$1');
         $routes->get('livestock-production-year', 'PoultryController::getLivestockProductionCountWholeYear');
+        $routes->get('get-poultries-report-data', 'PoultryController::getPoultryReportData');
 
         // Livestock Vaccination endpoint routes
         $routes->get('all-livestock-vaccinations', 'LivestockVaccinationsController::getAllLivestockVaccinations');
@@ -150,6 +152,8 @@ $routes->group('api', static function ($routes) {
         $routes->delete('delete-livestock-vaccination/(:any)', 'LivestockVaccinationsController::deleteLivestockVaccination/$1');
         $routes->get('all-vaccinations-4months', 'LivestockVaccinationsController::getVaccinationCountLast4Months');
         $routes->get('all-vaccinations-year', 'LivestockVaccinationsController::getVaccinationCountWholeYear');
+        $routes->get('get-livestock-vaccinations-report-data', 'LivestockVaccinationsController::getLivestockVaccinationReportData');
+        $routes->get('get-poultry-vaccinations-report-data', 'LivestockVaccinationsController::getPoultryVaccinationReportData');
 
 
         // Livestock Deworming endpoint routes
@@ -164,6 +168,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('all-deworming-4months', 'LivestockDewormingController::getDewormingCountLast4Months');
         $routes->get('livestock-type-deworming-count', 'LivestockDewormingController::getTopLivestockTypeDewormedCount');
         $routes->get('deworming-administration-method-count', 'LivestockDewormingController::getAdministrationMethodsCount');
+        $routes->get('get-livestock-dewormings-report-data', 'LivestockDewormingController::getLivestockDewormingReportData');
 
 
         // Livestock Breedings endpoint routes
@@ -183,6 +188,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('all-breeding-4months', 'LivestockBreedingsController::getBreedingsCountLast4Months');
         $routes->get('livestock-type-breeding-count', 'LivestockBreedingsController::getLivestockTypeBreedingsCount');
         $routes->get('breeding-distribution-month', 'LivestockBreedingsController::getBreedingCountByMonth');
+        $routes->get('get-livestock-breedings-report-data', 'LivestockBreedingsController::getLivestockBreedingReportData');
         
         // Livestock Pregnancy endpoint routes
         $routes->get('all-livestock-pregnancies', 'LivestockPregnancyController::getAllLivestockPregnancies');
@@ -190,6 +196,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('all-farmer-livestock-pregnancies/(:any)', 'LivestockPregnancyController::getAllFarmerLivestockPregnancies/$1');
         $routes->put('successful-livestock-pregnancy/(:any)', 'LivestockPregnancyController::addSuccessfulLivestockPregnancy/$1');
         $routes->put('update-livestock-pregnancy/(:any)', 'LivestockPregnancyController::updateLivestockPregnancy/$1');
+        $routes->get('get-livestock-pregnancies-report-data', 'LivestockPregnancyController::getLivestockPregnancyReportData');
 
         // Livestock Offspring endpoint routes
         $routes->get('all-livestock-offspring', 'LivestockOffspringController::getAllLivestockOffspringRecords');
@@ -210,6 +217,7 @@ $routes->group('api', static function ($routes) {
         $routes->put('update-livestock-eggprod/(:any)', 'LivestockEggProductionController::updateEggProduction/$1');
         $routes->put('update-livestock-eggprod-record-stat/(:any)', 'LivestockEggProductionController::updateEggProductionRecordStatus/$1');
         $routes->delete('delete-livestock-eggprod/(:any)', 'LivestockEggProductionController::deleteEggProduction/$1');
+        $routes->get('get-egg-productions-report-data', 'LivestockEggProductionController::getLivestockEggProductionReportData');
 
         $routes->get('active-eggprods-batch', 'EggProductionBatchGroupController::getAllActiveEggProductionBatchGroups');
         $routes->get('eggprods-distribution-month', 'LivestockEggProductionController::getEggProductionCountByMonth');
@@ -220,8 +228,10 @@ $routes->group('api', static function ($routes) {
         $routes->get('all-eggprocessing-batch', 'EggProcessingBatchController::getEggProcessingBatches');
         $routes->post('add-eggprocessing-batch', 'EggProcessingBatchController::insertEggProcessingBatch');
         $routes->put('update-eggprocessing-batch/(:any)', 'EggProcessingBatchController::updateEggProcessingBatch/$1');
+        $routes->get('get-egg-processing-report-data', 'EggProcessingBatchController::getLivestockEggProcessingBatchReportData');
 
         $routes->get('all-eggmonitoring-logs', 'EggProcessingBatchController::getAllEggMonitoringLogs');
+        $routes->get('get-egg-monitoring-logs-report-data', 'EggProcessingBatchController::getEggMonitoringLogsReportData');
 
         // Livestock Mortality endpoint routes
         $routes->get('all-livestock-mortalities', 'LivestockMortalityController::getAllLivestockMortalities');
@@ -252,6 +262,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('top-findings-fecalsample', 'LivestockFecalSampleController::getTopFecalSampleFindings');
         $routes->get('all-fecalsample-4months', 'LivestockFecalSampleController::getFecalCountLast4Months');
         $routes->get('fecalsample-distribution-month', 'LivestockFecalSampleController::getFecalSampleCountByMonth');
+        $routes->get('get-livestock-fecal-samples-report-data', 'LivestockFecalSampleController::getFecalSampleReportData');
 
 
         // Livestock Blood Sample endpoint routes
@@ -269,6 +280,7 @@ $routes->group('api', static function ($routes) {
         $routes->get('top-findings-bloodsample', 'LivestockBloodSampleController::getTopBloodSampleFindings');
         $routes->get('all-bloodsample-4months', 'LivestockBloodSampleController::getBloodCountLast4Months');
         $routes->get('bloodsample-distribution-month', 'LivestockBloodSampleController::getBloodSampleCountByMonth');
+        $routes->get('get-livestock-blood-samples-report-data', 'LivestockBloodSampleController::getBloodSampleReportData');
 
         // Livestock Advisories endpoint routes
         $routes->get('all-livestock-advisories', 'LivestockAdvisoriesController::getAllLivestockAdvisories');
@@ -291,6 +303,7 @@ $routes->group('api', static function ($routes) {
         $routes->put('update-livestock-mortality/(:any)', 'AuditTrailController::updateLivestockMortality/$1');
         $routes->put('update-livestock-mortality-record-stat/(:any)', 'AuditTrailController::updateLivestockMortalityRecordStatus/$1');
         $routes->delete('delete-livestock-mortality/(:any)', 'AuditTrailController::deleteLivestockMortality/$1');
+        $routes->get('get-farmer-audit-report-data', 'AuditTrailController::getAuditReportData');
 
         // Charts endpoint routes
         $routes->get('livestock-mapping-data', 'LivestocksController::getLivestockMappingData');

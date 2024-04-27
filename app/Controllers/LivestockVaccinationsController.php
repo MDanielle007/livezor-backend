@@ -38,6 +38,38 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
+    public function getLivestockVaccinationReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+            $category = 'Livestock';
+
+            $livestockVaccinations = $this->livestockVaccination->getReportData($category, $selectClause, $minDate, $maxDate);
+
+            return $this->respond($livestockVaccinations);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getPoultryVaccinationReportData(){
+        try {
+            $selectClause = $this->request->getGet('selectClause');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+            $category = 'Poultry';
+
+            $livestockVaccinations = $this->livestockVaccination->getReportData($category, $selectClause, $minDate, $maxDate);
+
+            return $this->respond($livestockVaccinations);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     public function getAllPoultryVaccinations(){
         try {
             $livestockVaccinations = $this->livestockVaccination->getAllPoultryVaccinations();
