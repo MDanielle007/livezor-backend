@@ -12,7 +12,7 @@ class LivestockModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'category','age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'date_of_birth', 'livestock_health_status', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'category', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'date_of_birth', 'livestock_health_status', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -101,7 +101,8 @@ class LivestockModel extends Model
         }
     }
 
-    public function getReportData($category ,$selectClause, $minDate, $maxDate){
+    public function getReportData($category, $selectClause, $minDate, $maxDate)
+    {
         try {
             $whereClause = [
                 'livestocks.record_status' => 'Accessible',
@@ -320,6 +321,10 @@ class LivestockModel extends Model
                 $bind['livestock_breed_id'] = $data->livestockBreedId;
             }
 
+            if (isset($data->livestockHealthStatus)) {
+                $bind['livestock_health_status'] = $data->livestockHealthStatus;
+            }
+
             $result = $this->insert($bind);
 
             return $result;
@@ -410,7 +415,7 @@ class LivestockModel extends Model
             COALESCE(NULLIF(livestocks.livestock_tag_id, ""), "Untagged") as livestockTagId,
             livestocks.livestock_type_id as livestockTypeId,
             livestock_types.livestock_type_name as livestockTypeName,
-            COALESCE(NULLIF(livestocks.livestock_breed_id, ""), "Unknown") as livestockBreedName,
+            COALESCE(NULLIF(livestocks.livestock_breed_id, ""), "Unknown") as livestockBreedId,
             livestocks.livestock_age_class_id as livestockAgeClassId,
             livestock_age_class.livestock_age_classification as livestockAgeClassification,
             livestocks.age_days as ageDays,
@@ -502,6 +507,33 @@ class LivestockModel extends Model
                 'livestocks.record_status' => 'Accessible',
                 'farmer_livestocks.farmer_id' => $id,
                 'livestocks.category' => 'Livestock'
+            ];
+
+            $mappingData = $this->select('
+                lt.livestock_type_name AS livestockType, 
+                COUNT(*) AS livestockCount
+            ')->join('livestock_types lt', 'lt.id = livestocks.livestock_type_id')
+                ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->groupBy('lt.livestock_type_name')
+                ->where($whereClause)
+                ->findAll();
+
+            return $mappingData;
+
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function getFarmerEachSpecificLivestockTypeCountData($id, $livestockTypeId){
+        try {
+            $whereClause = [
+                'livestocks.record_status' => 'Accessible',
+                'farmer_livestocks.farmer_id' => $id,
+                'livestocks.category' => 'Livestock',
+                'livestocks.livestock_type_id' => $livestockTypeId
             ];
 
             $mappingData = $this->select('
@@ -948,7 +980,7 @@ class LivestockModel extends Model
             $data = $this->select('
                 livestock_types.livestock_type_name as livestockType,
                 COUNT(livestocks.id) as livestockCount
-            ')->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+            ')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->where($whereClause)
                 ->groupBy('
@@ -1181,6 +1213,7 @@ class LivestockModel extends Model
             return $data;
         } catch (\Throwable $th) {
             //throw $th;
+            return $th->getMessage();
         }
     }
 
@@ -1310,25 +1343,40 @@ class LivestockModel extends Model
         }
     }
 
-    public function getLivestockCountByMonthAndType()
+    public function getLivestockCountByMonthAndType($livestockTypes)
     {
         try {
-            $whereClause = [
-                'YEAR(livestocks.date_of_birth)' => date('Y'),
-                'livestocks.category' => 'Livestock'
-            ];
+            // Initialize an array to hold the final results
+            $results = [];
 
-            // Build the query
-            $this->select('MONTH(livestocks.date_of_birth) AS month, livestock_types.livestock_type_name, COUNT(*) AS livestock_count')
-                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-                ->where($whereClause)
-                ->groupBy(['MONTH(livestocks.date_of_birth)', 'livestock_types.livestock_type_name'])
-                ->orderBy('MONTH(livestocks.date_of_birth)');
+            foreach ($livestockTypes as $type) {
+                $livestockTypeName = $type['livestockTypeName'];
 
-            // Execute the query and return the result
-            return $this->get()->getResult();
+                for ($month = 1; $month <= 12; $month++) {
+                    // Reset the query builder before each count
+                    $this->builder()->resetQuery();
+                    $count = $this
+                        ->where('YEAR(livestocks.date_of_birth)', date('Y'))
+                        ->where('livestocks.category', 'Livestock')
+                        ->where('livestock_types.livestock_type_name', $livestockTypeName)
+                        ->where('MONTH(livestocks.date_of_birth)', $month)
+                        ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                        ->countAllResults(false); // Count the number of results
+
+                    // Add the result to the array
+                    $results[] = [
+                        'month' => (string) $month,
+                        'livestock_type_name' => $livestockTypeName,
+                        'livestock_count' => (string) $count,
+                    ];
+                }
+            }
+
+            return $results;
         } catch (\Throwable $th) {
-            //throw $th;
+            // Log the error or handle it as needed
+            log_message('error', $th->getMessage());
+            return [];
         }
     }
 

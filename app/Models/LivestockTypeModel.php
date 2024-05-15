@@ -65,9 +65,9 @@ class LivestockTypeModel extends Model
                 livestock_type_name as livestockTypeName,
                 livestock_type_uses as livestockTypeUses'
             )
-            ->where('category','Livestock')
-            ->findAll();
-    
+                ->where('category', 'Livestock')
+                ->findAll();
+
             return $livestockTypes;
         } catch (\Throwable $th) {
             //throw $th;
@@ -82,9 +82,9 @@ class LivestockTypeModel extends Model
                 livestock_type_name as livestockTypeName,
                 livestock_type_uses as livestockTypeUses'
             )
-            ->where('category','Livestock')
-            ->find($id);
-    
+                ->where('category', 'Livestock')
+                ->find($id);
+
             return $livestockType;
         } catch (\Throwable $th) {
             //throw $th;
@@ -99,9 +99,9 @@ class LivestockTypeModel extends Model
                 livestock_type_name as livestockTypeName,
                 livestock_type_uses as livestockTypeUses'
             )
-            ->where('category','Poultry')
-            ->findAll();
-    
+                ->where('category', 'Poultry')
+                ->findAll();
+
             return $livestockTypes;
         } catch (\Throwable $th) {
             //throw $th;
@@ -116,9 +116,9 @@ class LivestockTypeModel extends Model
                 livestock_type_name as livestockTypeName,
                 livestock_type_uses as livestockTypeUses'
             )
-            ->where('category','Poultry')
-            ->find($id);
-    
+                ->where('category', 'Poultry')
+                ->find($id);
+
             return $livestockType;
         } catch (\Throwable $th) {
             //throw $th;
@@ -130,7 +130,7 @@ class LivestockTypeModel extends Model
         try {
             // Assuming 'livestockTypeName' is the column name in your database
             $livestockType = $this->find($id);
-    
+
             if ($livestockType) {
                 return $livestockType['livestock_type_name'];
             } else {
@@ -167,9 +167,9 @@ class LivestockTypeModel extends Model
                 'livestock_type_uses' => $data->livestockTypeUses,
                 'category' => $data->category
             ];
-    
+
             $result = $this->update($id, $bind);
-    
+
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
@@ -189,33 +189,79 @@ class LivestockTypeModel extends Model
         }
     }
 
-    public function getAllLivestockTypeIdName(){
+    public function getAllLivestockTypeIdName()
+    {
         try {
             $livestockTypes = $this->select(
                 'id,
                 livestock_type_name as livestockTypeName'
             )
-            ->where('category','Livestock')
-            ->findAll();
-    
+                ->where('category', 'Livestock')
+                ->findAll();
+
             return $livestockTypes;
         } catch (\Throwable $th) {
             //throw $th;
         }
     }
 
-    public function getAllPoultryTypeIdName(){
+    public function getAllLivestockTypeName()
+    {
+        try {
+            $livestockTypes = $this->select(
+                'livestock_type_name as livestockTypeName'
+            )
+                ->where('category', 'Livestock')
+                ->findAll();
+
+            return $livestockTypes;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getAllPoultryTypeIdName()
+    {
         try {
             $livestockTypes = $this->select(
                 'id,
                 livestock_type_name as livestockTypeName'
             )
-            ->where('category','Poultry')
-            ->findAll();
-    
+                ->where('category', 'Poultry')
+                ->findAll();
+
             return $livestockTypes;
         } catch (\Throwable $th) {
             //throw $th;
         }
-    }   
+    }
+
+    public function getLivestockTypeIdByName($livestockTypeName, $category)
+    {
+        try {
+
+            $typeNameLower = strtolower($livestockTypeName);
+
+            // Capitalize the first character
+            $capitalizedTypeName = ucfirst($typeNameLower);
+
+            $livestockType = $this->select('id')
+                ->where('livestock_type_name', $capitalizedTypeName)
+                ->first();
+
+            if ($livestockType) {
+                return $livestockType['id'];
+            } else {
+                $bind = [
+                    'livestock_type_name' => $capitalizedTypeName,
+                    'livestock_type_uses' => "",
+                    'category' => $category
+                ];
+                $result = $this->insert($bind);
+                return $result;
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
 }

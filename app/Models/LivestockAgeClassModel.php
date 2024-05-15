@@ -46,6 +46,9 @@ class LivestockAgeClassModel extends Model
             'livestock_age_class.id,
             livestock_age_class.livestock_age_classification as livestockAgeClassification,
             livestock_age_class.age_class_range as ageClassRange,
+            livestock_age_class.age_min_days as ageMinDays,
+            livestock_age_class.age_max_days as ageMaxDays,
+            livestock_age_class.is_offspring as isOffspring,
             livestock_age_class.livestock_type_id as livestockTypeId,
             livestock_types.livestock_type_name as livestockTypeName'
         )
@@ -62,6 +65,9 @@ class LivestockAgeClassModel extends Model
             'livestock_age_class.id,
             livestock_age_class.livestock_age_classification as livestockAgeClassification,
             livestock_age_class.age_class_range as ageClassRange,
+            livestock_age_class.age_min_days as ageMinDays,
+            livestock_age_class.age_max_days as ageMaxDays,
+            livestock_age_class.is_offspring as isOffspring,
             livestock_age_class.livestock_type_id as livestockTypeId,
             livestock_types.livestock_type_name as livestockTypeName'
         )
@@ -151,6 +157,27 @@ class LivestockAgeClassModel extends Model
                 livestock_type_id as livestockTypeId'
             )->where('livestock_type_id', $livestockTypeId)->findAll();
             return $livestockAgeClasses;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockAgeClassIdByName($livestockAgeClass, $livestockTypeId)
+    {
+        try {
+            $nameLower = strtolower($livestockAgeClass);
+
+            // Capitalize the first character
+            $capitalizedname = ucfirst($nameLower);
+
+            $result = $this->select('id')
+                ->where('livestock_age_classification', $capitalizedname)
+                ->where('livestock_type_id', $livestockTypeId)
+                ->first();
+
+            if ($result) {
+                return $result['id'];
+            }
         } catch (\Throwable $th) {
             //throw $th;
         }

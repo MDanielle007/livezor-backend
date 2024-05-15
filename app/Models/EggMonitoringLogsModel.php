@@ -56,7 +56,7 @@ class EggMonitoringLogsModel extends Model
                 ->join('livestock_egg_productions', 'livestock_egg_productions.batch_group_id = egg_production_batch_group.id')
                 ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-
+                ->orderBy('egg_monitoring_logs.date_conducted', 'DESC')
                 ->findAll();
 
             return $eggMonitoringLogs;

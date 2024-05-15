@@ -49,9 +49,9 @@ class LivestockBreedModel extends Model
                 livestock_breeds.livestock_breed_description as livestockBreedDescription,
                 livestock_breeds.livestock_type_id as livestockTypeId,
                 livestock_types.livestock_type_name as livestockTypeName'
-            )->join('livestock_types','livestock_types.id = livestock_breeds.livestock_type_id')
-            ->where('livestock_types.category','Livestock')
-            ->findAll();
+            )->join('livestock_types', 'livestock_types.id = livestock_breeds.livestock_type_id')
+                ->where('livestock_types.category', 'Livestock')
+                ->findAll();
 
             return $livestockBreeds;
         } catch (\Throwable $th) {
@@ -68,9 +68,9 @@ class LivestockBreedModel extends Model
                 livestock_breeds.livestock_breed_description as livestockBreedDescription,
                 livestock_breeds.livestock_type_id as livestockTypeId,
                 livestock_types.livestock_type_name as livestockTypeName'
-            )->join('livestock_types','livestock_types.id = livestock_breeds.livestock_type_id')
-            ->where('livestock_types.category','Poultry')
-            ->findAll();
+            )->join('livestock_types', 'livestock_types.id = livestock_breeds.livestock_type_id')
+                ->where('livestock_types.category', 'Poultry')
+                ->findAll();
 
             return $livestockBreeds;
         } catch (\Throwable $th) {
@@ -161,6 +161,35 @@ class LivestockBreedModel extends Model
                 livestock_type_id as livestockTypeId'
             )->where('livestock_type_id', $livestockTypeId)->findAll();
             return $livestockBreeds;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockBreedIdByName($livestockBreed, $livestockTypeId)
+    {
+        try {
+            $nameLower = strtolower($livestockBreed);
+
+            // Capitalize the first character
+            $capitalizedname = ucfirst($nameLower);
+
+            $result = $this->select('id')
+                ->where('livestock_breed_name', $capitalizedname)
+                ->where('livestock_type_id', $livestockTypeId)
+                ->first();
+
+            if ($result) {
+                return $result['id'];
+            } else {
+                $bind = [
+                    'livestock_breed_name' => $livestockBreed,
+                    'livestock_breed_description' => '',
+                    'livestock_type_id' => $livestockTypeId,
+                ];
+                $result = $this->insert($bind);
+                return $result;
+            }
         } catch (\Throwable $th) {
             //throw $th;
         }

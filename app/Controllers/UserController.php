@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\LivestockModel;
+use App\Models\PersonnelDetailsModel;
 use \Firebase\JWT\JWT;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\UserModel;
@@ -13,11 +14,13 @@ class UserController extends ResourceController
 {
     private $userModel;
     private $livestock;
+    private $personnelDetails;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->livestock = new LivestockModel();
+        $this->personnelDetails = new PersonnelDetailsModel();
     }
 
     public function index()
@@ -41,7 +44,7 @@ class UserController extends ResourceController
 
                 $key = getenv('JWT_SECRET');
                 $iat = time(); // current timestamp value
-                $exp = $iat + 10800;
+                $exp = $iat + (60 * 60 * 24);
 
                 $payload = array(
                     "iss" => "OrMin Livestock Management System",
@@ -56,8 +59,7 @@ class UserController extends ResourceController
                 $response = [
                     'login' => true,
                     'message' => 'Login Succesful',
-                    'token' => $token,
-                    'loginres' => $loginres
+                    'token' => $token
                 ];
                 return $this->respond($response, 200);
             } else {
@@ -91,8 +93,17 @@ class UserController extends ResourceController
         try {
             $data = $this->request->getJSON();
             $data->userId = $this->generateUserID($data->firstName, $data->lastName, $data->userType);
-            $response = $this->userModel->insertUser($data);
-            return $this->respond($response, 200);
+            $result = $this->userModel->insertUser($data);
+
+            if ($data->userRole == "DA Personnel") {
+                $personnelDetails = $this->personnelDetails->insert((object) [
+                    'userId' => $result,
+                    'positionId' => null,
+                    'departmentId' => null,
+                ]);
+            }
+
+            return $this->respond($result, 200);
         } catch (\Throwable $th) {
             log_message('error', $th->getMessage());
             return $this->respond(['message' => 'Invalid username or password.', 'error' => $th->getMessage()], 401);
@@ -143,7 +154,8 @@ class UserController extends ResourceController
 
 
         // Concatenate the parts to form the user ID
-        $userID = $userTypeCode . '-' . strtoupper($initials) . $year . $month . $day . $hour . $minute;;
+        $userID = $userTypeCode . '-' . strtoupper($initials) . $year . $month . $day . $hour . $minute;
+        ;
 
         return $userID;
     }
@@ -183,9 +195,10 @@ class UserController extends ResourceController
         try {
             $data = $this->request->getJSON();
             $response = $this->userModel->updateUser($id, $data);
-            return $this->respond($response, 200);
+            return $this->respond(['message' => 'Profile updated successfully', 'result' => $response], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
         }
     }
 
@@ -322,11 +335,42 @@ class UserController extends ResourceController
         }
     }
 
+    public function getAllFarmerLivestockTypeCountByAddress()
+    {
+        try {
+            $barangay = $this->request->getGet('barangay');
+            $city = $this->request->getGet('city');
+            $province = $this->request->getGet('province');
+
+            $farmers = $this->userModel->getFarmerNameSpecifiedAddress($barangay, $city, $province);
+
+            foreach ($farmers as &$farmer) {
+                $farmer['livestock'] = $this->livestock->getFarmerEachLivestockTypeCountData($farmer['id']);
+            }
+
+            return $this->respond($farmers, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
     public function getFarmerUserInfo($id)
     {
         try {
             $farmer = $this->userModel->getFarmerUserInfo($id);
             return $this->respond($farmer, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getAdminUserInfo($id)
+    {
+        try {
+            $admin = $this->userModel->getAdminUserInfo($id);
+            return $this->respond($admin, 200);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);

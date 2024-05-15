@@ -29,6 +29,7 @@ class LivestockAdvisoriesController extends ResourceController
 
         } catch (\Throwable $th) {
             //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
         }
     }
 
@@ -84,10 +85,6 @@ class LivestockAdvisoriesController extends ResourceController
             $title = $data->subject;
             $body = strip_tags($data->content);
 
-            $notifData = (object) [
-                'title' => $title,
-                'body' => $body
-            ];
             $notifRes = null;
 
             if ($data->isGeneral === true) {
@@ -105,10 +102,10 @@ class LivestockAdvisoriesController extends ResourceController
                 $notifRes = sendNotification($title, $body, $farmerTokens);
                 $result = $this->livestockAdvisories->sendLivestockAdvisory($data);
             }
-            return $this->respond(['result' => $data, 'message' => 'Livestock Advisory Successfully Sent', 'notification sent' => $notifRes, 'notification data' => $notifData], 200);
+            return $this->respond(['result' => $data, 'message' => 'Livestock Advisory Successfully Sent'], 200);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['result' => $th->getMessage()]);
+            return $this->respond(['error' => $th->getMessage()]);
         }
     }
 

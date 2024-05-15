@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\FarmerAuditModel;
+use App\Models\LivestockAgeClassModel;
+use App\Models\LivestockBreedModel;
 use App\Models\LivestockTypeModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -15,6 +17,8 @@ class LivestocksController extends ResourceController
 {
     private $livestock;
     private $livestockTypes;
+    private $livestockAgeClass;
+    private $livestockBreed;
     private $farmerLivestock;
     private $userModel;
     private $farmerAudit;
@@ -23,9 +27,12 @@ class LivestocksController extends ResourceController
     {
         $this->livestock = new LivestockModel();
         $this->livestockTypes = new LivestockTypeModel();
+        $this->livestockAgeClass = new LivestockAgeClassModel();
+        $this->livestockBreed = new LivestockBreedModel();
         $this->farmerLivestock = new FarmerLivestockModel();
         $this->userModel = new UserModel();
         $this->farmerAudit = new FarmerAuditModel();
+        // helper('excel');
     }
 
     public function getAllLivestocks()
@@ -39,7 +46,8 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getLivestockReportData(){
+    public function getLivestockReportData()
+    {
         try {
             $selectClause = $this->request->getGet('selectClause');
             $minDate = $this->request->getGet('minDate');
@@ -48,7 +56,10 @@ class LivestocksController extends ResourceController
 
             $livestocks = $this->livestock->getReportData($category, $selectClause, $minDate, $maxDate);
 
+            // Call the helper function to generate the Excel file
+            // $tempFile = export_to_excel($livestocks);
             return $this->respond($livestocks);
+            // return $this->response->download($tempFile, null);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);
@@ -160,7 +171,7 @@ class LivestocksController extends ResourceController
             return $this->respond(['success' => true, 'message' => 'Livestock Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => 'Failed to add livestock','errMsg' => $th->getMessage()]);
+            return $this->respond(['error' => 'Failed to add livestock', 'errMsg' => $th->getMessage()]);
         }
     }
 
@@ -268,6 +279,27 @@ class LivestocksController extends ResourceController
 
 
             return $this->respond(['farmers' => $mappingData]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getLivestockMappingDataByType($livestockTypeId)
+    {
+        try {
+            //code...
+            $mappingData = $this->userModel->getBasicUserInfo();
+
+            foreach ($mappingData as &$md) {
+                $md['livestock'] = $this->livestock->getFarmerEachSpecificLivestockTypeCountData($md['id'], $livestockTypeId);
+            }
+
+            $filteredMappingData = array_filter($mappingData, function ($md) {
+                return !empty ($md['livestock']);
+            });
+
+            return $this->respond(['farmers' => array_values($filteredMappingData)]);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);
@@ -445,7 +477,9 @@ class LivestocksController extends ResourceController
     public function getLivestockCountByMonthAndType()
     {
         try {
-            $data = $this->livestock->getLivestockCountByMonthAndType();
+            $livestockTypes = $this->livestockTypes->getAllLivestockTypeName();
+
+            $data = $this->livestock->getLivestockCountByMonthAndType($livestockTypes);
 
             return $this->respond($data);
         } catch (\Throwable $th) {
@@ -548,7 +582,7 @@ class LivestocksController extends ResourceController
 
             $data = [];
             foreach ($cities as $city) {
-                $livestockTypeCount = $this->livestock->getLivestockTypeCountBycity($city,$livestockTypeId);
+                $livestockTypeCount = $this->livestock->getLivestockTypeCountBycity($city, $livestockTypeId);
                 $data[] = [
                     'livestock' => $livestockTypeCount,
                     'city' => $city,
@@ -597,6 +631,72 @@ class LivestocksController extends ResourceController
         } catch (\Throwable $th) {
             // Handle exceptions
             return $th->getMessage();
+        }
+    }
+
+    public function importLivestockData()
+    {
+        try {
+            $livestockData = $this->request->getJSON();
+            $success = false;
+
+            $newL = null;
+            $livestockTagId = "";
+            foreach ($livestockData as $livestock) {
+                if (!property_exists($livestock, 'LivestockType')) {
+                    continue;
+                }
+                $success = false;
+                $livestockTagId = isset($livestock->LivestockTagID) ? trim($livestock->LivestockTagID) : null;
+                $category = 'Livestock';
+
+                $livestockType = trim($livestock->LivestockType);
+                $livestockTypeId = $this->livestockTypes->getLivestockTypeIdByName($livestockType, $category);
+
+                $livestockAgeClassification = trim($livestock->LivestockAgeClassification);
+                $livestockAgeClassificationId = $this->livestockAgeClass->getLivestockAgeClassIdByName($livestockAgeClassification, $livestockTypeId);
+
+                $livestockBreed = trim($livestock->LivestockBreed);
+                $livestockBreedId = $this->livestockBreed->getLivestockBreedIdByName($livestockBreed, $livestockTypeId);
+
+                $dateOfBirth = $livestock->DateofBirth;
+                $sex = $livestock->Sex;
+                $breedingEligibility = $livestock->BreedingEligibility;
+                $livestockHealthStatus = $livestock->HealthStatus;
+
+                $newLivestock = $this->livestock->insertLivestock((object) [
+                    'livestockTagId' => $livestockTagId,
+                    'livestockTypeId' => $livestockTypeId,
+                    'livestockBreedId' => $livestockBreedId,
+                    'livestockAgeClassId' => $livestockAgeClassificationId,
+                    'category' => $category,
+                    'dateOfBirth' => $dateOfBirth,
+                    'sex' => $sex,
+                    'breedingEligibility' => $breedingEligibility,
+                    'livestockHealthStatus' => $livestockHealthStatus
+                ]);
+
+                if (isset($livestock->FarmerUserID)) {
+                    $farmerUserID = $livestock->FarmerUserID;
+                    $farmer = $this->userModel->getIdByUserId($farmerUserID);
+                    $acquiredDate = $dateOfBirth;
+
+                    $newL = $newLivestock;
+
+                    // $newLivestockAcquired = $this->farmerLivestock->associateFarmerLivestock((object) [
+                    //     'livestockId' => $newLivestock,
+                    //     'farmerId' => $farmer['id'],
+                    //     'acquiredDate' => $acquiredDate
+                    // ]);
+                }
+
+                $success = $newLivestock;
+            }
+
+            return $this->respond(['success' => $success, 'message' => 'Successfully imported Livestock Data', 'newL' => $newL, 'farmer' => $farmer['id'], 'acquiredDate' => $acquiredDate]);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getTrace(), 'message' => $th->getMessage()]);
         }
     }
 

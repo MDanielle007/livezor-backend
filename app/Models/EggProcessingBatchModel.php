@@ -162,6 +162,7 @@ class EggProcessingBatchModel extends Model
                 'user_id' => $data->userId,
                 'egg_batch_group_id' => $data->eggBatchGroupId,
                 'batch_date' => $data->batchDate,
+                'status' => $data->status,
                 'machine' => $data->machine,
                 'total_eggs' => $data->totalEggs,
                 'mortalities' => $data->mortalities,

@@ -197,12 +197,46 @@ class UserModel extends Model
         }
     }
 
+    public function getAdminUserInfo($id)
+    {
+        try {
+            $whereClause = [
+                'user_role' => 'DA Personnel',
+               'record_status' => 'Accessible',
+            ];
+
+            $user = $this->select(
+                'id,
+                user_id as userId,
+                username,
+                email,
+                first_name as firstName,
+                middle_name as middleName,
+                last_name as lastName,
+                date_of_birth as dateOfBirth,
+                gender,
+                civil_status as civilStatus,
+                sitio,
+                barangay,
+                city,
+                province,
+                phone_number as phoneNumber,    
+                user_image as userImage,
+                user_role as userRole,'
+            )->where($whereClause)->find($id);
+
+            return $user;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
     public function updateUser($id, $data)
     {
         try {
             $bind = [
                 'first_name' => $data->firstName,
-                'user_id' => $data->userId,
                 'middle_name' => $data->middleName,
                 'last_name' => $data->lastName,
                 'date_of_birth' => $data->dateOfBirth,
@@ -214,6 +248,8 @@ class UserModel extends Model
                 'city' => $data->city,
                 'province' => $data->province,
                 'phone_number' => $data->phoneNumber,
+                'email' => $data->email,
+                'username' => $data->username,
             ];
 
             $result = $this->update($id, $bind);
@@ -240,10 +276,6 @@ class UserModel extends Model
                 'city' => $data->city,
                 'province' => $data->province,
                 'phone_number' => $data->phoneNumber,
-                'user_image' => $data->userImage,
-                'email' => $data->email,
-                'username' => $data->username,
-                'password' => password_hash($data->password, PASSWORD_DEFAULT),
             ];
 
             $result = $this->update($id, $bind);
@@ -466,6 +498,58 @@ class UserModel extends Model
             ->where($whereClause)->findAll();
 
             return $farmer;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getFarmerNameSpecifiedAddress($barangay, $city, $province){
+        try {
+            $whereClause = [
+                'user_role' => 'Farmer',
+                'record_status' => 'Accessible',
+            ];
+
+            if($barangay){
+                $whereClause['barangay'] = $barangay;
+            }
+
+            if($city){
+                $whereClause['city'] = $city;
+            }
+
+            if($province){
+                $whereClause['province'] = $province;
+            }
+
+            $farmer = $this->select('
+                id,
+                user_id as userId,
+                CONCAT(first_name, " ", last_name) as fullName,
+                user_role as userRole,
+                sitio,
+                barangay,
+                city,
+                province,
+                user_image as userImage
+            ')
+            ->where($whereClause)->findAll();
+
+            return $farmer;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getIdByUserId($userId){
+        try {
+            $whereClause = [
+                'user_id' => $userId
+            ];
+
+            $id = $this->select('id')->where($whereClause)->first();
+
+            return $id;
         } catch (\Throwable $th) {
             //throw $th;
         }

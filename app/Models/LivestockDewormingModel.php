@@ -65,8 +65,8 @@ class LivestockDewormingModel extends Model
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_dewormings.dewormer_id')
                 ->where($whereClause)
-                ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->orderBy('livestock_dewormings.deworming_date', 'DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->findAll();
 
             return $livestockDewormings;
@@ -91,8 +91,8 @@ class LivestockDewormingModel extends Model
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_dewormings.dewormer_id')
                 ->where($whereClause)
-                ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->orderBy('livestock_dewormings.deworming_date', 'DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->findAll();
 
             return $data;
@@ -126,8 +126,8 @@ class LivestockDewormingModel extends Model
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_dewormings.dewormer_id')
                 ->where($whereClause)
-                ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->orderBy('livestock_dewormings.created_at', 'DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->find($id);
 
             return $livestockDewormings;
@@ -161,8 +161,8 @@ class LivestockDewormingModel extends Model
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_dewormings.dewormer_id')
                 ->where($whereClause)
-                ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->orderBy('livestock_dewormings.created_at', 'DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->findAll();
 
             return $livestockDewormings;
