@@ -27,9 +27,9 @@ class Database extends Config
     public array $default = [
         'DSN'          => '',
         'hostname'     => 'localhost',
-        'username'     => 'root',
-        'password'     => '',
-        'database'     => 'orminlivestocks',
+        'username'     => 'u262559041_adlivezor',
+        'password'     => '0rm1n.L1v35t0ck.2o24',
+        'database'     => 'u262559041_orminlivezor',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
