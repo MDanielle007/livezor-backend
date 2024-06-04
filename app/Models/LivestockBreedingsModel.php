@@ -90,6 +90,7 @@ class LivestockBreedingsModel extends Model
             return $livestockBreedings;
         } catch (\Throwable $th) {
             //throw $th;
+            return $th->getMessage();
         }
     }
 
@@ -385,16 +386,65 @@ class LivestockBreedingsModel extends Model
 
     public function getBreedingCountByMonth()
     {
-        // Get the current year
-        $currentYear = date('Y');
+        try {
+            // Get the current year and month
+            $currentYear = date('Y');
+            $currentMonth = date('m');
 
-        // Build the query
-        $this->select('MONTH(breed_date) AS month, COUNT(*) AS count')
-            ->where("YEAR(breed_date)", $currentYear)
-            ->groupBy('MONTH(breed_date)')
-            ->orderBy('MONTH(breed_date)');
+            // Build the query
+            $breedingCounts = [];
+            for ($month = 1; $month <= $currentMonth; $month++) {
+                $count = $this->select('COUNT(*) AS count')
+                    ->where('YEAR(breed_date)', $currentYear)
+                    ->where('MONTH(breed_date)', $month)
+                    ->countAllResults();
+                $breedingCounts[] = [
+                    'month' => $month,
+                    'count' => $count
+                ];
+            }
 
-        // Execute the query and return the result
-        return $this->get()->getResult();
+            return $breedingCounts;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getBreedingsForReport($minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_breedings.record_status' => 'Accessible',
+                'livestock_breedings.breed_date >=' => $minDate,
+                'livestock_breedings.breed_date <=' => $maxDate
+            ];
+
+            $data = $this
+                ->select('
+                    user_accounts.user_id as farmerUserId,
+                    CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                    CONCAT_WS(", ", user_accounts.sitio, user_accounts.barangay, user_accounts.city, user_accounts.province) as fullAddress,
+                    livestock_types.livestock_type_name as livestockType,
+                    livestock_breedings.male_livestock_tag_id as maleLivestockTagId,
+                    livestock_breedings.female_livestock_tag_id as femaleLivestockTagId,
+                    livestock_breedings.breeding_result as breedResult,
+                    livestock_breedings.breeding_remarks as remarks,
+                    livestock_breedings.breed_date as breedDate
+                ')
+                ->join('user_accounts', 'user_accounts.id = livestock_breedings.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestock_breedings.livestock_type_id')
+                ->where($whereClause)
+                ->orderBy('livestock_breedings.breed_date', 'ASC')
+                ->orderBy('farmerUserId', 'ASC')
+                ->orderBy('farmerName', 'ASC')
+                ->orderBy('maleLivestockTagId', 'ASC')
+                ->orderBy('femaleLivestockTagId', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+        }
     }
 }

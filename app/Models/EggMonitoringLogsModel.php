@@ -90,6 +90,41 @@ class EggMonitoringLogsModel extends Model
         }
     }
 
+    public function getEggMonitoringLogsForReport($minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'egg_monitoring_logs.record_status' => 'Accessible',
+                'egg_monitoring_logs.date_conducted >=' => $minDate,
+                'egg_monitoring_logs.date_conducted <=' => $maxDate
+            ];
+
+            $data = $this->distinct()->select('
+                egg_production_batch_group.batch_name as batchName,
+                user_accounts.user_id as userId,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as userName,
+                egg_monitoring_logs.action,
+                egg_monitoring_logs.remarks,
+                egg_monitoring_logs.date_conducted as dateConducted
+            ')
+                ->join('egg_processing_batch', 'egg_processing_batch.id = egg_monitoring_logs.egg_process_batch_id')
+                ->join('egg_production_batch_group', 'egg_production_batch_group.id = egg_processing_batch.egg_batch_group_id')
+                ->join('livestock_egg_productions', 'livestock_egg_productions.batch_group_id = egg_production_batch_group.id')
+                ->join('user_accounts', 'user_accounts.id = egg_monitoring_logs.user_id')
+                ->where($whereClause)
+                ->orderBy('egg_monitoring_logs.date_conducted', 'ASC')
+                ->orderBy('egg_production_batch_group.batch_name', 'ASC')
+                ->orderBy('egg_monitoring_logs.action', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+            log_message('error', json_encode($th->getTrace()));
+        }
+    }
+
     public function getEggMonitoringLog($id)
     {
         $eggMonitoringLog = $this->find($id);

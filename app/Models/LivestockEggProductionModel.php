@@ -88,6 +88,46 @@ class LivestockEggProductionModel extends Model
             //throw $th;
         }
     }
+
+    public function getEggProductionsForReport($minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_egg_productions.record_status' => 'Accessible',
+                'livestock_egg_productions.date_of_production >=' => $minDate,
+                'livestock_egg_productions.date_of_production <=' => $maxDate
+            ];
+
+            $data = $this->select('
+                COALESCE(NULLIF(livestocks.livestock_tag_id, ""), "Untagged") as livestockTagId,
+                livestock_types.livestock_type_name as livestockTypeName,
+                user_accounts.user_id as farmerUserId,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                CONCAT_WS(", ", user_accounts.sitio, user_accounts.barangay, user_accounts.city, user_accounts.province) as fullAddress,
+                egg_production_batch_group.batch_name as batchGroupName,
+                livestock_egg_productions.eggs_produced as eggsProduced,
+                livestock_egg_productions.remarks,
+                livestock_egg_productions.date_of_production as dateOfProduction
+            ')
+                ->join('user_accounts', 'user_accounts.id = livestock_egg_productions.farmer_id')
+                ->join('egg_production_batch_group', 'egg_production_batch_group.id = livestock_egg_productions.batch_group_id')
+                ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->orderBy('livestock_egg_productions.date_of_production', 'DESC')
+                ->orderBy('user_accounts.user_id', 'ASC')
+                ->orderBy('farmerName', 'ASC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->orderBy('egg_production_batch_group.batch_name', 'ASC')
+                ->orderBy('livestock_egg_productions.eggs_produced', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
     public function getEggProduction($id)
     {
         $eggProduction = $this->select(
@@ -206,17 +246,39 @@ class LivestockEggProductionModel extends Model
 
     public function getEggProductionCountByMonth()
     {
-        // Get the current year
-        $currentYear = date('Y');
+        // // Get the current year
+        // $currentYear = date('Y');
 
-        // Build the query
-        $this->select('MONTH(date_of_production) AS month, SUM(eggs_produced) as count')
-            ->where("YEAR(date_of_production)", $currentYear)
-            ->groupBy('MONTH(date_of_production)')
-            ->orderBy('MONTH(date_of_production)');
+        // // Build the query
+        // $this->select('MONTH(date_of_production) AS month, SUM(eggs_produced) as count')
+        //     ->where("YEAR(date_of_production)", $currentYear)
+        //     ->groupBy('MONTH(date_of_production)')
+        //     ->orderBy('MONTH(date_of_production)');
 
-        // Execute the query and return the result
-        return $this->get()->getResult();
+        // // Execute the query and return the result
+        // return $this->get()->getResult();
+        try {
+            // Get the current year and month
+            $currentYear = date('Y');
+            $currentMonth = date('m');
+
+            // Build the query
+            $eggProdCounts = [];
+            for ($month = 1; $month <= $currentMonth; $month++) {
+                $count = $this->select('SUM(eggs_produced) as count')
+                    ->where('YEAR(date_of_production)', $currentYear)
+                    ->where('MONTH(date_of_production)', $month)
+                    ->countAllResults();
+                $eggProdCounts[] = [
+                    'month' => $month,
+                    'count' => $count
+                ];
+            }
+
+            return $eggProdCounts;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     public function getCurrentYearEggProductionCount()

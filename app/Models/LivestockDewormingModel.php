@@ -362,5 +362,100 @@ class LivestockDewormingModel extends Model
         }
     }
 
+    public function getLivestockDewormingsCountByMonthTimeSeries()
+    {
+        try {
+            // Get the earliest and latest dates
+            $earliestDate = $this->select('MIN(deworming_date) as earliest_date')->first();
+            $latestDate = $this->select('MAX(deworming_date) as latest_date')->first();
 
+            if (!$earliestDate['earliest_date'] || !$latestDate['latest_date']) {
+                return []; // No records found
+            }
+
+            $startDate = new \DateTime($earliestDate['earliest_date']);
+            $endDate = new \DateTime($latestDate['latest_date']);
+
+            // Get the monthly counts from the database
+            $dbResults = $this->select('YEAR(livestock_dewormings.deworming_date) as year, MONTH(livestock_dewormings.deworming_date) as month, COUNT(*) as count')
+                ->join('livestocks', 'livestocks.id = livestock_dewormings.livestock_id')
+                ->groupBy('YEAR(livestock_dewormings.deworming_date), MONTH(deworming_date)')
+                ->orderBy('YEAR(livestock_dewormings.deworming_date)', 'ASC')
+                ->orderBy('MONTH(livestock_dewormings.deworming_date)', 'ASC')
+                ->where(['livestocks.category' => 'Livestock'])
+                ->findAll();
+
+            // Create a complete list of months between start and end dates
+            $completeResults = [];
+            $interval = new \DateInterval('P1M');
+            $period = new \DatePeriod($startDate, $interval, $endDate);
+
+            foreach ($period as $dt) {
+                $year = $dt->format('Y');
+                $month = $dt->format('n');
+                $completeResults["$year-$month"] = [
+                    'year' => (int) $year,
+                    'month' => (int) $month,
+                    'count' => 0
+                ];
+            }
+
+            // Merge the database results with the complete list
+            foreach ($dbResults as $result) {
+                $key = "{$result['year']}-{$result['month']}";
+                $completeResults[$key]['count'] = (int) $result['count'];
+            }
+
+            // Re-index array to be sequential
+            return array_values($completeResults);
+        } catch (\Throwable $th) {
+            // Log the exception or handle it as needed
+            log_message('error', $th->getMessage());
+            return [];
+        }
+    }
+
+    public function getDewormingsForReport($minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_dewormings.record_status' => 'Accessible',
+                'livestocks.category' => 'Livestock',
+                'livestock_dewormings.deworming_date >=' => $minDate,
+                'livestock_dewormings.deworming_date <=' => $maxDate
+            ];
+
+            $data = $this
+                ->select('
+                    livestocks.livestock_tag_id as livestockTagId,
+                    livestock_types.livestock_type_name as livestockType,
+                    COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                    livestock_age_class.livestock_age_classification as livestockAgeClassification,
+                    user_accounts.user_id as farmerUserId,
+                    CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                    CONCAT_WS(", ", user_accounts.sitio, user_accounts.barangay, user_accounts.city, user_accounts.province) as fullAddress,
+                    livestock_dewormings.dosage,
+                    livestock_dewormings.administration_method as administrationMethod,
+                    livestock_dewormings.deworming_remarks as remarks,
+                    livestock_dewormings.next_deworming_date as nextDewormingDate,
+                    livestock_dewormings.deworming_date as dewormingDate
+                ')
+                ->join('livestocks', 'livestocks.id = livestock_dewormings.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_dewormings.dewormer_id')
+                ->where($whereClause)
+                ->orderBy('livestock_dewormings.deworming_date', 'ASC')
+                ->orderBy('farmerUserId', 'ASC')
+                ->orderBy('farmerName', 'ASC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+        }
+    }
 }

@@ -68,6 +68,40 @@ class FarmerAuditModel extends Model
             //throw $th;
         }
     }
+    
+    public function getUserAuditTrailForReport($minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'farmer_audit.timestamp >=' => $minDate,
+                'farmer_audit.timestamp <=' => $maxDate
+            ];
+
+            $data = $this->select('
+                user_accounts.user_id as farmerUserId,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                CONCAT_WS(", ", user_accounts.sitio, user_accounts.barangay, user_accounts.city, user_accounts.province) as fullAddress,
+                farmer_audit.action,
+                farmer_audit.title,
+                farmer_audit.description,
+                farmer_audit.entity_affected as entityAffected,
+                farmer_audit.timestamp
+            ')
+            ->join('user_accounts','user_accounts.id = farmer_audit.farmer_id')
+            ->where($whereClause)
+            ->orderBy('timestamp', 'DESC')
+            ->orderBy('user_accounts.user_id', 'ASC')
+            ->orderBy('farmerName', 'ASC')
+            ->orderBy('farmer_audit.action', 'ASC')
+            ->orderBy('farmer_audit.entity_affected', 'ASC')
+            ->orderBy('farmer_audit.description', 'ASC')
+            ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
 
     public function getReportData($selectClause, $minDate, $maxDate){
         try {

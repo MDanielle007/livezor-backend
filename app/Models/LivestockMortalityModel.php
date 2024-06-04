@@ -327,19 +327,81 @@ class LivestockMortalityModel extends Model
     public function getMortalityCountByMonth()
     {
         try {
-            // Get the current year
+            // Get the current year and month
             $currentYear = date('Y');
+            $currentMonth = date('m');
 
             // Build the query
-            $this->select('MONTH(date_of_death) AS month, COUNT(*) AS count')
-                ->where("YEAR(date_of_death)", $currentYear)
-                ->groupBy('MONTH(date_of_death)')
-                ->orderBy('MONTH(date_of_death)');
+            $mortalityCounts = [];
+            for ($month = 1; $month <= $currentMonth; $month++) {
+                $count = $this->select('COUNT(*) AS count')
+                    ->where('YEAR(date_of_death)', $currentYear)
+                    ->where('MONTH(date_of_death)', $month)
+                    ->countAllResults();
+                $mortalityCounts[] = [
+                    'month' => $month,
+                    'count' => $count
+                ];
+            }
 
-            // Execute the query and return the result
-            return $this->get()->getResult();
+            return $mortalityCounts;
         } catch (\Throwable $th) {
             //throw $th;
+        }
+    }
+
+    public function getLivestockMortalityCountByMonthTimeSeries()
+    {
+        try {
+            // Get the earliest and latest dates
+            $earliestDate = $this->select('MIN(date_of_death) as earliest_date')->first();
+            $latestDate = $this->select('MAX(date_of_death) as latest_date')->first();
+
+            if (!$earliestDate['earliest_date'] || !$latestDate['latest_date']) {
+                return []; // No records found
+            }
+
+            $startDate = new \DateTime($earliestDate['earliest_date']);
+            $endDate = new \DateTime($latestDate['latest_date']);
+            // Include the end month in the period
+            $endDate->modify('first day of next month');
+
+            // Get the monthly counts from the database
+            $dbResults = $this->select('YEAR(livestock_mortalities.date_of_death) as year, MONTH(livestock_mortalities.date_of_death) as month, COUNT(*) as count')
+                ->join('livestocks', 'livestocks.id = livestock_mortalities.livestock_id')
+                ->where(['livestocks.category' => 'Livestock'])
+                ->groupBy('YEAR(livestock_mortalities.date_of_death), MONTH(livestock_mortalities.date_of_death)')
+                ->orderBy('YEAR(livestock_mortalities.date_of_death)', 'ASC')
+                ->orderBy('MONTH(livestock_mortalities.date_of_death)', 'ASC')
+                ->findAll();
+
+            // Create a complete list of months between start and end dates
+            $completeResults = [];
+            $interval = new \DateInterval('P1M');
+            $period = new \DatePeriod($startDate, $interval, $endDate);
+
+            foreach ($period as $dt) {
+                $year = $dt->format('Y');
+                $month = $dt->format('n'); // Use 'n' to avoid leading zeros
+                $completeResults["$year-$month"] = [
+                    'year' => (int) $year,
+                    'month' => (int) $month,
+                    'count' => 0
+                ];
+            }
+
+            // Merge the database results with the complete list
+            foreach ($dbResults as $result) {
+                $key = "{$result['year']}-{$result['month']}";
+                $completeResults[$key]['count'] = (int) $result['count'];
+            }
+
+            // Re-index array to be sequential
+            return array_values($completeResults);
+        } catch (\Throwable $th) {
+            // Log the exception or handle it as needed
+            log_message('error', $th->getMessage());
+            return [];
         }
     }
 
@@ -364,6 +426,81 @@ class LivestockMortalityModel extends Model
         } catch (\Throwable $th) {
             //throw $th;
             return $th->getMessage();
+        }
+    }
+
+    public function getReportData($selectClause, $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestocks.category' => 'Livestock',
+                'livestock_mortalities.record_status' => 'Accessible',
+                'livestock_mortalities.date_of_death >=' => $minDate,
+                'livestock_mortalities.date_of_death <=' => $maxDate
+            ];
+
+            $data = $this->select($selectClause)
+                ->join('livestocks', 'livestocks.id = livestock_mortalities.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_mortalities.farmer_id')
+                ->where($whereClause)
+                ->orderBy('livestock_mortalities.date_of_death', 'DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getMortalitiesForReport( $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_mortalities.record_status' => 'Accessible',
+                'livestock_mortalities.date_of_death >=' => $minDate,
+                'livestock_mortalities.date_of_death <=' => $maxDate
+            ];
+
+            $data = $this
+                ->select('
+                    livestocks.livestock_tag_id as livestockTagId,
+                    livestock_types.livestock_type_name as livestockType,
+                    COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                    livestock_age_class.livestock_age_classification as livestockAgeClassification,
+                    CASE
+                        WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years")
+                        WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
+                        WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks")
+                        WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
+                        ELSE "Unknown Age"
+                    END as age,
+                    user_accounts.user_id as farmerUserId,
+                    CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                    CONCAT_WS(", ", user_accounts.sitio, user_accounts.barangay, user_accounts.city, user_accounts.province) as fullAddress,
+                    livestock_mortalities.cause_of_death as causeOfDeath,
+                    livestock_mortalities.mortality_remarks as remarks,
+                    livestock_mortalities.date_of_death as dateOfDeath
+                ')
+                ->join('livestocks', 'livestocks.id = livestock_mortalities.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_mortalities.farmer_id')
+                ->where($whereClause)
+                ->orderBy('livestock_mortalities.date_of_death', 'ASC')
+                ->orderBy('farmerUserId', 'ASC')
+                ->orderBy('farmerName', 'ASC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
         }
     }
 }

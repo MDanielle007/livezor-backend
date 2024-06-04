@@ -69,6 +69,11 @@ class CreateLivestockTable extends Migration
                 'constraint' => ['Alive', 'Sick' ,'Dead'],
                 'default' => 'Alive',
             ],
+            'origin' => [
+                'type' => 'ENUM',
+                'constraint' => ['Produced', 'Distributed'],
+                'default' => 'Produced',
+            ],
             'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],

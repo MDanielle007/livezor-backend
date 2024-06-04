@@ -68,10 +68,10 @@ class LivestockModel extends Model
                 livestocks.livestock_health_status as livestockHealthStatus,
                 livestocks.record_status as recordStatus,
                 CASE
-                    WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
-                    WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks")
-                    WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
                     WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years")
+                    WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
+                    WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks")
+                    WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
                     ELSE "Unknown Age"
                 END as age,
                 user_accounts.id as farmerId,
@@ -325,6 +325,10 @@ class LivestockModel extends Model
                 $bind['livestock_health_status'] = $data->livestockHealthStatus;
             }
 
+            if (isset($data->origin)) {
+                $bind['origin'] = $data->origin;
+            }
+
             $result = $this->insert($bind);
 
             return $result;
@@ -527,7 +531,8 @@ class LivestockModel extends Model
         }
     }
 
-    public function getFarmerEachSpecificLivestockTypeCountData($id, $livestockTypeId){
+    public function getFarmerEachSpecificLivestockTypeCountData($id, $livestockTypeId)
+    {
         try {
             $whereClause = [
                 'livestocks.record_status' => 'Accessible',
@@ -1800,6 +1805,57 @@ class LivestockModel extends Model
         }
 
         return $productionData;
+    }
+
+    public function getLivestockForReport($category, $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestocks.record_status' => 'Accessible',
+                'livestocks.category' => $category,
+                'livestocks.date_of_birth >=' => $minDate,
+                'livestocks.date_of_birth <=' => $maxDate
+            ];
+
+            $data = $this
+                ->select('
+                    livestocks.livestock_tag_id as livestockTagId,
+                    livestock_types.livestock_type_name as livestockType,
+                    COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                    livestock_age_class.livestock_age_classification as livestockAgeClassification,
+                    user_accounts.user_id as farmerUserId,
+                    CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                    CONCAT_WS(", ", user_accounts.sitio, user_accounts.barangay, user_accounts.city, user_accounts.province) as fullAddress,
+                    CASE 
+                        WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years") 
+                        WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months") 
+                        WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks") 
+                        WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
+                        ELSE "Unknown Age" 
+                    END as age,
+                    livestocks.sex,
+                    livestocks.breeding_eligibility as breedingEligibility,
+                    livestocks.date_of_birth as dateOfBirth,
+                    livestocks.livestock_health_status as livestockHealthStatus,
+                    livestocks.origin
+                ')
+                ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
+                ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->where($whereClause)
+                ->orderBy('livestocks.date_of_birth', 'ASC')
+                ->orderBy('farmerUserId', 'ASC')
+                ->orderBy('farmerName', 'ASC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+        }
     }
 
 }

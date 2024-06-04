@@ -74,7 +74,8 @@ class LivestockFecalSampleModel extends Model
         }
     }
 
-    public function getReportData($selectClause, $minDate, $maxDate){
+    public function getReportData($selectClause, $minDate, $maxDate)
+    {
         try {
             $whereClause = [
                 'livestocks.category' => 'Livestock',
@@ -82,7 +83,7 @@ class LivestockFecalSampleModel extends Model
                 'livestock_fecal_samples.fecal_sample_date >=' => $minDate,
                 'livestock_fecal_samples.fecal_sample_date <=' => $maxDate
             ];
-            
+
             $livestockFecalSamples = $this->select($selectClause)
                 ->join('livestocks', 'livestocks.id = livestock_fecal_samples.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
@@ -265,10 +266,10 @@ class LivestockFecalSampleModel extends Model
             livestock_fecal_samples.findings,
             livestock_fecal_samples.fecal_sample_date as sampleDate
         ')
-        ->join('livestocks', 'livestocks.id = livestock_fecal_samples.livestock_id')
-        ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-        ->orderBy('livestock_fecal_samples.created_at', 'DESC')
-        ->first();
+            ->join('livestocks', 'livestocks.id = livestock_fecal_samples.livestock_id')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            ->orderBy('livestock_fecal_samples.created_at', 'DESC')
+            ->first();
 
         return $livestockFecalSample;
     }
@@ -351,18 +352,64 @@ class LivestockFecalSampleModel extends Model
 
     public function getFecalSampleCountByMonth()
     {
-        // Get the current year
         $currentYear = date('Y');
+        $currentMonth = date('m');
 
         // Build the query
-        $this->select('MONTH(livestock_fecal_samples.fecal_sample_date) AS month, COUNT(*) AS count')
-            ->join('livestocks', 'livestocks.id = livestock_fecal_samples.livestock_id')
-            ->where("YEAR(livestock_fecal_samples.fecal_sample_date)", $currentYear)
-            ->where('livestocks.category','Livestock')
-            ->groupBy('MONTH(livestock_fecal_samples.fecal_sample_date)')
-            ->orderBy('MONTH(livestock_fecal_samples.fecal_sample_date)');
+        $fecalSampleCounts = [];
+        for ($month = 1; $month <= $currentMonth; $month++) {
+            $count = $this->select('COUNT(*) AS count')
+                ->where('YEAR(fecal_sample_date)', $currentYear)
+                ->where('MONTH(fecal_sample_date)', $month)
+                ->countAllResults();
+            $fecalSampleCounts[] = [
+                'month' => $month,
+                'count' => $count
+            ];
+        }
 
-        // Execute the query and return the result
-        return $this->get()->getResult();
+        return $fecalSampleCounts;
+    }
+
+    public function getFecalSamplesForReport( $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_fecal_samples.record_status' => 'Accessible',
+                'livestocks.category' => 'Livestock',
+                'livestock_fecal_samples.fecal_sample_date >=' => $minDate,
+                'livestock_fecal_samples.fecal_sample_date <=' => $maxDate
+            ];
+
+            $data = $this
+                ->select('
+                    livestocks.livestock_tag_id as livestockTagId,
+                    livestock_types.livestock_type_name as livestockType,
+                    COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                    livestock_age_class.livestock_age_classification as livestockAgeClassification,
+                    user_accounts.user_id as farmerUserId,
+                    CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                    CONCAT_WS(", ", user_accounts.sitio, user_accounts.barangay, user_accounts.city, user_accounts.province) as fullAddress,
+                    livestock_fecal_samples.livestock_observation as livestockObservation,
+                    livestock_fecal_samples.findings,
+                    livestock_fecal_samples.fecal_sample_date as sampleDate
+                ')
+                ->join('livestocks', 'livestocks.id = livestock_fecal_samples.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_fecal_samples.user_id')
+                ->where($whereClause)
+                ->orderBy('livestock_fecal_samples.fecal_sample_date', 'ASC')
+                ->orderBy('farmerUserId', 'ASC')
+                ->orderBy('farmerName', 'ASC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+        }
     }
 }

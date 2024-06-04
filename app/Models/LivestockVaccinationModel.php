@@ -96,7 +96,8 @@ class LivestockVaccinationModel extends Model
         return $livestockVaccinations;
     }
 
-    public function getReportData($category, $selectClause, $minDate, $maxDate){
+    public function getReportData($category, $selectClause, $minDate, $maxDate)
+    {
         try {
             $whereClause = [
                 'livestock_vaccinations.record_status' => 'Accessible',
@@ -106,16 +107,16 @@ class LivestockVaccinationModel extends Model
             ];
 
             $data = $this
-            ->select($selectClause)
-            ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
-            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-            ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
-            ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
-            ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
-            ->where($whereClause)
-            ->orderBy('livestock_vaccinations.vaccination_date', 'DESC')
-            ->orderBy('livestocks.livestock_tag_id', 'ASC')
-            ->findAll();
+                ->select($selectClause)
+                ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+                ->where($whereClause)
+                ->orderBy('livestock_vaccinations.vaccination_date', 'DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
 
             return $data;
         } catch (\Throwable $th) {
@@ -312,36 +313,203 @@ class LivestockVaccinationModel extends Model
 
     public function getVaccinationCountByMonth()
     {
-        // Get the current year
-        $currentYear = date('Y');
+        try {
+            // Get the current year and month
+            $currentYear = date('Y');
+            $currentMonth = date('m');
 
-        // Build the query
-        $this->select('MONTH(livestock_vaccinations.vaccination_date) AS month, COUNT(*) AS count')
-            ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
-            ->where("YEAR(livestock_vaccinations.vaccination_date)", $currentYear)
-            ->where('livestocks.category','Livestock')
-            ->groupBy('MONTH(livestock_vaccinations.vaccination_date)')
-            ->orderBy('MONTH(livestock_vaccinations.vaccination_date)');
+            // Build the query
+            $vaccinationCounts = [];
+            for ($month = 1; $month <= $currentMonth; $month++) {
+                $count = $this->select('COUNT(*) AS count')
+                    ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+                    ->where('YEAR(livestock_vaccinations.vaccination_date)', $currentYear)
+                    ->where('MONTH(livestock_vaccinations.vaccination_date)', $month)
+                    ->where('livestocks.category', 'Livestock')
+                    ->countAllResults();
+                $vaccinationCounts[] = [
+                    'month' => $month,
+                    'count' => $count
+                ];
+            }
 
-        // Execute the query and return the result
-        return $this->get()->getResult();
+            return $vaccinationCounts;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getVaccinationAllCountByMonth()
+    {
+        try {
+            // Get the oldest record date
+            $oldestRecord = $this->select('MIN(vaccination_date) AS oldest_date')
+                ->get()->getRow()->oldest_date;
+
+            if (!$oldestRecord) {
+                // If there's no record, return an empty array
+                return [];
+            }
+
+            // Convert the oldest date to a DateTime object
+            $oldestDate = new \DateTime($oldestRecord);
+            $currentDate = new \DateTime();
+
+            // Initialize an array to hold the vaccination counts
+            $vaccinationCounts = [];
+
+            // Loop through each month from the oldest to the current
+            while ($oldestDate <= $currentDate) {
+                $year = (int) $oldestDate->format('Y');
+                $month = (int) $oldestDate->format('m');
+
+                $count = (int) $this->select('COUNT(*) AS count')
+                    ->where('YEAR(vaccination_date)', $year)
+                    ->where('MONTH(vaccination_date)', $month)
+                    ->countAllResults();
+
+                $vaccinationCounts[] = [
+                    'year' => (int) $year,
+                    'month' => (int) $month,
+                    'count' => (int) $count
+                ];
+
+                // Move to the next month
+                $oldestDate->modify('+1 month');
+            }
+
+            return $vaccinationCounts;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getLivestockVaccinationCountByMonthTimeSeries()
+    {
+        try {
+            // Get the earliest and latest dates
+            $earliestDate = $this->select('MIN(vaccination_date) as earliest_date')->first();
+            $latestDate = $this->select('MAX(vaccination_date) as latest_date')->first();
+
+            if (!$earliestDate['earliest_date'] || !$latestDate['latest_date']) {
+                return []; // No records found
+            }
+
+            $startDate = new \DateTime($earliestDate['earliest_date']);
+            $endDate = new \DateTime($latestDate['latest_date']);
+
+            // Get the monthly counts from the database
+            $dbResults = $this->select('YEAR(livestock_vaccinations.vaccination_date) as year, MONTH(livestock_vaccinations.vaccination_date) as month, COUNT(*) as count')
+                ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+                ->groupBy('YEAR(livestock_vaccinations.vaccination_date), MONTH(vaccination_date)')
+                ->orderBy('YEAR(livestock_vaccinations.vaccination_date)', 'ASC')
+                ->orderBy('MONTH(livestock_vaccinations.vaccination_date)', 'ASC')
+                ->where(['livestocks.category' => 'Livestock'])
+                ->findAll();
+
+            // Create a complete list of months between start and end dates
+            $completeResults = [];
+            $interval = new \DateInterval('P1M');
+            $period = new \DatePeriod($startDate, $interval, $endDate);
+
+            foreach ($period as $dt) {
+                $year = $dt->format('Y');
+                $month = $dt->format('n');
+                $completeResults["$year-$month"] = [
+                    'year' => (int) $year,
+                    'month' => (int) $month,
+                    'count' => 0
+                ];
+            }
+
+            // Merge the database results with the complete list
+            foreach ($dbResults as $result) {
+                $key = "{$result['year']}-{$result['month']}";
+                $completeResults[$key]['count'] = (int) $result['count'];
+            }
+
+            // Re-index array to be sequential
+            return array_values($completeResults);
+        } catch (\Throwable $th) {
+            // Log the exception or handle it as needed
+            log_message('error', $th->getMessage());
+            return [];
+        }
+    }
+
+    public function getLivestockVaccinationCountByMonthTimeSeriesTrial()
+    {
+        try {
+            // Get the earliest and latest dates
+            $earliestDate = $this->select('MIN(vaccination_date) as earliest_date')->first();
+            $latestDate = $this->select('MAX(vaccination_date) as latest_date')->first();
+
+            if (!$earliestDate['earliest_date'] || !$latestDate['latest_date']) {
+                return []; // No records found
+            }
+
+            $startDate = new \DateTime($earliestDate['earliest_date']);
+            $endDate = new \DateTime($latestDate['latest_date']);
+
+            // Get the monthly counts from the database
+            $dbResults = $this->select('YEAR(vaccination_date) as year, MONTH(vaccination_date) as month, COUNT(*) as value')
+                ->groupBy('YEAR(vaccination_date), MONTH(vaccination_date)')
+                ->orderBy('YEAR(vaccination_date)', 'ASC')
+                ->orderBy('MONTH(vaccination_date)', 'ASC')
+                ->findAll();
+
+            // Create a complete list of months between start and end dates
+            $completeResults = [];
+            $interval = new \DateInterval('P1M');
+            $period = new \DatePeriod($startDate, $interval, $endDate);
+
+            foreach ($period as $dt) {
+                $year = $dt->format('Y');
+                $month = $dt->format('n');
+                $completeResults["$year-$month"] = [
+                    'year' => $year,
+                    'month' => $month,
+                    'value' => 0
+                ];
+            }
+
+            // Merge the database results with the complete list
+            foreach ($dbResults as $result) {
+                $key = "{$result['year']}-{$result['month']}";
+                $completeResults[$key]['value'] = $result['value'];
+            }
+
+            // Re-index array to be sequential
+            return array_values($completeResults);
+        } catch (\Throwable $th) {
+            // Log the exception or handle it as needed
+            log_message('error', $th->getMessage());
+            return [];
+        }
     }
 
     public function getPoultryVaccinationCountByMonth()
     {
-        // Get the current year
+        // Get the current year and month
         $currentYear = date('Y');
+        $currentMonth = date('m');
 
         // Build the query
-        $this->select('MONTH(livestock_vaccinations.vaccination_date) AS month, COUNT(*) AS count')
-            ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
-            ->where("YEAR(livestock_vaccinations.vaccination_date)", $currentYear)
-            ->where('livestocks.category','Poultry')
-            ->groupBy('MONTH(livestock_vaccinations.vaccination_date)')
-            ->orderBy('MONTH(livestock_vaccinations.vaccination_date)');
+        $vaccinationCounts = [];
+        for ($month = 1; $month <= $currentMonth; $month++) {
+            $count = $this->select('COUNT(*) AS count')
+                ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+                ->where('YEAR(livestock_vaccinations.vaccination_date)', $currentYear)
+                ->where('MONTH(livestock_vaccinations.vaccination_date)', $month)
+                ->where('livestocks.category', 'Poultry')
+                ->countAllResults();
+            $vaccinationCounts[] = [
+                'month' => $month,
+                'count' => $count
+            ];
+        }
 
-        // Execute the query and return the result
-        return $this->get()->getResult();
+        return $vaccinationCounts;
     }
 
     public function getVaccinationCountLast4Months()
@@ -428,6 +596,49 @@ class LivestockVaccinationModel extends Model
         } catch (\Throwable $th) {
             // Handle exceptions
             return [];
+        }
+    }
+
+    public function getVaccinationsForReport($category, $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_vaccinations.record_status' => 'Accessible',
+                'livestocks.category' => $category,
+                'livestock_vaccinations.vaccination_date >=' => $minDate,
+                'livestock_vaccinations.vaccination_date <=' => $maxDate
+            ];
+
+            $data = $this
+                ->select('
+                    livestocks.livestock_tag_id as livestockTagId,
+                    livestock_types.livestock_type_name as livestockType,
+                    COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                    livestock_age_class.livestock_age_classification as livestockAgeClassification,
+                    user_accounts.user_id as vaccineAdminUserId,
+                    CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as vaccineAdministratorName,
+                    CONCAT_WS(", ", user_accounts.sitio, user_accounts.barangay, user_accounts.city, user_accounts.province) as fullAddress,
+                    livestock_vaccinations.vaccination_name as vaccinationName,
+                    livestock_vaccinations.vaccination_description as vaccinationDescription,
+                    livestock_vaccinations.vaccination_remarks as remarks,
+                    livestock_vaccinations.vaccination_date as vaccinationDate
+                ')
+                ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+                ->where($whereClause)
+                ->orderBy('livestock_vaccinations.vaccination_date', 'ASC')
+                ->orderBy('vaccineAdminUserId', 'ASC')
+                ->orderBy('vaccineAdministratorName', 'ASC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
         }
     }
 }

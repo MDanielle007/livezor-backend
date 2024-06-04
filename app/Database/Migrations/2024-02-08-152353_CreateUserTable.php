@@ -60,7 +60,7 @@ class CreateUserTable extends Migration
             ],
             'sitio' => [
                 'type' => 'TEXT',
-                'null' => false,
+                'null' => true,
             ],
             'barangay' => [
                 'type' => 'TEXT',

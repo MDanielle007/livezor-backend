@@ -99,6 +99,44 @@ class EggProcessingBatchModel extends Model
         }
     }
 
+    public function getEggProcessingBatchForReport($minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'egg_processing_batch.record_status' => 'Accessible',
+                'egg_processing_batch.batch_date >=' => $minDate,
+                'egg_processing_batch.batch_date <=' => $maxDate
+            ];
+
+            $reportData = $this->select('
+                egg_production_batch_group.batch_name as batchName,
+                egg_processing_batch.batch_date as batchDate,
+                egg_processing_batch.machine,
+                livestock_types.livestock_type_name as livestockTypeName,
+                egg_processing_batch.total_eggs as totalEggs,
+                egg_processing_batch.mortalities,
+                egg_processing_batch.produced_poultry as producedPoultry,
+                egg_processing_batch.remarks,
+                egg_processing_batch.status
+            ')
+                ->join('egg_production_batch_group', 'egg_production_batch_group.id = egg_processing_batch.egg_batch_group_id')
+                ->join('livestock_egg_productions', 'livestock_egg_productions.batch_group_id = egg_production_batch_group.id')
+                ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->orderBy('egg_processing_batch.batch_date', 'ASC')
+                ->orderBy('egg_production_batch_group.batch_name', 'ASC')
+                ->orderBy('egg_processing_batch.status', 'ASC')
+                ->orderBy('egg_processing_batch.machine', 'ASC')
+                ->findAll();
+
+            return $reportData;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
     public function getEggProcessingBatch($id)
     {
         try {

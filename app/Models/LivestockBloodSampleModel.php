@@ -352,18 +352,64 @@ class LivestockBloodSampleModel extends Model
 
     public function getBloodSampleCountByMonth()
     {
-        // Get the current year
         $currentYear = date('Y');
+        $currentMonth = date('m');
 
         // Build the query
-        $this->select('MONTH(livestock_blood_samples.blood_sample_date) AS month, COUNT(*) AS count')
-            ->join('livestocks', 'livestocks.id = livestock_blood_samples.livestock_id')
-            ->where("YEAR(livestock_blood_samples.blood_sample_date)", $currentYear)
-            ->where('livestocks.category', 'Livestock')
-            ->groupBy('MONTH(livestock_blood_samples.blood_sample_date)')
-            ->orderBy('MONTH(livestock_blood_samples.blood_sample_date)');
+        $bloodSampleCounts = [];
+        for ($month = 1; $month <= $currentMonth; $month++) {
+            $count = $this->select('COUNT(*) AS count')
+                ->where('YEAR(blood_sample_date)', $currentYear)
+                ->where('MONTH(blood_sample_date)', $month)
+                ->countAllResults();
+            $bloodSampleCounts[] = [
+                'month' => $month,
+                'count' => $count
+            ];
+        }
 
-        // Execute the query and return the result
-        return $this->get()->getResult();
+        return $bloodSampleCounts;
+    }
+
+    public function getBloodSamplesForReport( $minDate, $maxDate)
+    {
+        try {
+            $whereClause = [
+                'livestock_blood_samples.record_status' => 'Accessible',
+                'livestocks.category' => 'Livestock',
+                'livestock_blood_samples.blood_sample_date >=' => $minDate,
+                'livestock_blood_samples.blood_sample_date <=' => $maxDate
+            ];
+
+            $data = $this
+                ->select('
+                    livestocks.livestock_tag_id as livestockTagId,
+                    livestock_types.livestock_type_name as livestockType,
+                    COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                    livestock_age_class.livestock_age_classification as livestockAgeClassification,
+                    user_accounts.user_id as farmerUserId,
+                    CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                    CONCAT_WS(", ", user_accounts.sitio, user_accounts.barangay, user_accounts.city, user_accounts.province) as fullAddress,
+                    livestock_blood_samples.livestock_observation as livestockObservation,
+                    livestock_blood_samples.findings,
+                    livestock_blood_samples.blood_sample_date as sampleDate
+                ')
+                ->join('livestocks', 'livestocks.id = livestock_blood_samples.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_blood_samples.user_id')
+                ->where($whereClause)
+                ->orderBy('livestock_blood_samples.blood_sample_date', 'ASC')
+                ->orderBy('farmerUserId', 'ASC')
+                ->orderBy('farmerName', 'ASC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+        }
     }
 }

@@ -91,12 +91,44 @@ class UserController extends ResourceController
     public function registerUser()
     {
         try {
-            $data = $this->request->getJSON();
-            $data->userId = $this->generateUserID($data->firstName, $data->lastName, $data->userType);
+
+            $file = $this->request->getFile('userImage');
+            $newName = "";
+            if ($file && $file->isValid() && !$file->hasMoved()) {
+                $newName = $file->getRandomName();
+                $file->move('./uploads', $newName);
+                // You can also save the file path to your database
+            } else {
+                return $this->fail('Invalid file upload');
+            }
+
+            $firstName = $this->request->getPost('firstName');
+            $lastName = $this->request->getPost('lastName');
+            $userType = $this->request->getPost('userType');
+            $data = (object) [
+                'firstName' => $firstName,
+                'userId' => $this->generateUserID($firstName, $lastName, $userType),
+                'middleName' => $this->request->getPost('middleName'),
+                'lastName' => $lastName,
+                'dateOfBirth' => $this->request->getPost('dateOfBirth'),
+                'gender' => $this->request->getPost('gender'),
+                'civilStatus' => $this->request->getPost('civilStatus'),
+                'userType' => $userType,
+                'sitio' => $this->request->getPost('sitio'),
+                'barangay' => $this->request->getPost('barangay'),
+                'city' => $this->request->getPost('city'),
+                'province' => $this->request->getPost('province'),
+                'phoneNumber' => $this->request->getPost('phoneNumber'),
+                'userImage' => $newName,
+                'email' => $this->request->getPost('email'),
+                'username' => $this->request->getPost('username'),
+                'password' => $this->request->getPost('password'),
+            ];
+
             $result = $this->userModel->insertUser($data);
 
-            if ($data->userRole == "DA Personnel") {
-                $personnelDetails = $this->personnelDetails->insert((object) [
+            if ($data->userType == "DA Personnel") {
+                $personnelDetails = $this->personnelDetails->insertPersonnelDetails((object) [
                     'userId' => $result,
                     'positionId' => null,
                     'departmentId' => null,
@@ -106,7 +138,7 @@ class UserController extends ResourceController
             return $this->respond($result, 200);
         } catch (\Throwable $th) {
             log_message('error', $th->getMessage());
-            return $this->respond(['message' => 'Invalid username or password.', 'error' => $th->getMessage()], 401);
+            return $this->respond(['message' => 'Invalid username or password.', 'error' => $th->getMessage(), 'trace' => $th->getTrace()], 401);
         }
     }
 
@@ -114,11 +146,12 @@ class UserController extends ResourceController
     {
         try {
             $file = $this->request->getFile('file');
-            $newName = $file->getRandomName();
-            if ($file->isValid() && !$file->hasMoved()) {
-                $file->move('./uploads', $newName);
-                return $this->respond(['path' => $newName], 200);
-            }
+            // $newName = $file->getRandomName();
+            // if ($file->isValid() && !$file->hasMoved()) {
+            //     $file->move('./uploads', $newName);
+            //     return $this->respond(['path' => $newName], 200);
+            // }
+            return $this->respond($file, 200);
         } catch (\Throwable $th) {
             return $this->respond(['error' => $th->getMessage()], 401);
         }
@@ -370,6 +403,15 @@ class UserController extends ResourceController
     {
         try {
             $admin = $this->userModel->getAdminUserInfo($id);
+
+            if (isset($admin['userImage'])) {
+                $imageFilename = $admin['userImage'];
+                $imagePath = base_url("/uploads/" . $imageFilename);
+                $admin['userImageURL'] = $imagePath;
+            } else {
+                $admin['userImageURL'] = null; // or set a default image URL if needed
+            }
+
             return $this->respond($admin, 200);
         } catch (\Throwable $th) {
             //throw $th;

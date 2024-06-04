@@ -282,4 +282,49 @@ class LivestockPregnancyModel extends Model
             //throw $th;
         }
     }
+
+    public function getPregnanciesForReport($minDate, $maxDate){
+        try {
+            $whereClause = [
+                'livestock_pregnancies.record_status' => 'Accessible',
+                'livestock_pregnancies.pregnancy_start_date >=' => $minDate,
+                'livestock_pregnancies.pregnancy_start_date <=' => $maxDate
+            ];
+
+
+            $data = $this
+                ->select('
+                    user_accounts.user_id as farmerUserId,
+                    CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                    CONCAT_WS(", ", user_accounts.sitio, user_accounts.barangay, user_accounts.city, user_accounts.province) as fullAddress,
+                    livestock_breedings.male_livestock_tag_id as maleLivestockTagId,
+                    livestock_breedings.female_livestock_tag_id as femaleLivestockTagId,
+                    livestock_breedings.breeding_result as breedingResult,
+                    livestock_types.livestock_type_name as livestockTypeName,
+                    livestock_pregnancies.outcome,
+                    livestock_pregnancies.pregnancy_start_date as pregnancyStartDate,
+                    livestock_pregnancies.expected_delivery_date as expectedDeliveryDate,
+                    livestock_pregnancies.actual_delivery_date as actualDeliveryDate
+                ')
+                ->join('livestock_breedings', 'livestock_breedings.id = livestock_pregnancies.breeding_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_breedings.farmer_id')
+                ->join('livestocks', 'livestocks.id = livestock_pregnancies.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->orderBy('livestock_pregnancies.pregnancy_start_date', 'ASC')
+                ->orderBy('livestock_pregnancies.expected_delivery_date', 'ASC')
+                ->orderBy('livestock_pregnancies.actual_delivery_date', 'ASC')
+                ->orderBy('farmerUserId', 'ASC')
+                ->orderBy('farmerName', 'ASC')
+                ->orderBy('livestock_breedings.male_livestock_tag_id', 'ASC')
+                ->orderBy('livestock_breedings.female_livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+
+        }
+    }
 }
