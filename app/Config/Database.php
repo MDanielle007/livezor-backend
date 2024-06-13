@@ -27,9 +27,9 @@ class Database extends Config
     public array $default = [
         'DSN'          => '',
         'hostname'     => 'localhost',
-        'username'     => 'u262559041_adlivezor',
-        'password'     => '0rm1n.L1v35t0ck.2o24',
-        'database'     => 'u262559041_orminlivezor',
+        'username'     => '',
+        'password'     => '',
+        'database'     => '',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
@@ -74,6 +74,12 @@ class Database extends Config
     public function __construct()
     {
         parent::__construct();
+        log_message('debug', 'Database hostname: ' . env('database.default.hostname'));
+        log_message('debug', 'Database username: ' . env('database.default.username'));
+        log_message('debug', 'Database password: ' . env('database.default.password'));
+        log_message('debug', 'Database name: ' . env('database.default.database'));
+        log_message('debug', 'Database driver: ' . env('database.default.DBDriver'));
+        log_message('debug', 'Database port: ' . env('database.default.port'));
 
         // Ensure that we always set the database group to 'tests' if
         // we are currently running an automated test suite, so that
