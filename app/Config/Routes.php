@@ -143,6 +143,7 @@ $routes->group('api', function ($routes) {
         $routes->get('get-livestock-report-data', 'LivestocksController::getLivestockReportData');
         $routes->post('import-livestock-data','LivestocksController::importLivestockData');
         $routes->get('get-livestock-freport', 'LivestocksController::getLivestockRecordsForReport');
+        $routes->get('get-livestock-disprod-freport', 'LivestocksController::getLivestockDisProdForReport');
 
 
         // Poultry endpoints routes

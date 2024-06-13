@@ -1807,7 +1807,7 @@ class LivestockModel extends Model
         return $productionData;
     }
 
-    public function getLivestockForReport($category, $minDate, $maxDate)
+    public function getLivestockRecordForReport($category, $minDate, $maxDate)
     {
         try {
             $whereClause = [
@@ -1856,6 +1856,107 @@ class LivestockModel extends Model
             //throw $th;
             log_message('error', $th->getMessage());
         }
+    }
+
+    public function getLivestockDisProdForReport($category,$minDate,$maxDate, $origin){
+        try {
+            // //code...
+            // $whereClause = [
+            //     'farmer_livestocks.record_status' => 'Accessible',
+            //     'livestocks.category' => $category,
+            //     'farmer_livestocks.acquired_date >=' => $minDate,
+            //     'farmer_livestocks.acquired_date <=' => $maxDate,
+            //     'livestocks.origin' => $origin
+            // ];
+
+            // $data = $this->distinct()
+            //     ->select('
+            //         ROW_NUMBER() OVER () AS id,
+            //         user_accounts.user_id as farmerUserId,
+            //         CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+            //         user_accounts.sitio,
+            //         user_accounts.barangay,
+            //         user_accounts.city,
+            //         user_accounts.province,
+            //         user_accounts.date_of_birth as dateOfBirth,
+            //         user_accounts.phone_number as phoneNumber,
+            //         livestock_types.livestock_type_name as livestockType,
+            //         COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+            //         COUNT(*) as livestockCount,
+            //         farmer_livestocks.acquired_date as acquiredDate
+            //     ')
+            //     ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
+            //     ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+            //     ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+            //     ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+            //     ->where($whereClause)
+            //     ->groupBy('livestock_types.livestock_type_name')
+            //     ->groupBy('livestock_breeds.livestock_breed_name')
+            //     ->groupBy('user_accounts.user_id')
+            //     ->groupBy('farmerName')
+            //     ->groupBy('farmer_livestocks.acquired_date')
+            //     ->orderBy('farmer_livestocks.acquired_date', 'ASC')
+            //     ->orderBy('farmerUserId', 'ASC')
+            //     ->orderBy('farmerName', 'ASC')
+            //     ->orderBy('livestock_types.livestock_type_name')
+            //     ->orderBy('livestock_breeds.livestock_breed_name')
+            //     ->findAll();
+
+            // return $data;
+
+            $whereClause = [
+                'farmer_livestocks.record_status' => 'Accessible',
+                'livestocks.category' => $category,
+                'farmer_livestocks.acquired_date >=' => $minDate,
+                'farmer_livestocks.acquired_date <=' => $maxDate,
+                'livestocks.origin' => $origin
+            ];
+    
+            $data = $this->select('
+                    ROW_NUMBER() OVER (ORDER BY farmer_livestocks.acquired_date) AS id,
+                    user_accounts.user_id as farmerUserId,
+                    CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                    user_accounts.sitio,
+                    user_accounts.barangay,
+                    user_accounts.city,
+                    user_accounts.province,
+                    user_accounts.date_of_birth as dateOfBirth,
+                    user_accounts.phone_number as phoneNumber,
+                    livestock_types.livestock_type_name as livestockType,
+                    COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                    COUNT(*) as livestockCount,
+                    farmer_livestocks.acquired_date as acquiredDate
+                ')
+                ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id', 'left') // Use left join if breed can be null
+                ->where($whereClause)
+                ->groupBy([
+                    'user_accounts.user_id',
+                    'farmerName',
+                    'user_accounts.sitio',
+                    'user_accounts.barangay',
+                    'user_accounts.city',
+                    'user_accounts.province',
+                    'user_accounts.date_of_birth',
+                    'user_accounts.phone_number',
+                    'livestock_types.livestock_type_name',
+                    'livestock_breeds.livestock_breed_name',
+                    'farmer_livestocks.acquired_date'
+                ])
+                ->orderBy('farmer_livestocks.acquired_date', 'ASC')
+                ->orderBy('farmerUserId', 'ASC')
+                ->orderBy('farmerName', 'ASC')
+                ->orderBy('livestock_types.livestock_type_name', 'ASC')
+                ->orderBy('livestock_breeds.livestock_breed_name', 'ASC')
+                ->findAll();
+    
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+        }   
     }
 
 }
