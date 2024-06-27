@@ -349,11 +349,25 @@ $routes->group('api', function ($routes) {
         $routes->get('audit-trail-entity/(:any)', 'AuditTrailController::getAuditTrailLogsByEntity/$1');
         $routes->get('audit-trail-action/(:any)', 'AuditTrailController::getAuditTrailLogsByAction/$1');
         $routes->post('add-audit-trail', 'AuditTrailController::insertAuditTrailLog');
-        $routes->put('update-livestock-mortality/(:any)', 'AuditTrailController::updateLivestockMortality/$1');
-        $routes->put('update-livestock-mortality-record-stat/(:any)', 'AuditTrailController::updateLivestockMortalityRecordStatus/$1');
-        $routes->delete('delete-livestock-mortality/(:any)', 'AuditTrailController::deleteLivestockMortality/$1');
-        $routes->get('get-farmer-audit-report-data', 'AuditTrailController::getAuditReportData');
-        $routes->get('get-farmer-audit-freport', 'AuditTrailController::getUserAuditTrailsForReport');
+
+        // Farmer Association endpoint routes
+        $routes->get('get-farmer-associationc', 'FarmerAssociationController::getAllFarmerAssociationComplete');
+        $routes->get('get-farmer-associationc/(:any)', 'FarmerAssociationController::getFarmerAssociationComplete/$1');
+        $routes->get('get-farmer-association', 'FarmerAssociationController::getFarmerAssociation');
+        $routes->post('add-farmer-association', 'FarmerAssociationController::insertFarmerAssociation');
+        $routes->post('add-farmer-association-multiple', 'FarmerAssociationController::insertMultipleFarmerAssociation');
+        $routes->put('update-farmer-association/(:any)', 'FarmerAssociationController::updateFarmerAssociation/$1');
+        $routes->delete('delete-farmer-association/(:any)', 'FarmerAssociationController::deleteFarmerAssociation/$1');
+
+        // Farmer User Association endpoint routes
+        $routes->get('get-farmeruser-association', 'FarmerUserAssociationController::getAllFarmerUserAssociations');
+        $routes->get('get-farmeruser-association/(:any)', 'FarmerUserAssociationController::getFarmerUserAssociationsById/$1');
+        $routes->get('get-farmeruser-association-user/(:any)', 'FarmerUserAssociationController::getFarmerUserAssociationsByUserId/$1');
+        $routes->post('add-farmeruser-association', 'FarmerUserAssociationController::insertFarmerUserAssociation');
+        $routes->post('add-farmeruser-association-multiple-farmer', 'FarmerUserAssociationController::insertMultipleFarmerUserAssociations');
+        $routes->post('add-farmeruser-association-multiple', 'FarmerUserAssociationController::insertMultipleFarmerUserAssociationsInAFarmer');
+        $routes->put('update-farmeruser-association/(:any)', 'FarmerUserAssociationController::updateFarmerUserAssociation/$1');
+        $routes->delete('delete-farmeruser-association/(:any)', 'FarmerUserAssociationController::deleteFarmerUserAssociation/$1');
 
         // Charts endpoint routes
         $routes->get('livestock-mapping-data', 'LivestocksController::getLivestockMappingData');
@@ -441,6 +455,12 @@ $routes->group('api', function ($routes) {
         // Farmer User Management endpoint routes
         $routes->get('get-farmer-profile/(:any)', 'UserController::getFarmerUserInfo/$1');
         $routes->put('update-user-personal-info/(:any)', 'UserController::updateUserPersonalInfo/$1');
+
+        $routes->get('get-farmeruser-association-user/(:any)', 'FarmerUserAssociationController::getFarmerUserAssociationsByUserId/$1');
+        $routes->post('add-farmeruser-association', 'FarmerUserAssociationController::insertFarmerUserAssociation');
+        $routes->post('add-farmeruser-association-multiple-farmer', 'FarmerUserAssociationController::insertMultipleFarmerUserAssociations');
+        $routes->post('add-farmeruser-association-multiple', 'FarmerUserAssociationController::insertMultipleFarmerUserAssociationsInAFarmer');
+        $routes->put('update-farmeruser-association/(:any)', 'FarmerUserAssociationController::updateFarmerUserAssociation/$1');
 
         $routes->get('get-audit-trails/(:any)', 'AuditTrailController::getFarmerAuditTrailLogs/$1');
     });

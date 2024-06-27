@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\FarmerAssociationModel;
+use App\Models\FarmerUserAssociationModel;
 use App\Models\LivestockModel;
 use App\Models\PersonnelDetailsModel;
 use \Firebase\JWT\JWT;
@@ -15,12 +17,14 @@ class UserController extends ResourceController
     private $userModel;
     private $livestock;
     private $personnelDetails;
+    private $farmerAssociation;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->livestock = new LivestockModel();
         $this->personnelDetails = new PersonnelDetailsModel();
+        $this->farmerAssociation = new FarmerAssociationModel();
     }
 
     public function index()
@@ -133,6 +137,25 @@ class UserController extends ResourceController
                     'positionId' => null,
                     'departmentId' => null,
                 ]);
+            } else if ($data->userType == "Farmer") {
+                $haveFarmerAssociation = $data->haveFarmerAssociationp;
+                if ($haveFarmerAssociation) {
+                    $farmerAssociation = $this->farmerAssociation->getFarmerAssociationByName($data->farmerUserAssociation);
+                    $farmerAssociationId = null;
+                    if (!$farmerAssociation) {
+                        $farmerAssociationId = $this->farmerAssociation->insertFarmerAssociation((object) ['farmerAssociationName' => $data->farmerUserAssociation]);
+                    } else {
+                        $farmerAssociationId = $farmerAssociation['id'];
+                    }
+                    $fuAssociations = new FarmerUserAssociationModel();
+
+                    $farmerUserAssociation = $fuAssociations->insert(
+                        (object) [
+                            'userId' => $result,
+                            'farmerAssociationId' => $farmerAssociationId
+                        ]
+                    );
+                }
             }
 
             return $this->respond($result, 200);
