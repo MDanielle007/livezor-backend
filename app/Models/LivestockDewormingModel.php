@@ -136,6 +136,41 @@ class LivestockDewormingModel extends Model
         }
     }
 
+    public function getLivestockDewormingByLivestockId($id)
+    {
+        try {
+            $whereClause = [
+                'livestock_dewormings.record_status' => 'Accessible',
+                'livestocks.id' => $id
+            ];
+
+            $livestockDewormings = $this->select('
+                livestock_dewormings.id,
+                livestock_dewormings.dewormer_id as dewormerId,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as dewormerName,
+                livestock_dewormings.livestock_id as livestockId,
+                livestocks.livestock_tag_id as livestockTagId,
+                livestock_types.livestock_type_name as livestockType,
+                livestock_dewormings.dosage as dosage,
+                livestock_dewormings.administration_method as administrationMethod,
+                livestock_dewormings.deworming_remarks as remarks,
+                livestock_dewormings.next_deworming_date as nextDewormingDate,
+                livestock_dewormings.deworming_date as dewormingDate
+            ')
+                ->join('livestocks', 'livestocks.id = livestock_dewormings.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_dewormings.dewormer_id')
+                ->where($whereClause)
+                ->orderBy('livestock_dewormings.created_at', 'DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+
+            return $livestockDewormings;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
     public function getAllFarmerLivestockDewormings($userId)
     {
         try {
@@ -265,30 +300,28 @@ class LivestockDewormingModel extends Model
     public function getDewormingCountLast4Months()
     {
         try {
-            $currentMonth = date('F');
-            $currentYear = date('Y');
+            $currentDate = new \DateTime();
 
-            $months = [];
-            for ($i = 3; $i >= 0; $i--) {
-                $month = date('F', strtotime("-$i months"));
-                $months[] = $month;
-            }
+            $data = [];
 
-            $dewormingCounts = [];
-            foreach ($months as $month) {
-                $count = $this->select('COUNT(*) as dewormingCount')
-                    ->where('MONTH(deworming_date)', date('m', strtotime($month)))
-                    ->where('YEAR(deworming_date)', $currentYear)
-                    ->get()
-                    ->getRowArray();
+            for ($i = 0; $i < 4; $i++) {
+                $currentDate->modify('-1 month');
 
-                $dewormingCounts[] = [
-                    'month' => $month,
-                    'dewormingCount' => $count['dewormingCount'] ?? 0,
+                $month = $currentDate->format('n'); // Numeric month
+                $year = $currentDate->format('Y'); // Year
+
+                $count = $this->selectCount('id')
+                ->where('MONTH(deworming_date)', $month)
+                ->where('YEAR(deworming_date)', $year)
+                ->countAllResults();
+
+                $data[] = [
+                    'month' => $currentDate->format('F'),
+                    'dewormingCount' => $count ?? 0,
                 ];
             }
 
-            return $dewormingCounts;
+            return $data;
         } catch (\Throwable $th) {
             // Handle exceptions
             return [];
@@ -375,14 +408,16 @@ class LivestockDewormingModel extends Model
 
             $startDate = new \DateTime($earliestDate['earliest_date']);
             $endDate = new \DateTime($latestDate['latest_date']);
+            // Include the end month in the period
+            $endDate->modify('first day of next month');
 
             // Get the monthly counts from the database
             $dbResults = $this->select('YEAR(livestock_dewormings.deworming_date) as year, MONTH(livestock_dewormings.deworming_date) as month, COUNT(*) as count')
                 ->join('livestocks', 'livestocks.id = livestock_dewormings.livestock_id')
+                ->where(['livestocks.category' => 'Livestock'])
                 ->groupBy('YEAR(livestock_dewormings.deworming_date), MONTH(deworming_date)')
                 ->orderBy('YEAR(livestock_dewormings.deworming_date)', 'ASC')
                 ->orderBy('MONTH(livestock_dewormings.deworming_date)', 'ASC')
-                ->where(['livestocks.category' => 'Livestock'])
                 ->findAll();
 
             // Create a complete list of months between start and end dates
@@ -414,6 +449,7 @@ class LivestockDewormingModel extends Model
             return [];
         }
     }
+
 
     public function getDewormingsForReport($minDate, $maxDate)
     {

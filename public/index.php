@@ -44,7 +44,7 @@ require_once SYSTEMPATH . 'Config/DotEnv.php';
 (new CodeIgniter\Config\DotEnv(ROOTPATH))->load();
 
 // Define ENVIRONMENT
-if (! defined('ENVIRONMENT')) {
+if (!defined('ENVIRONMENT')) {
     define('ENVIRONMENT', env('CI_ENVIRONMENT', 'production'));
 }
 
@@ -62,11 +62,15 @@ if (! defined('ENVIRONMENT')) {
  * the application run, and does all the dirty work to get
  * the pieces all working together.
  */
-header('Access-Control-Allow-Origin: *');
+$frontend = getenv('FRONTEND_URL');
+
+header("Access-Control-Allow-Origin: $frontend");
 header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method, Authorization");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+header("Access-Control-Allow-Credentials: true");
+
 $method = $_SERVER['REQUEST_METHOD'];
-if($method == "OPTIONS"){
+if ($method == "OPTIONS") {
     die();
 }
 

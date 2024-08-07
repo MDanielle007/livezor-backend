@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\FarmerAuditModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use ErrorException;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Color;
@@ -22,6 +23,21 @@ class AuditTrailController extends ResourceController
     public function __construct()
     {
         $this->auditTrails = new FarmerAuditModel();
+        helper('jwt');
+    }
+
+    public function getAllAuditTrailLogs()
+    {
+        try {
+            //code...
+            $data = $this->auditTrails->getAllAuditTrailLogs();
+            // return $this->respond($auditTrails);
+            return $this->respond($data, 200, 'Data retrieved successfully');
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to retrieve data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     public function getAllFarmerAuditTrailLogs()
@@ -36,7 +52,8 @@ class AuditTrailController extends ResourceController
         }
     }
 
-    public function getAuditReportData(){
+    public function getAuditReportData()
+    {
         try {
             $selectClause = $this->request->getGet('selectClause');
             $minDate = $this->request->getGet('minDate');
@@ -51,13 +68,18 @@ class AuditTrailController extends ResourceController
         }
     }
 
-    public function getFarmerAuditTrailLogs($id)
+    public function getFarmerAuditTrailLogs()
     {
         try {
-            $auditTrails = $this->auditTrails->getFarmerAuditTrailLogs($id);
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
+            $auditTrails = $this->auditTrails->getFarmerAuditTrailLogs($userId);
             return $this->respond($auditTrails);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 

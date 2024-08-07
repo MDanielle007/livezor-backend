@@ -165,6 +165,37 @@ class LivestockBloodSampleModel extends Model
         }
     }
 
+    public function getLivestockBloodSampleByLivestockId($id)
+    {
+        try {
+            $whereClause = [
+                'livestocks.category' => 'Livestock',
+                'livestock_blood_samples.record_status' => 'Accessible',
+                'livestocks.id' => $id
+            ];
+
+            $livestockBloodSample = $this->select('
+                livestock_blood_samples.id,
+                livestock_blood_samples.user_id as userId,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as userName,
+                livestock_blood_samples.livestock_id as livestockId,
+                livestocks.livestock_tag_id as livestockTagId,
+                livestock_types.livestock_type_name as livestockType,
+                livestock_blood_samples.findings,
+                livestock_blood_samples.blood_sample_date as sampleDate
+            ')
+                ->join('livestocks', 'livestocks.id = livestock_blood_samples.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_blood_samples.user_id')
+                ->where($whereClause)
+                ->findAll();
+
+            return $livestockBloodSample;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
     public function insertLivestockBloodSample($data)
     {
         try {
@@ -321,29 +352,28 @@ class LivestockBloodSampleModel extends Model
     public function getBloodCountLast4Months()
     {
         try {
-            $currentYear = date('Y');
+            $currentDate = new \DateTime();
 
-            $months = [];
-            for ($i = 3; $i >= 0; $i--) {
-                $month = date('F', strtotime("-$i months"));
-                $months[] = $month;
-            }
+            $data = [];
 
-            $bloodSampleCounts = [];
-            foreach ($months as $month) {
-                $count = $this->select('COUNT(*) as bloodSampleCount')
-                    ->where('MONTH(blood_sample_date)', date('m', strtotime($month)))
-                    ->where('YEAR(blood_sample_date)', $currentYear)
-                    ->get()
-                    ->getRowArray();
+            for ($i = 0; $i < 4; $i++) {
+                $currentDate->modify('-1 month');
 
-                $bloodSampleCounts[] = [
-                    'month' => $month,
-                    'bloodSampleCount' => $count['bloodSampleCount'] ?? 0,
+                $month = $currentDate->format('n'); // Numeric month
+                $year = $currentDate->format('Y'); // Year
+
+                $count = $this->selectCount('id')
+                ->where('MONTH(blood_sample_date)', $month)
+                ->where('YEAR(blood_sample_date)', $year)
+                ->countAllResults();
+
+                $data[] = [
+                    'month' => $currentDate->format('F'),
+                    'bloodSampleCount' => $count ?? 0,
                 ];
             }
 
-            return $bloodSampleCounts;
+            return $data;
         } catch (\Throwable $th) {
             // Handle exceptions
             return [];

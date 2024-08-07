@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\EggMonitoringLogsModel;
 use App\Models\EggProcessingBatchModel;
 use App\Models\EggProductionBatchGroupModel;
+use App\Models\FarmerAuditModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -22,11 +23,14 @@ class EggProcessingBatchController extends ResourceController
     private $eggProcessBatches;
     private $eggBatch;
     private $eggMonitoringLog;
+    private $farmerAudit;
     public function __construct()
     {
         $this->eggProcessBatches = new EggProcessingBatchModel();
         $this->eggBatch = new EggProductionBatchGroupModel();
         $this->eggMonitoringLog = new EggMonitoringLogsModel();
+        $this->farmerAudit = new FarmerAuditModel();
+        helper('jwt');
     }
 
     public function getEggProcessingBatches()
@@ -39,7 +43,8 @@ class EggProcessingBatchController extends ResourceController
         }
     }
 
-    public function getLivestockEggMonitoringLogsReportData(){
+    public function getLivestockEggMonitoringLogsReportData()
+    {
         try {
             $selectClause = $this->request->getGet('selectClause');
             $minDate = $this->request->getGet('minDate');
@@ -54,7 +59,8 @@ class EggProcessingBatchController extends ResourceController
         }
     }
 
-    public function getEggMonitoringLogsReportData(){
+    public function getEggMonitoringLogsReportData()
+    {
         try {
             $selectClause = $this->request->getGet('selectClause');
             $minDate = $this->request->getGet('minDate');
@@ -85,36 +91,57 @@ class EggProcessingBatchController extends ResourceController
         try {
             $data = $this->request->getJSON();
 
-            $data->userId = '1';
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
 
-            $eggProcessBatchId = $this->eggProcessBatches->insertEggProcessingBatch($data);
+            $data->userId = $userId;
+
+            $response = $this->eggProcessBatches->insertEggProcessingBatch($data);
 
             $batchStat = $this->eggBatch->updateEggProductionBatchStatus($data->eggBatchGroupId, 'Processing');
 
             $log = $this->eggMonitoringLog->insertEggMonitoringLog((object) [
                 'recordOwner' => 'DA',
                 'userId' => $data->userId,
-                'eggProcessBatchId' => $eggProcessBatchId,
+                'eggProcessBatchId' => $response,
                 'action' => 'Setting',
                 'dateConducted' => date('Y-m-d H:i:s'),
                 'remarks' => $data->remarks
             ]);
 
-            return $this->respond(['success' => $eggProcessBatchId], 200);
+            $eggProdBatch = $this->eggBatch->getEggProductionBatchGroup($data->eggBatchGroupId);
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object) [
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Add New Processed Egg",
+                'description' => "Add New Processed Egg of batch " . $eggProdBatch['batch_name'],
+                'entityAffected' => "Egg Production",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+            return $this->respond(['result' => $response], 200, 'Processed egg production successfully');
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()], 200);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to process egg production', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
-    public function updateEggProcessingBatch($id)
+    public function updateEggProcessingBatch()
     {
         try {
             $data = $this->request->getJSON();
 
-            $data->userId = '1';
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $data->userId = $userId;
 
-            $res = $this->eggProcessBatches->updateEggProcessingBatch($id, $data);
+            $response = $this->eggProcessBatches->updateEggProcessingBatch($data->id, $data);
 
             if ($data->action == "Extracting") {
                 $batchStat = $this->eggBatch->updateEggProductionBatchStatus($data->eggBatchGroupId, 'Inactive');
@@ -123,20 +150,69 @@ class EggProcessingBatchController extends ResourceController
             $log = $this->eggMonitoringLog->insertEggMonitoringLog((object) [
                 'recordOwner' => 'DA',
                 'userId' => $data->userId,
-                'eggProcessBatchId' => $id,
+                'eggProcessBatchId' => $data->id,
                 'action' => $data->action,
                 'dateConducted' => date('Y-m-d H:i:s'),
                 'remarks' => $data->remarks
             ]);
+            
+            $eggProdBatch = $this->eggBatch->getEggProductionBatchGroup($data->eggBatchGroupId);
+            
+            $auditLog = (object) [
+                'farmerId' => $userId,
+                'action' => "Edit",
+                'title' => "Updated Processed Egg",
+                'description' => "Updated Processed Egg of batch " . $eggProdBatch['batch_name'],
+                'entityAffected' => "Egg Production",
+            ];
 
-            return $this->respond(['success' => $log], 200);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+            return $this->respond(['result' => $response], 200,'Updated processed egg production successfully');
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()], 200);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to update egg production', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
-    public function getAllEggMonitoringLogs(){
+    public function deleteEggProcessingBatch(){
+        try {
+            //code...
+
+            $id = $this->request->getGet('eggProcessing');
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
+            $eggProcessBatch = $this->eggProcessBatches->getEggProcessingBatch($id);
+
+            $batchStat = $this->eggBatch->updateEggProductionBatchStatus($eggProcessBatch->eggBatchGroupId, 'Inactive');
+
+            $response = $this->eggProcessBatches->deleteEggProcessingBatch($id);
+
+            $auditLog = (object) [
+                'farmerId' => $userId,
+                'action' => "Delete",
+                'title' => "Deleted Egg Processing Record",
+                'description' => "Deleted Egg Processing Record of batch " . $eggProcessBatch->batchName,
+                'entityAffected' => "Egg Production",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+            return $this->respond(['result' => $response], 200,'Updated processed egg production successfully');
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete egg production', ResponseInterface::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function getAllEggMonitoringLogs()
+    {
         try {
             $eggMonitoringLogs = $this->eggMonitoringLog->getAllEggMonitoringLogs();
             return $this->respond($eggMonitoringLogs, 200);

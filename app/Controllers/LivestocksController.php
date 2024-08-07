@@ -40,6 +40,7 @@ class LivestocksController extends ResourceController
         $this->farmerLivestock = new FarmerLivestockModel();
         $this->userModel = new UserModel();
         $this->farmerAudit = new FarmerAuditModel();
+        helper('jwt');
         // helper('excel');
     }
 
@@ -85,18 +86,23 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getFarmerAllLivestocks($userId)
+    public function getFarmerAllLivestocks()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
             $livestocks = $this->livestock->getFarmerAllLivestock($userId);
 
             return $this->respond($livestocks);
         } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => $th->getMessage()]);
         }
     }
 
-    public function addLivestock()
+    public function addSingleLivestock()
     {
         try {
             $data = $this->request->getJSON();
@@ -112,8 +118,18 @@ class LivestocksController extends ResourceController
     public function addFarmerLivestock()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            $userId = getTokenUserId($header);
+
             $data = $this->request->getJSON();
             $data->category = "Livestock";
+
+            if($userType == 'Farmer'){
+                $data->farmerId = $userId;
+            }
+
             $livestockId = $this->livestock->insertLivestock($data);
 
             $data->livestockId = $livestockId;
@@ -123,15 +139,21 @@ class LivestocksController extends ResourceController
             $livestockType = $this->livestockTypes->getLivestockTypeName($data->livestockTypeId);
             $livestockTagId = $data->livestockTagId;
 
-            $data->action = "Add";
-            $data->title = "Add New Livestock";
-            $data->description = "Add New Livestock $livestockType, $livestockTagId";
-            $data->entityAffected = "Livestock";
+            $auditLog = (object)[
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Add New Livestock",
+                'description' => "Add New Livestock $livestockType, $livestockTagId",
+                'entityAffected' => "Livestock",
+            ];
 
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
             return $this->respond(['success' => true, 'message' => 'Livestock Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => 'Failed to add livestock']);
         }
     }
@@ -143,22 +165,34 @@ class LivestocksController extends ResourceController
             $data->category = "Livestock";
             $data->breedingEligibility = "Not Age-Suited";
 
-            $data->action = "Add";
-            $data->title = "Add New Livestock";
-            $data->entityAffected = "Livestock";
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->farmerId = $userId;
+            }
+
+            $auditLog = (object)[
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Add New Livestock",
+                'entityAffected' => "Livestock",
+            ];
 
             if ($data->maleLivestockCount > 0) {
                 $data->sex = 'Male';
                 for ($i = 1; $i <= $data->maleLivestockCount; $i++) {
 
                     $livestockId = $this->livestock->insertLivestock($data);
+                    $auditLog->livestockId = $livestockId;
                     $data->livestockId = $livestockId;
                     $result = $this->farmerLivestock->associateFarmerLivestock($data);
-
                     $livestockType = $this->livestockTypes->getLivestockTypeName($data->livestockTypeId);
 
-                    $data->description = "Add New Livestock $livestockType";
-                    $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+                    $auditLog->description = "Add New Livestock $livestockType";
+                    $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
                 }
             }
 
@@ -167,42 +201,59 @@ class LivestocksController extends ResourceController
                 for ($i = 1; $i <= $data->femaleLivestockCount; $i++) {
 
                     $livestockId = $this->livestock->insertLivestock($data);
+                    $auditLog->livestockId = $livestockId;
                     $data->livestockId = $livestockId;
                     $result = $this->farmerLivestock->associateFarmerLivestock($data);
                     $livestockType = $this->livestockTypes->getLivestockTypeName($data->livestockTypeId);
 
-                    $data->description = "Add New Livestock $livestockType";
-                    $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+                    $auditLog->description = "Add New Livestock $livestockType";
+                    $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
                 }
             }
 
             return $this->respond(['success' => true, 'message' => 'Livestock Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => 'Failed to add livestock', 'errMsg' => $th->getMessage()]);
         }
     }
 
-    public function updateLivestock($id)
+    public function updateLivestock()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+
             $data = $this->request->getJSON();
             $data->category = "Livestock";
-            $response = $this->livestock->updateLivestock($id, $data);
+
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->farmerId = $userId;
+            }
+
+            $response = $this->livestock->updateLivestock($data->id, $data);
 
             $livestockTagId = $data->livestockTagId;
 
-            $data->livestockId = $id;
-            $data->action = "Edit";
-            $data->title = " Edit Livestock Record";
-            $data->description = "Updated details for Livestock $livestockTagId";
-            $data->entityAffected = "Livestock";
-
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $auditLog = (object)[
+                'livestockId' => $data->id,
+                'farmerId' => $userId,
+                'action' => "Edit",
+                'title' => "Edit Livestock Record",
+                'description' => "Updated details for Livestock $livestockTagId",
+                'entityAffected' => "Livestock",
+            ];
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
             return $this->respond(['success' => $response, 'message' => 'Livestock Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => 'Failed to update livestock']);
         }
     }
@@ -253,25 +304,32 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function deleteLivestock($id)
+    public function deleteLivestock()
     {
         try {
+            $id = $this->request->getGet('livestock');
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $livestockTagId = $this->livestock->getLivestockTagIdById($id);
             $response = $this->livestock->deleteLivestock($id);
 
-            $livestockTagId = $this->livestock->getLivestockTagIdById($id);
+            $auditLog = (object)[
+                'livestockId' => $id,
+                'farmerId' => $userId,
+                'action' => "Delete",
+                'title' => "Delete Livestock Record",
+                'description' => "Delete Livestock $livestockTagId",
+                'entityAffected' => "Livestock",
+            ];
 
-            $data = new \stdClass();
-            $data->farmerId = $this->userModel->getFarmerByLivestock($id);
-            $data->action = "Delete";
-            $data->title = "Delete Livestock Record";
-            $data->description = "Delete Livestock $livestockTagId";
-            $data->entityAffected = "Livestock";
-
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
-
-            return $this->respond(['result' => $response, 'message' => 'Livestock Successfully Deleted'], 200);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            return $this->respond(['result' => $response], 200,'Livestock Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            $this->fail('Failed to delete record',ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
@@ -352,9 +410,12 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getFarmerLivestockTypeAgeClassCount($userId)
+    public function getFarmerLivestockTypeAgeClassCount()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
             $data = $this->livestock->getFarmerLivestockTypeAgeClassCount($userId);
 
             return $this->respond($data);
@@ -376,9 +437,12 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getFarmerLivestockTypeCount($userId)
+    public function getFarmerLivestockTypeCount()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
             $data = $this->livestock->getFarmerLivestockTypeCount($userId);
 
             return $this->respond($data);
@@ -403,9 +467,11 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getFarmerLivestockCount($userId)
+    public function getFarmerLivestockCount()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
             $data = $this->livestock->getFarmerLivestockCount($userId);
 
             return $this->respond($data);
@@ -415,9 +481,11 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestockTagIDs($userId)
+    public function getAllLivestockTagIDs()
     {
         try {
+            $userId = $this->request->getGet('fui');
+
             $data = $this->livestock->getAllFarmerLivestockTagIDs($userId);
 
             return $this->respond($data);
@@ -427,9 +495,35 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getFarmerDistinctLivestockType($userId)
+    public function getAllFarmerLivestockTagIDs()
     {
         try {
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
+            $data = $this->livestock->getAllFarmerLivestockTagIDs($userId);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function getFarmerDistinctLivestockType()
+    {
+        try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = null;
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+               $userId = $decoded->sub->id;
+            }else{
+               $userId = $this->request->getGet('fui');
+            }
+
             $data = $this->livestock->getFarmerDistinctLivestockType($userId);
 
             return $this->respond($data);
@@ -439,14 +533,27 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestocksBySexAndType($userId)
+    public function getAllFarmerLivestocksBySexAndType()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = null;
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+               $userId = $decoded->sub->id;
+            }else{
+               $userId = $this->request->getGet('fui');
+            }
+
             $data = $this->livestock->getAllFarmerLivestocksBySexAndType($userId);
 
             return $this->respond($data);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            
         }
     }
 
@@ -485,13 +592,21 @@ class LivestocksController extends ResourceController
     public function getLivestockCountByMonthAndType()
     {
         try {
-            $livestockTypes = $this->livestockTypes->getAllLivestockTypeName();
+            $animal = $this->request->getGet('animal');
+            $origin = $this->request->getGet('origin');
+            $year = $this->request->getGet('year');
 
-            $data = $this->livestock->getLivestockCountByMonthAndType($livestockTypes);
+            $livestockTypes = $this->livestockTypes->getAllLivestockTypeName($animal);
+
+            $data = $this->livestock->getLivestockCountByMonthAndType($livestockTypes, $animal, $origin, $year);
+            // $data = $this->livestock->getLivestockCountByMonthAndType($livestockTypes);
+
 
             return $this->respond($data);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => $th->getMessage()]);
         }
     }
@@ -499,7 +614,7 @@ class LivestocksController extends ResourceController
     public function getLivestockHealthStatusesCount()
     {
         try {
-            $data = $this->livestock->getLivestockHealthStatusesCount();
+            $data = $this->livestock->getLivestockHealthStatusesCount('Livestock');
 
             return $this->respond($data);
         } catch (\Throwable $th) {
@@ -510,23 +625,31 @@ class LivestocksController extends ResourceController
     public function getAllLivestockTypeCountByCity($city)
     {
         try {
-            $livestockTypeCount = $this->livestock->getAllLivestockTypeCountByCity($city);
 
-            $totalLivestockCount = $this->livestock->getLivestockCountBycity($city);
-            $data = [
-                'livestock' => $livestockTypeCount,
-                'totalLivestockCount' => $totalLivestockCount
-            ];
+            $cities = $this->request->getGet('cities');
+
+            $data = [];
+            $i = 1;
+            foreach ($cities as $city){
+                $livestockTypeCount = $this->livestock->getAllLivestockTypeCountByCity($city);
+
+                $totalLivestockCount = $this->livestock->getLivestockCountBycity($city);
+                $data[] = [
+
+                    'livestockType' => $livestockTypeCount,
+                    'totalLivestockCount' => $totalLivestockCount
+                ];
+            }
+            
             return $this->respond($data);
         } catch (\Throwable $th) {
             return $this->respond($th->getMessage());
         }
     }
 
-    public function getLivestockCountAllCity()
+    public function getLivestockCountAllCity($origin)
     {
         try {
-
             $cities = [
                 'Puerto Galera',
                 'San Teodoro',
@@ -547,9 +670,9 @@ class LivestocksController extends ResourceController
             $data = [];
             $i = 1;
             foreach ($cities as $city) {
-                $livestockTypeCount = $this->livestock->getAllLivestockTypeCountByCity($city);
+                $livestockTypeCount = $this->livestock->getAllLivestockTypeCountByCity($city, $origin);
 
-                $totalLivestockCount = $this->livestock->getLivestockCountBycity($city);
+                $totalLivestockCount = $this->livestock->getLivestockCountBycity($city, $origin);
 
                 $registeredFarmersCount = $this->userModel->getFarmerCountByCity($city);
                 $data[] = [
@@ -570,7 +693,6 @@ class LivestocksController extends ResourceController
     public function getLivestockTypeCountAllCity($livestockTypeId)
     {
         try {
-
             $cities = [
                 'Puerto Galera',
                 'San Teodoro',
@@ -599,6 +721,82 @@ class LivestocksController extends ResourceController
 
             return $this->respond($data);
         } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->respond($th->getMessage());
+        }
+    }
+
+    public function getLivestockBreedCountAllCity($livestockBreedId)
+    {
+        try {
+            $cities = [
+                'Puerto Galera',
+                'San Teodoro',
+                'Baco',
+                'Calapan City',
+                'Naujan',
+                'Victoria',
+                'Socorro',
+                'Pinamalayan',
+                'Gloria',
+                'Bansud',
+                'Bongabong',
+                'Roxas',
+                'Mansalay',
+                'Bulalacao'
+            ];
+
+            $data = [];
+            foreach ($cities as $city) {
+                $livestockBreedCount = $this->livestock->getLivestockBreedCountByCity($city, $livestockBreedId);
+                $data[] = [
+                    'livestock' => $livestockBreedCount,
+                    'city' => $city,
+                ];
+            }
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->respond($th->getMessage());
+        }
+    }
+
+    public function getLivestockAgeClassCountAllCity($livestockAgeId)
+    {
+        try {
+            $cities = [
+                'Puerto Galera',
+                'San Teodoro',
+                'Baco',
+                'Calapan City',
+                'Naujan',
+                'Victoria',
+                'Socorro',
+                'Pinamalayan',
+                'Gloria',
+                'Bansud',
+                'Bongabong',
+                'Roxas',
+                'Mansalay',
+                'Bulalacao'
+            ];
+
+            $data = [];
+            foreach ($cities as $city) {
+                $livestockAgeClassCount = $this->livestock->getLivestockAgeClassCountByCity($city, $livestockAgeId);
+                $data[] = [
+                    'livestock' => $livestockAgeClassCount,
+                    'city' => $city,
+                ];
+            }
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond($th->getMessage());
         }
     }
@@ -628,12 +826,12 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getLivestockProductionSelectedYear($year)
+    public function getLivestockProductionSelectedYear($year, $origin)
     {
         try {
             $livestockTypes = $this->livestockTypes->getAllLivestockTypeIdName();
 
-            $livestock = $this->livestock->getProductionCountByMonthYearAndType($livestockTypes, $year);
+            $livestock = $this->livestock->getProductionCountByMonthYearAndType($livestockTypes, $year, $origin);
 
             return $this->respond($livestock);
         } catch (\Throwable $th) {
@@ -1361,6 +1559,48 @@ class LivestocksController extends ResourceController
                 'fileName' => $fileName
             ]);
         } catch (\Throwable $th) {
+            log_message('error', $th->getMessage());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failServerError($th->getMessage());
+        }
+    }
+
+    public function getLivestockTypeCountMonitoring(){
+        try {
+            $category = $this->request->getGet('category');
+            $data = $this->livestock->getLivestockTypeCountMonitoring($category);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failServerError($th->getMessage());
+        }
+    }
+
+    public function getLivestockBreedCountMonitoring(){
+        try {
+            $category = $this->request->getGet('category');
+            $data = $this->livestock->getLivestockBreedCountMonitoring($category);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failServerError($th->getMessage());
+        }
+    }
+
+    public function getLivestockAgeCountMonitoring(){
+        try {
+            $category = $this->request->getGet('category');
+            $data = $this->livestock->getLivestockAgeCountMonitoring($category);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
             log_message('error', $th->getMessage());
             log_message('error', json_encode($th->getTrace()));
             return $this->failServerError($th->getMessage());

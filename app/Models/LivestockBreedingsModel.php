@@ -71,6 +71,39 @@ class LivestockBreedingsModel extends Model
         }
     }
 
+    public function getAllLivestockBreedingsByLivestockId($livestockId, $farmerId)
+    {
+        try {
+            $whereClause = [
+                'livestock_breedings.record_status' => 'Accessible',
+                'user_accounts.user_id' => $farmerId
+            ];
+
+            $livestockBreedings = $this->select(
+                'livestock_breedings.id,
+                livestock_breedings.livestock_type_id as livestockTypeId,
+                livestock_types.livestock_type_name as livestockType,
+                livestock_breedings.male_livestock_tag_id as maleLivestockTagId,
+                livestock_breedings.female_livestock_tag_id as femaleLivestockTagId,
+                livestock_breedings.breeding_result as breedResult,
+                livestock_breedings.breeding_remarks as remarks,
+                livestock_breedings.breed_date as breedDate'
+            )
+                ->join('user_accounts', 'user_accounts.id = livestock_breedings.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestock_breedings.livestock_type_id')
+                ->where($whereClause)
+                ->groupStart() // Start grouping the next where clauses
+                ->where('livestock_breedings.male_livestock_tag_id', $livestockId)
+                ->orWhere('livestock_breedings.female_livestock_tag_id', $livestockId)
+                ->groupEnd() // End grouping
+                ->findAll();
+            return $livestockBreedings;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+            //throw $th;
+        }
+    }
+
     public function getReportData($selectClause, $minDate, $maxDate)
     {
         try {
@@ -132,7 +165,9 @@ class LivestockBreedingsModel extends Model
                 livestock_breedings.breed_date as breedDate'
             )
                 ->join('livestock_types', 'livestock_types.id = livestock_breedings.livestock_type_id')
-                ->where($whereClause)->findAll();
+                ->where($whereClause)
+                ->orderBy('livestock_breedings.breed_date','DESC')
+                ->findAll();
             return $livestockBreedings;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -147,17 +182,14 @@ class LivestockBreedingsModel extends Model
                 female_livestock_tag_id as femaleLivestockTagId
             ')
                 ->where('id', $id) // Use the parameter $id here
-                ->get()
-                ->result();
+                ->first();
 
             // Check if any result is found
-            if (!empty($livestock)) {
-                return $livestock[0]; // Access the id property of the first object
-            } else {
-                return null; // Or you can return an appropriate value if no result is found
-            }
+            return $livestock;
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -328,30 +360,28 @@ class LivestockBreedingsModel extends Model
     public function getBreedingsCountLast4Months()
     {
         try {
-            $currentMonth = date('F');
-            $currentYear = date('Y');
+            $currentDate = new \DateTime();
 
-            $months = [];
-            for ($i = 3; $i >= 0; $i--) {
-                $month = date('F', strtotime("-$i months"));
-                $months[] = $month;
-            }
+            $data = [];
 
-            $breedingCounts = [];
-            foreach ($months as $month) {
-                $count = $this->select('COUNT(*) as breedingCount')
-                    ->where('MONTH(breed_date)', date('m', strtotime($month)))
-                    ->where('YEAR(breed_date)', $currentYear)
-                    ->get()
-                    ->getRowArray();
+            for ($i = 0; $i < 4; $i++) {
+                $currentDate->modify('-1 month');
 
-                $breedingCounts[] = [
-                    'month' => $month,
-                    'breedingCount' => $count['breedingCount'] ?? 0,
+                $month = $currentDate->format('n'); // Numeric month
+                $year = $currentDate->format('Y'); // Year
+
+                $count = $this->selectCount('id')
+                ->where('MONTH(breed_date)', $month)
+                ->where('YEAR(breed_date)', $year)
+                ->countAllResults();
+
+                $data[] = [
+                    'month' => $currentDate->format('F'),
+                    'breedingCount' => $count ?? 0,
                 ];
             }
 
-            return $breedingCounts;
+            return $data;
         } catch (\Throwable $th) {
             // Handle exceptions
             return [];

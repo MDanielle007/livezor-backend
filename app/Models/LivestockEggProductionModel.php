@@ -130,16 +130,28 @@ class LivestockEggProductionModel extends Model
 
     public function getEggProduction($id)
     {
-        $eggProduction = $this->select(
-            'id,
-            farmer_id as farmerId,
-            livestock_id as livestockId,
-            batch_group_id as batchGroupId,
-            eggs_produced as eggsProduced,
-            remarks as remarks,
-            date_of_production as dateOfProduction'
-        )->find($id);
-        return $eggProduction;
+        try {
+            $eggProduction = $this->select('
+            livestock_egg_productions.id,
+            livestock_egg_productions.farmer_id as farmerId,
+            CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+            livestock_egg_productions.livestock_id as livestockId,
+            livestock_egg_productions.batch_group_id as batchGroupId,
+            egg_production_batch_group.batch_name as batchGroupName,
+            livestock_egg_productions.eggs_produced as eggsProduced,
+            livestock_egg_productions.remarks as remarks,
+            livestock_egg_productions.date_of_production as dateOfProduction
+        ')
+                ->join('user_accounts', 'user_accounts.id = livestock_egg_productions.farmer_id')
+                ->join('egg_production_batch_group', 'egg_production_batch_group.id = livestock_egg_productions.batch_group_id')
+                ->find($id);
+            return $eggProduction;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
+        }
     }
 
     public function getAllFarmerEggProductions($userId)
@@ -172,33 +184,27 @@ class LivestockEggProductionModel extends Model
 
     public function insertEggProduction($data)
     {
-        $bind = [
-            'farmer_id' => $data->farmerId,
-            'livestock_id' => $data->livestockId,
-            'eggs_produced' => $data->eggsProduced,
-            'remarks' => $data->remarks,
-            'date_of_production' => $data->dateOfProduction
-        ];
+        try {
+            $bind = [
+                'farmer_id' => $data->farmerId,
+                'livestock_id' => $data->livestockId,
+                'eggs_produced' => $data->eggsProduced,
+                'remarks' => $data->remarks,
+                'date_of_production' => $data->dateOfProduction
+            ];
+            if (isset($data->batchGroupId)) {
+                $bind['batch_group_id'] = $data->batchGroupId;
+            }
 
-        $result = $this->insert($bind);
+            $result = $this->insert($bind);
 
-        return $result;
-    }
-
-    public function insertEggProductionWithBatch($data)
-    {
-        $bind = [
-            'farmer_id' => $data->farmerId,
-            'livestock_id' => $data->livestockId,
-            'batch_group_id' => $data->batchGroupId,
-            'eggs_produced' => $data->eggsProduced,
-            'remarks' => $data->remarks,
-            'date_of_production' => $data->dateOfProduction
-        ];
-
-        $result = $this->insert($bind);
-
-        return $result;
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
+        }
     }
 
     public function setEggProductionBatch($id, $batchId)
@@ -214,17 +220,23 @@ class LivestockEggProductionModel extends Model
 
     public function updateEggProduction($id, $data)
     {
-        $bind = [
-            'farmer_id' => $data->farmerId,
-            'livestock_id' => $data->livestockId,
-            'eggs_produced' => $data->eggsProduced,
-            'remarks' => $data->remarks,
-            'date_of_production' => $data->dateOfProduction
-        ];
+        try {
+            $bind = [
+                'farmer_id' => $data->farmerId,
+                'livestock_id' => $data->livestockId,
+                'eggs_produced' => $data->eggsProduced,
+                'remarks' => $data->remarks,
+                'date_of_production' => $data->dateOfProduction
+            ];
 
-        $result = $this->update($id, $bind);
+            $result = $this->update($id, $bind);
 
-        return $result;
+            return $result;
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
+        }
     }
 
     public function updateEggProductionRecordStatus($id, $status)
@@ -240,8 +252,16 @@ class LivestockEggProductionModel extends Model
 
     public function deleteEggProduction($id)
     {
-        $result = $this->delete($id);
-        return $result;
+        try {
+            //code...
+            $result = $this->delete($id);
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
+        }
     }
 
     public function getEggProductionCountByMonth()

@@ -10,23 +10,23 @@ class CreateEggDistributionTable extends Migration
     {
         $this->forge->addField([
             'id' => [
-                'type' => 'BIGINT',
-                'unsigned' => true,
+                'type' => 'INT',
+                'constraint' => 11,
                 'auto_increment' => true
             ],
             'number_of_eggs' => [
                 'type' => 'INT',
                 'null' => false,
             ],
-            'poultry_type' => [
-                'type' => 'VARCHAR',
-                'constraint' => '50',
+            'poultry_type_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
                 'null' => false,
             ],
-            'poultry_breed' => [
-                'type' => 'VARCHAR',
-                'constraint' => '50',
-                'null' => false,
+            'poultry_breed_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => true,
             ],
             'recipient_user_id' => [
                 'type' => 'VARCHAR',

@@ -91,11 +91,29 @@ class FarmerAssociationModel extends Model
                 farmer_association_name as farmerAssociationName
             ')
                 ->where('record_status', 'Accessible')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function getFarmerAssociationById($id)
+    {
+        try {
+            $data = $this->select('
+                id,
+                farmer_association_name as farmerAssociationName
+            ')
+                ->where('record_status', 'Accessible')
+                ->where('id', $id)
                 ->first();
 
             return $data;
         } catch (\Throwable $th) {
             //throw $th;
+            return false;
         }
     }
 

@@ -41,15 +41,22 @@ class FarmerLivestockModel extends Model
     protected $afterDelete    = [];
 
     public function associateFarmerLivestock($data){
-        $bind = [
-            'farmer_id' => $data->farmerId,
-            'livestock_id' => $data->livestockId,
-            'acquired_date' => $data->acquiredDate,
-        ];
-
-        $result = $this->insert($bind);
-
-        return $result;
+        try {
+            $bind = [
+                'farmer_id' => $data->farmerId,
+                'livestock_id' => $data->livestockId,
+                'acquired_date' => $data->acquiredDate,
+            ];
+    
+            $result = $this->insert($bind);
+    
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
+        }
     }
 
     public function updateFarmerLivestock($id, $data){

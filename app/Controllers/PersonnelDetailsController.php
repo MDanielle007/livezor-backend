@@ -14,6 +14,7 @@ class PersonnelDetailsController extends ResourceController
     public function __construct()
     {
         $this->personnelDetails = new PersonnelDetailsModel();
+        helper('jwt');
     }
 
     public function getAllPersonnelDetails()
@@ -39,7 +40,8 @@ class PersonnelDetailsController extends ResourceController
     public function getPersonnelDetailByUserId()
     {
         try {
-            $userId = $this->request->getGet('userId');
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
 
             $personnelDetails = $this->personnelDetails->getPersonnelDetailByUserId($userId);
             return $this->respond($personnelDetails);
@@ -62,12 +64,14 @@ class PersonnelDetailsController extends ResourceController
         }
     }
 
-    public function updatePersonnelDetails($id)
+    public function updatePersonnelDetails()
     {
         try {
             $data = $this->request->getJSON();
+            $header = $this->request->getHeader("Authorization");
+            $data->userId = getTokenUserId($header);
 
-            $result = $this->personnelDetails->updatePersonnelDetails($id, $data);
+            $result = $this->personnelDetails->updatePersonnelDetails($data->id, $data);
 
             return $this->respond(['message' => 'Personnel Details inserted successfully', 'result' => $result]);
         } catch (\Throwable $th) {

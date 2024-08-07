@@ -35,6 +35,7 @@ class LivestockMortalityController extends ResourceController
         $this->userModel = new UserModel();
         $this->farmerAudit = new FarmerAuditModel();
         $this->arimaPrediction = new ArimaPredictionLibrary();
+        helper('jwt');
     }
 
     public function getAllLivestockMortalities()
@@ -61,9 +62,12 @@ class LivestockMortalityController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestockMortalities($userId)
+    public function getAllFarmerLivestockMortalities()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
             $livestockMortalities = $this->livestockMortality->getAllFarmerLivestockMortalities($userId);
 
             return $this->respond($livestockMortalities);
@@ -90,18 +94,28 @@ class LivestockMortalityController extends ResourceController
         try {
             $data = $this->request->getJSON();
 
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->farmerId = $userId;
+            }
+
             $response = $this->livestockMortality->insertLivestockMortality($data);
 
             $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
 
-            $data->farmerId;
-            $data->livestockId;
-            $data->action = "Add";
-            $data->title = "Report Livestock Mortality";
-            $data->description = "Report Livestock Mortality of Livestock $livestockTagId";
-            $data->entityAffected = "Mortality";
+            $auditLog = (object)[
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Report Livestock Mortality",
+                'description' => "Report Livestock Mortality of Livestock $livestockTagId",
+                'entityAffected' => "Mortality",
+            ];
 
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
             $data->livestockHealthStatus = 'Dead';
             $result = $this->livestock->updateLivestockHealthStatus($data->livestockId, $data);
@@ -110,27 +124,40 @@ class LivestockMortalityController extends ResourceController
 
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => $th->getMessage()], 200);
         }
     }
 
-    public function updateLivestockMortality($id)
+    public function updateLivestockMortality()
     {
         try {
             $data = $this->request->getJSON();
 
-            $response = $this->livestockMortality->updateLivestockMortality($id, $data);
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->farmerId = $userId;
+            }
+
+            $response = $this->livestockMortality->updateLivestockMortality($data->id, $data);
 
             $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
 
-            $data->farmerId;
-            $data->livestockId;
-            $data->action = "Edit";
-            $data->title = "Updated Livestock Mortality";
-            $data->description = "Updated Livestock Mortality of Livestock $livestockTagId";
-            $data->entityAffected = "Mortality";
+            $auditLog = (object)[
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Edit",
+                'title' => "Updated Livestock Mortality",
+                'description' => "Updated Livestock Mortality of Livestock $livestockTagId",
+                'entityAffected' => "Mortality",
+            ];
 
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
             return $this->respond(['success' => $response, 'message' => 'Livestock Mortality Successfully Updated'], 200);
 
         } catch (\Throwable $th) {
@@ -162,29 +189,37 @@ class LivestockMortalityController extends ResourceController
         }
     }
 
-    public function deleteLivestockMortality($id)
+    public function deleteLivestockMortality()
     {
         try {
+            $id = $this->request->getGet('mortality');
+
+            $livestock = $this->livestock->getLivestockByMortality($id);
+
             $response = $this->livestockMortality->deleteLivestockMortality($id);
 
-            $livestock = $this->livestock->getLivestockByDeworming($id);
             $livestockTagId = $livestock['livestock_tag_id'];
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
 
-            $data = new \stdClass();
-            $data->farmerId = $data->userId;
-            ;
-            $data->livestockId = $livestock['id'];
-            $data->action = "Delete";
-            $data->title = "Deleted Livestock Mortality";
-            $data->description = "Deleted Livestock Mortality of Livestock $livestockTagId";
-            $data->entityAffected = "Mortality";
+            $auditLog = (object) [
+                'farmerId' => $userId,
+                'livestockId' => $livestock['id'],
+                'action' => "Delete",
+                'title' => "Deleted Livestock Mortality",
+                'description' => "Deleted Livestock Mortality of Livestock $livestockTagId",
+                'entityAffected' => "Mortality",
+            ];
 
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
-            return $this->respond(['result' => $response, 'message' => 'Livestock Mortality Successfully Deleted'], 200);
+            return $this->respond(['result' => $response], 200, 'Livestock Mortality Successfully Deleted');
 
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete record', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 

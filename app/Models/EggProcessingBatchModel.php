@@ -44,7 +44,8 @@ class EggProcessingBatchModel extends Model
     {
         try {
             $whereClause = [
-                'egg_processing_batch.record_status' => 'Accessible'
+                'egg_processing_batch.record_status' => 'Accessible',
+                'egg_processing_batch.deleted_at' => null
             ];
 
             $eggProBatch = $this->distinct()->select('
@@ -145,7 +146,7 @@ class EggProcessingBatchModel extends Model
                 'egg_processing_batch.id' => $id
             ];
 
-            $eggProBatch = $this->select('
+            $eggProBatch = $this->distinct()->select('
                 egg_processing_batch.id,
                 egg_processing_batch.egg_batch_group_id as eggBatchGroupId,
                 egg_production_batch_group.batch_name as batchName,
@@ -163,13 +164,17 @@ class EggProcessingBatchModel extends Model
                 ->join('livestocks', 'livestocks.id = livestock_egg_productions.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->where($whereClause)
-                ->findAll();
+                ->orderBy('egg_processing_batch.id', 'DESC')
+                ->get()->getResult();
 
-            return $eggProBatch;
+            return $eggProBatch[0];
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $th->getMessage();
         }
+        // return $id;
     }
 
     public function insertEggProcessingBatch($data)
@@ -212,6 +217,19 @@ class EggProcessingBatchModel extends Model
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
+        }
+    }
+
+    public function deleteEggProcessingBatch($id){
+        try {
+            //code...
+            $result = $this->delete($id);
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 }

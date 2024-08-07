@@ -26,6 +26,7 @@ class PoultryController extends ResourceController
         $this->farmerPoultry = new FarmerLivestockModel();
         $this->userModel = new UserModel();
         $this->farmerAudit = new FarmerAuditModel();
+        helper('jwt');
     }
 
     public function getAllPoultries(){
@@ -88,8 +89,18 @@ class PoultryController extends ResourceController
     
     public function addFarmerPoultry(){
         try {
+            $header = $this->request->getHeader("Authorization");
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            $userId = getTokenUserId($header);
+
             $data = $this->request->getJSON();
             $data->category = "Poultry";
+
+            if($userType == 'Farmer'){
+                $data->farmerId = $userId;
+            }
+
             $livestockId = $this->poultry->insertLivestock($data);
 
             $data->livestockId = $livestockId;    
@@ -99,15 +110,22 @@ class PoultryController extends ResourceController
             $livestockType = $this->poultryTypes->getLivestockTypeName($data->livestockTypeId);
             $livestockTagId = $data->livestockTagId;
 
-            $data->action = "Add";
-            $data->title = "Add New Poultry";
-            $data->description = "Add New Poultry $livestockType, $livestockTagId";
-            $data->entityAffected = "Livestock";
+            $auditLog = (object)[
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Add New Poultry",
+                'description' => "Add New Poultry $livestockType, $livestockTagId",
+                'entityAffected' => "Livestock",
+            ];
 
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
-            return $this->respond(['success' => true, 'message' => 'Livestock Successfully Added'], 200);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            return $this->respond(['success' => true, 'message' => 'Poultry Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->respond(['error' => 'Failed to add livestock']);
         }
     }
 
@@ -119,9 +137,21 @@ class PoultryController extends ResourceController
 
             $data->breedingEligibility = "Not Age-Suited";
 
-            $data->action = "Add";
-            $data->title = "Add New Poutry";
-            $data->entityAffected = "Livestock";
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->farmerId = $userId;
+            }
+
+            $auditLog = (object)[
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Add New Poultry",
+                'entityAffected' => "Livestock",
+            ];
 
             if ($data->malePoultryCount > 0) {
                 $data->sex = 'Male';
@@ -129,12 +159,12 @@ class PoultryController extends ResourceController
 
                     $poultryId = $this->poultry->insertLivestock($data);
                     $data->livestockId = $poultryId;
+                    $auditLog->livestockId = $poultryId;
                     $result = $this->farmerPoultry->associateFarmerLivestock($data);
-
                     $livestockType = $this->poultryTypes->getLivestockTypeName($data->livestockTypeId);
 
-                    $data->description = "Add New Poultry $livestockType";
-                    $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+                    $auditLog->description = "Add New Poultry $livestockType";
+                    $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
                 }
             }
 
@@ -142,42 +172,59 @@ class PoultryController extends ResourceController
                 $data->sex = 'Female';
                 for ($i = 1; $i <= $data->femalePoultryCount; $i++) {
 
-                    $livestockId = $this->poultry->insertLivestock($data);
-                    $data->livestockId = $livestockId;
+                    $poultryId = $this->poultry->insertLivestock($data);
+                    $auditLog->livestockId = $poultryId;
+                    $data->livestockId = $poultryId;
                     $result = $this->farmerPoultry->associateFarmerLivestock($data);
                     $livestockType = $this->poultryTypes->getLivestockTypeName($data->livestockTypeId);
 
-                    $data->description = "Add New Poultry $livestockType";
-                    $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+                    $auditLog->description = "Add New Poultry $livestockType";
+                    $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
                 }
             }
 
             return $this->respond(['success' => true, 'message' => 'Poultry Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => 'Failed to add poultry','errMsg' => $th->getMessage()]);
         }
     }
 
-    public function updatePoultry($id){
+    public function updatePoultry(){
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+
             $data = $this->request->getJSON();
             $data->category = "Poultry";
-            $response = $this->poultry->updateLivestock($id, $data);
+
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->farmerId = $userId;
+            }
+
+            $response = $this->poultry->updateLivestock($data->id, $data);
 
             $livestockTagId = $data->livestockTagId;
 
-            $data->livestockId = $id;
-            $data->action = "Edit";
-            $data->title = " Edit Poultry Record";
-            $data->description = "Updated details for Poultry $livestockTagId";
-            $data->entityAffected = "Livestock";
-
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $auditLog = (object)[
+                'livestockId' => $data->id,
+                'farmerId' => $userId,
+                'action' => "Edit",
+                'title' => "Edit Poultry Record",
+                'description' => "Updated details for Poultry $livestockTagId",
+                'entityAffected' => "Livestock",
+            ];
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
             return $this->respond(['success' => $response, 'message' => 'Poultry Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => 'Failed to update poultry']);
         }
     }
@@ -228,25 +275,32 @@ class PoultryController extends ResourceController
         }
     }
 
-    public function deletePoultry($id)
+    public function deletePoultry()
     {
         try {
+            $id = $this->request->getGet('poultry');
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $livestockTagId = $this->poultry->getLivestockTagIdById($id);
             $response = $this->poultry->deleteLivestock($id);
 
-            $livestockTagId = $this->poultry->getLivestockTagIdById($id);
+            $auditLog = (object)[
+                'livestockId' => $id,
+                'farmerId' => $userId,
+                'action' => "Delete",
+                'title' => "Delete Poultry Record",
+                'description' => "Delete Poultry $livestockTagId",
+                'entityAffected' => "Livestock",
+            ];
 
-            $data = new \stdClass();
-            $data->farmerId = $this->userModel->getFarmerByLivestock($id);
-            $data->action = "Delete";
-            $data->title = "Delete Poultry Record";
-            $data->description = "Delete Poultry $livestockTagId";
-            $data->entityAffected = "Livestock";
-
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
-
-            return $this->respond(['result' => $response, 'message' => 'Poultry Successfully Deleted'], 200);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            return $this->respond(['result' => $response], 200, 'Poultry Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            $this->fail('Failed to delete record',ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
@@ -408,7 +462,7 @@ class PoultryController extends ResourceController
     public function getPoultryHealthStatusesCount()
     {
         try {
-            $data = $this->poultry->getPoultryHealthStatusesCount();
+            $data = $this->poultry->getLivestockHealthStatusesCount('Poultry');
 
             return $this->respond($data);
         } catch (\Throwable $th) {

@@ -17,7 +17,7 @@ class FarmerUserAssociationModel extends Model
     protected bool $allowEmptyInserts = false;
 
     // Dates
-    protected $useTimestamps = trye;
+    protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
@@ -80,26 +80,56 @@ class FarmerUserAssociationModel extends Model
         }
     }   
     
-    public function getFarmerUserAssociationsByUserId($id)
+    public function getFarmerUserAssociationsByUser($id)
     {
         try {
             $data = $this->select('
-                id,
-                user_id as userId,
-                farmer_association_id as farmerAssociationId,
-                farmer_id as farmerId,
-                position,
-                join_date as joinDate,
+                farmer_user_associations.id,
+                farmer_associations.farmer_association_name as farmerAssociationName,
+                farmer_associations.overview,
+                farmer_user_associations.farmer_id as farmerId,
+                farmer_user_associations.position,
+                farmer_user_associations.join_date as joinDate,
             ')
-                ->where('record_status', 'Accessible')
-                ->where('user_id', $id)
-                ->first();
+                ->join('farmer_associations','farmer_associations.id = farmer_user_associations.farmer_association_id')
+                ->where('farmer_user_associations.record_status', 'Accessible')
+                ->where('farmer_user_associations.user_id', $id)
+                ->orderBy('farmerAssociationName')
+                ->findAll();
 
             return $data;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
-    }   
+    }
+    
+    public function getFarmerUserAssociationsByUserId($id)
+    {
+        try {
+            $data = $this->select('
+                farmer_user_associations.id,
+                farmer_associations.farmer_association_name as farmerAssociationName,
+                farmer_associations.overview,
+                farmer_user_associations.farmer_id as farmerId,
+                farmer_user_associations.position,
+                farmer_user_associations.join_date as joinDate,
+            ')
+                ->join('farmer_associations','farmer_associations.id = farmer_user_associations.farmer_association_id')
+                ->join('user_accounts', 'user_accounts.id = farmer_user_associations.user_id')
+                ->where('farmer_user_associations.record_status', 'Accessible')
+                ->where('user_accounts.user_id', $id)
+                ->orderBy('farmerAssociationName')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+        }
+       }   
 
     public function insertFarmerUserAssociation($data){
         try {

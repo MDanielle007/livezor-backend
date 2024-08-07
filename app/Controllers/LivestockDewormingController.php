@@ -35,6 +35,7 @@ class LivestockDewormingController extends ResourceController
         $this->userModel = new UserModel();
         $this->farmerAudit = new FarmerAuditModel();
         $this->arimaPrediction = new ArimaPredictionLibrary();
+        helper('jwt');
     }
 
     public function getAllLivestockDewormings()
@@ -75,9 +76,12 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestockDewormings($userId)
+    public function getAllFarmerLivestockDewormings()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
             $livestockDewormings = $this->livestockDewormings->getAllFarmerLivestockDewormings($userId);
 
             return $this->respond($livestockDewormings);
@@ -91,6 +95,14 @@ class LivestockDewormingController extends ResourceController
         try {
             $data = $this->request->getJSON();
 
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->dewormerId = $userId;
+            }
+
             $response = $this->livestockDewormings->insertLivestockDeworming($data);
 
             $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
@@ -98,17 +110,22 @@ class LivestockDewormingController extends ResourceController
             $dosage = $data->dosage;
             $administrationMethod = $data->administrationMethod;
 
-            $data->farmerId = $data->dewormerId;
-            $data->action = "Add";
-            $data->title = "Adminster Deworming";
-            $data->description = "Deworm $administrationMethod $dosage to Livestock $livestockTagId";
-            $data->entityAffected = "Deworming";
+            $auditLog = (object)[
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Adminster Deworming",
+                'description' => "Deworm $administrationMethod $dosage to Livestock $livestockTagId",
+                'entityAffected' => "Deworming",
+            ];
 
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
             return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -118,52 +135,80 @@ class LivestockDewormingController extends ResourceController
             $data = $this->request->getJSON();
 
             $livestock = $data->livestock;
-            $data->farmerId = $data->dewormerId;
-            $data->action = "Add";
-            $data->title = "Adminster Deworming";
-            $data->entityAffected = "Deworming";
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->dewormerId = $userId;
+            }
+
+            $auditLog = (object)[
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Adminster Deworming",
+                'entityAffected' => "Deworming",
+            ];
 
             foreach ($livestock as $ls) {
                 $response = $this->livestockDewormings->insertLivestockDeworming($data);
 
                 $data->livestockId = $ls;
+                $auditLog->livestockId = $ls;
+
                 $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
 
                 $dosage = $data->dosage;
                 $administrationMethod = $data->administrationMethod;
 
-                $data->description = "Deworm $administrationMethod $dosage to Livestock $livestockTagId";
+                $auditLog->description = "Deworm $administrationMethod $dosage to Livestock $livestockTagId";
 
-                $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
             }
 
             return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => $th->getMessage(), 'message' => 'Livestock Deworming Successfully Added'], 200);
         }
     }
 
-    public function updateLivestockDeworming($id)
+    public function updateLivestockDeworming()
     {
         try {
             $data = $this->request->getJSON();
 
-            $response = $this->livestockDewormings->updateLivestockDeworming($id, $data);
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->dewormerId = $userId;
+            }
+
+            $response = $this->livestockDewormings->updateLivestockDeworming($data->id, $data);
 
             $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
 
-            $data->farmerId = $data->dewormerId;
-            $data->action = "Edit";
-            $data->title = "Update Deworming Details";
-            $data->description = "Update Deworming of Livestock $livestockTagId";
-            $data->entityAffected = "Deworming";
+            $auditLog = (object)[
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Edit",
+                'title' => "Update Deworming Details",
+                'description' => "Update Deworming of Livestock $livestockTagId",
+                'entityAffected' => "Deworming",
+            ];
 
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
             return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -192,25 +237,34 @@ class LivestockDewormingController extends ResourceController
         }
     }
 
-    public function deleteLivestockDewormingRecord($id)
+    public function deleteLivestockDewormingRecord()
     {
         try {
-            $response = $this->livestockDewormings->deleteLivestockDewormingRecord($id);
+            $id = $this->request->getGet('deworming');
 
             $livestock = $this->livestock->getLivestockByDeworming($id);
+            $response = $this->livestockDewormings->deleteLivestockDewormingRecord($id);
+
             $livestockTagId = $livestock['livestock_tag_id'];
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object) [
+                'farmerId' => $userId,
+                'livestockId' => $livestock['id'],
+                'action' => "Delete",
+                'title' => "Deleted Deworming Record",
+                'description' => "Deleted Deworming of Livestock $livestockTagId",
+                'entityAffected' => "Deworming",
+            ];
 
-            $data = new \stdClass();
-            $data->farmerId = $data->userId;
-            $data->livestockId = $livestock['id'];
-            $data->action = "Delete";
-            $data->title = "Deleted Deworming Record";
-            $data->description = "Deleted Deworming of Livestock $livestockTagId";
-            $data->entityAffected = "Deworming";
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
-            return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Deleted'], 200);
+            return $this->respond(['result' => $response], 200, 'Livestock Deworming Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete record', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
@@ -658,6 +712,19 @@ class LivestockDewormingController extends ResourceController
         ob_end_clean();
 
         return $html;
+    }
+
+    public function getLivestockDewormingByLivestock(){
+        try {
+            //code...
+            $livestockId = $this->request->getGet('livestock');
+
+            $data = $this->livestockDewormings->getLivestockDewormingByLivestockId($livestockId);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
 }

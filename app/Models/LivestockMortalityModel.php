@@ -273,30 +273,28 @@ class LivestockMortalityModel extends Model
     public function getMortalitiesCountLast4Months()
     {
         try {
-            $currentMonth = date('F');
-            $currentYear = date('Y');
+            $currentDate = new \DateTime();
 
-            $months = [];
-            for ($i = 3; $i >= 0; $i--) {
-                $month = date('F', strtotime("-$i months"));
-                $months[] = $month;
-            }
+            $data = [];
 
-            $mortalityCounts = [];
-            foreach ($months as $month) {
-                $count = $this->select('COUNT(*) as mortalityCount')
-                    ->where('MONTH(date_of_death)', date('m', strtotime($month)))
-                    ->where('YEAR(date_of_death)', $currentYear)
-                    ->get()
-                    ->getRowArray();
+            for ($i = 0; $i < 4; $i++) {
+                $currentDate->modify('-1 month');
 
-                $mortalityCounts[] = [
-                    'month' => $month,
-                    'mortalityCount' => $count['mortalityCount'] ?? 0,
+                $month = $currentDate->format('n'); // Numeric month
+                $year = $currentDate->format('Y'); // Year
+
+                $count = $this->selectCount('id')
+                ->where('MONTH(date_of_death)', $month)
+                ->where('YEAR(date_of_death)', $year)
+                ->countAllResults();
+
+                $data[] = [
+                    'month' => $currentDate->format('F'),
+                    'mortalityCount' => $count ?? 0,
                 ];
             }
 
-            return $mortalityCounts;
+            return $data;
         } catch (\Throwable $th) {
             // Handle exceptions
             return [];

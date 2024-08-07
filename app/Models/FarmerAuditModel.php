@@ -40,6 +40,40 @@ class FarmerAuditModel extends Model
     protected $beforeDelete = [];
     protected $afterDelete = [];
 
+    public function getAllAuditTrailLogs()
+    {
+        try {
+            $auditTrails = $this->select(
+                'farmer_audit.id,
+                farmer_audit.livestock_id as livestockId,
+                COALESCE(NULLIF(livestocks.livestock_tag_id, ""), "Untagged") as livestockTagId,
+                livestocks.livestock_type_id as livestockTypeId,
+                livestock_types.livestock_type_name as livestockTypeName,
+                farmer_audit.farmer_id as farmerId,
+                user_accounts.user_id as farmerUserId,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
+                farmer_audit.action,
+                farmer_audit.title,
+                farmer_audit.description,
+                farmer_audit.entity_affected as entityAffected,
+                farmer_audit.timestamp,
+                farmer_audit.record_status as recordStatus'
+            )
+            ->join('user_accounts', 'user_accounts.id = farmer_audit.farmer_id')
+            ->join('livestocks', 'livestocks.id = farmer_audit.livestock_id', 'left')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id', 'left')
+            ->orderBy('timestamp', 'DESC')
+            ->findAll();
+    
+            return $auditTrails;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
+        }
+    }
+
     public function getAllFarmerAuditTrailLogs()
     {
         try {
@@ -61,6 +95,7 @@ class FarmerAuditModel extends Model
             )
             ->join('user_accounts','user_accounts.id = farmer_audit.farmer_id')
             ->join('livestocks', 'livestocks.id = farmer_audit.livestock_id')
+            ->where('user_accounts.user_role', 'Farmer')
             ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
             ->orderBy('timestamp', 'DESC')->findAll();
             return $auditTrails;
@@ -144,6 +179,9 @@ class FarmerAuditModel extends Model
             return $auditTrails;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -194,7 +232,6 @@ class FarmerAuditModel extends Model
     {
         try {
             $bind = [
-                'livestock_id' => $data->livestockId,
                 'farmer_id' => $data->farmerId,
                 'action' => $data->action,
                 'title' => $data->title,
@@ -202,10 +239,16 @@ class FarmerAuditModel extends Model
                 'entity_affected' => $data->entityAffected
             ];
 
+            if (isset($data->livestockId)) {
+                $bind['livestock_id'] = $data->livestockId;
+            }
+
             $result = $this->insert($bind);
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -213,7 +256,6 @@ class FarmerAuditModel extends Model
     {
         try {
             $bind = [
-                'livestock_id' => $data->livestock_id,
                 'farmer_id' => $data->farmerId,
                 'action' => $data->action,
                 'title' => $data->title,
@@ -221,10 +263,16 @@ class FarmerAuditModel extends Model
                 'entity_affected' => $data->entityAffected
             ];
 
+            if (isset($data->livestockId)) {
+                $bind['livestock_id'] = $data->livestockId;
+            }
+
             $result = $this->update($id, $bind);
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 

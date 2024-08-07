@@ -7,6 +7,8 @@ use App\Models\FarmerAssociationModel;
 use App\Models\FarmerUserAssociationModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class FarmerUserAssociationController extends ResourceController
 {
@@ -16,6 +18,7 @@ class FarmerUserAssociationController extends ResourceController
     {
         $this->farmerUserAssociations = new FarmerUserAssociationModel();
         $this->farmerAssociations = new FarmerAssociationModel();
+        helper('jwt');
     }
 
     public function getAllFarmerUserAssociations()
@@ -38,13 +41,31 @@ class FarmerUserAssociationController extends ResourceController
         }
     }
 
-    public function getFarmerUserAssociationsByUserId($id)
+    public function getFarmerUserAssociationsByFarmer()
     {
         try {
-            $data = $this->farmerUserAssociations->getFarmerUserAssociationsByUserId($id);
+            $header = $this->request->getHeader("Authorization");
+            $decoded = decodeToken($header);
+            $userId = $decoded->sub->id;
+            $data = $this->farmerUserAssociations->getFarmerUserAssociationsByUser($userId);
             return $this->respond($data);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+        }
+    }
+
+    public function getFarmerUserAssociationsByUserId()
+    {
+        try {
+            $userId = $this->request->getGet('farmer');
+            $data = $this->farmerUserAssociations->getFarmerUserAssociationsByUserId($userId);
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -52,11 +73,36 @@ class FarmerUserAssociationController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
+            $header = $this->request->getHeader("Authorization");
+            $decoded = decodeToken($header);
 
+            $farmerAssociationId = $this->checkFarmerAssociation($data->farmerAssociationId);
+            $data->farmerAssociationId = $farmerAssociationId;
+
+            $data->userId = $decoded->sub->id;
             $res = $this->farmerUserAssociations->insertFarmerUserAssociation($data);
-            return $this->respond($res);
+            if ($res) {
+                return $this->respond(['message' => 'Farmer Association Successfully Added', 'result' => $res], 200);
+            } else {
+                return $this->respond(['message' => 'Farmer Association Added Unuccessfully', 'result' => false], 200);
+            }
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->respond(['message' => 'Farmer Association Added Unuccessfully', 'result' => false, 'error' => $th->getMessage()], 200);
+        }
+    }
+
+    private function checkFarmerAssociation($id)
+    {
+        $farmerAssociation = $this->farmerAssociations->getFarmerAssociationById($id);
+        $farmerAssociationId = null;
+        if (!$farmerAssociation) {
+            $farmerAssociationId = $this->farmerAssociations->insertFarmerAssociation((object) ['farmerAssociationName' => $id]);
+            return $farmerAssociationId;
+        }else{
+            return $id;
         }
     }
 
@@ -88,6 +134,8 @@ class FarmerUserAssociationController extends ResourceController
             return $this->respond(['success' => $result, 'message' => 'Farmer Associations Successfully Added']);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -95,8 +143,10 @@ class FarmerUserAssociationController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
+            $header = $this->request->getHeader("Authorization");
+            $decoded = decodeToken($header);
 
-            $userId = $data->userId;
+            $userId = $decoded->sub->id;
 
             $farmerAssociations = $data->farmerAssociations;
 

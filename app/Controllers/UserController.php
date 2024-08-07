@@ -25,6 +25,7 @@ class UserController extends ResourceController
         $this->livestock = new LivestockModel();
         $this->personnelDetails = new PersonnelDetailsModel();
         $this->farmerAssociation = new FarmerAssociationModel();
+        helper('jwt');
     }
 
     public function index()
@@ -81,13 +82,16 @@ class UserController extends ResourceController
     public function userLogOut()
     {
         try {
-            $userId = $this->request->getJsonVar('id');
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
 
             $result = $this->userModel->setUserLogout($userId);
 
             return $this->respond(['message' => 'Logged Out Successfully', 'success' => $result], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['message' => 'Failed to logout', 'error' => $th->getMessage()], 200);
         }
     }
@@ -138,7 +142,7 @@ class UserController extends ResourceController
                     'departmentId' => null,
                 ]);
             } else if ($data->userType == "Farmer") {
-                $haveFarmerAssociation = $data->haveFarmerAssociationp;
+                $haveFarmerAssociation = $this->request->getPost('haveFarmerAssociation');
                 if ($haveFarmerAssociation) {
                     $farmerAssociation = $this->farmerAssociation->getFarmerAssociationByName($data->farmerUserAssociation);
                     $farmerAssociationId = null;
@@ -148,7 +152,6 @@ class UserController extends ResourceController
                         $farmerAssociationId = $farmerAssociation['id'];
                     }
                     $fuAssociations = new FarmerUserAssociationModel();
-
                     $farmerUserAssociation = $fuAssociations->insert(
                         (object) [
                             'userId' => $result,
@@ -236,10 +239,6 @@ class UserController extends ResourceController
     {
         try {
             $user = $this->userModel->getUser($id);
-
-            $baseURL = getenv('app.baseURL');
-            $user['image'] = $baseURL . 'uploads/' . $user['userImage'];
-
             return $this->respond($user);
         } catch (\Throwable $th) {
             //throw $th;
@@ -258,14 +257,24 @@ class UserController extends ResourceController
         }
     }
 
-    public function updateUserPersonalInfo($id)
+    public function updateUserPersonalInfo()
     {
         try {
             $data = $this->request->getJSON();
-            $response = $this->userModel->updateUserPersonalInfo($id, $data);
-            return $this->respond($response, 200);
+            $header = $this->request->getHeader("Authorization");
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->id = $decoded->sub->id;
+            }
+
+            $response = $this->userModel->updateUserPersonalInfo($data->id, $data);
+            return $this->respond($response, 200, 'Profile updated successfully');
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to update profile',400);            
         }
     }
 
@@ -359,6 +368,9 @@ class UserController extends ResourceController
             return $this->respond($farmers, 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -411,21 +423,27 @@ class UserController extends ResourceController
         }
     }
 
-    public function getFarmerUserInfo($id)
+    public function getFarmerUserInfo()
     {
         try {
-            $farmer = $this->userModel->getFarmerUserInfo($id);
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
+            $farmer = $this->userModel->getFarmerUserInfo($userId);
             return $this->respond($farmer, 200);
         } catch (\Throwable $th) {
-            //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
-    public function getAdminUserInfo($id)
+    public function getAdminUserInfo()
     {
         try {
-            $admin = $this->userModel->getAdminUserInfo($id);
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            
+            $admin = $this->userModel->getAdminUserInfo($userId);
 
             if (isset($admin['userImage'])) {
                 $imageFilename = $admin['userImage'];

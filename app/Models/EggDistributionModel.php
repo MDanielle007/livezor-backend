@@ -12,7 +12,7 @@ class EggDistributionModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['number_of_eggs', 'poultry_type', 'poultry_breed', 'recipient_user_id', 'recipient_first_name', 'recipient_middle_name', 'recipient_last_name', 'recipient_barangay', 'recipient_city_municipality', 'recipient_province', 'recipient_contact_number', 'date_of_distribution', 'remarks', 'farmer_association', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['number_of_eggs', 'poultry_type_id', 'poultry_breed_id', 'recipient_user_id', 'recipient_first_name', 'recipient_middle_name', 'recipient_last_name', 'recipient_barangay', 'recipient_city_municipality', 'recipient_province', 'recipient_contact_number', 'date_of_distribution', 'remarks', 'farmer_association', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -47,32 +47,36 @@ class EggDistributionModel extends Model
                 'record_status' => 'Accessible',
             ];
 
-            $eggDistribution = $this->select([
-                'id,
-                number_of_eggs as numberOfEggs,
-                poultry_type as poultryType,
-                poultry_breed as poultryBreed,
-                COALESCE(recipient_user_id, "") as recipientUserId,
-                recipient_first_name as recipientFirstName,
-                COALESCE(recipient_middle_name, "") as recipientMiddleName,
-                recipient_last_name as recipientLastName,
-                CONCAT(recipient_first_name, " ", recipient_last_name) as recipientFullName,
-                recipient_barangay as recipientBarangay,
-                recipient_city_municipality as recipientCityMunicipality,
-                recipient_province as recipientProvince,
-                CONCAT(recipient_barangay, ", ", recipient_city_municipality, ", ", recipient_province) as recipientAddress,
-                recipient_contact_number as recipientContactNumber,
-                date_of_distribution as dateOfDistribution,
-                COALESCE(farmer_association, "") as farmerAssociation,
-                remarks'
-            ])
+            $eggDistribution = $this->select('
+                egg_distribution.id,
+                egg_distribution.number_of_eggs as numberOfEggs,
+                egg_distribution.poultry_type_id as poultryTypeId,
+                livestock_types.livestock_type_name as livestockTypeName,
+                egg_distribution.poultry_breed_id as poultryBreedId,
+                COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                COALESCE(egg_distribution.recipient_user_id, "") as recipientUserId,
+                egg_distribution.recipient_first_name as recipientFirstName,
+                COALESCE(egg_distribution.recipient_middle_name, "") as recipientMiddleName,
+                egg_distribution.recipient_last_name as recipientLastName,
+                CONCAT(egg_distribution.recipient_first_name, " ", egg_distribution.recipient_last_name) as recipientFullName,
+                egg_distribution.recipient_barangay as recipientBarangay,
+                egg_distribution.recipient_city_municipality as recipientCityMunicipality,
+                egg_distribution.recipient_province as recipientProvince,
+                CONCAT(egg_distribution.recipient_barangay, ", ", egg_distribution.recipient_city_municipality, ", ", egg_distribution.recipient_province) as recipientAddress,
+                egg_distribution.recipient_contact_number as recipientContactNumber,
+                egg_distribution.date_of_distribution as dateOfDistribution,
+                COALESCE(egg_distribution.farmer_association, "") as farmerAssociation,
+                egg_distribution.remarks
+            ')
+                ->join('livestock_types', 'livestock_types.id = egg_distribution.poultry_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = egg_distribution.poultry_breed_id')
                 ->where($whereClause)
                 ->orderBy('date_of_distribution', 'DESC')
+                ->orderBy('number_of_eggs', 'DESC')
                 ->orderBy('farmerAssociation', 'ASC')
                 ->orderBy('recipient_user_id', 'ASC')
                 ->orderBy('recipient_last_name', 'ASC')
                 ->orderBy('recipient_first_name', 'ASC')
-                ->orderBy('number_of_eggs', 'DESC')
                 ->findAll();
 
             return $eggDistribution;
@@ -89,28 +93,43 @@ class EggDistributionModel extends Model
             ];
 
             $eggDistribution = $this->select('
-                number_of_eggs as numberOfEggs,
-                poultry_type as poultryType,
-                poultry_breed as poultryBreed,
-                COALESCE(NULLIF(recipient_user_id, ""), "") as recipientUserId,
-                recipient_first_name as recipientFirstName,
-                COALESCE(NULLIF(recipient_middle_name, ""), "") as recipientMiddleName,
-                recipient_last_name as recipientLastName,
-                CONCAT(recipient_first_name, " ", recipient_last_name) as recipientFullName,
-                recipient_barangay as recipientBarangay,
-                recipient_city_municipality as recipientCityMunicipality,
-                recipient_province as recipientProvince,
-                recipient_contact_number as recipientContactNumber,
-                date_of_distribution as dateOfDistribution,
-                COALESCE(NULLIF(farmer_association, ""), "") as farmerAssociation,
-                remarks
+                egg_distribution.id,
+                egg_distribution.number_of_eggs as numberOfEggs,
+                egg_distribution.poultry_type_id as poultryTypeId,
+                livestock_types.livestock_type_name as livestockTypeName,
+                egg_distribution.poultry_breed_id as poultryBreedId,
+                COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                COALESCE(egg_distribution.recipient_user_id, "") as recipientUserId,
+                egg_distribution.recipient_first_name as recipientFirstName,
+                COALESCE(egg_distribution.recipient_middle_name, "") as recipientMiddleName,
+                egg_distribution.recipient_last_name as recipientLastName,
+                CONCAT(egg_distribution.recipient_first_name, " ", egg_distribution.recipient_last_name) as recipientFullName,
+                egg_distribution.recipient_barangay as recipientBarangay,
+                egg_distribution.recipient_city_municipality as recipientCityMunicipality,
+                egg_distribution.recipient_province as recipientProvince,
+                CONCAT(egg_distribution.recipient_barangay, ", ", egg_distribution.recipient_city_municipality, ", ", egg_distribution.recipient_province) as recipientAddress,
+                egg_distribution.recipient_contact_number as recipientContactNumber,
+                egg_distribution.date_of_distribution as dateOfDistribution,
+                COALESCE(egg_distribution.farmer_association, "") as farmerAssociation,
+                egg_distribution.remarks
             ')
+                ->join('livestock_types', 'livestock_types.id = egg_distribution.poultry_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = egg_distribution.poultry_breed_id')
                 ->where($whereClause)
+                ->orderBy('date_of_distribution', 'DESC')
+                ->orderBy('number_of_eggs', 'DESC')
+                ->orderBy('farmerAssociation', 'ASC')
+                ->orderBy('recipient_user_id', 'ASC')
+                ->orderBy('recipient_last_name', 'ASC')
+                ->orderBy('recipient_first_name', 'ASC')
                 ->find($id);
 
             return $eggDistribution;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -119,9 +138,7 @@ class EggDistributionModel extends Model
         try {
             $bind = [
                 'number_of_eggs' => $data->numberOfEggs,
-                'poultry_type' => $data->poultryType,
-                'poultry_breed' => $data->poultryBreed,
-                'recipient_user_id' => $data->recipientUserId,
+                'poultry_type_id' => $data->poultryTypeId,
                 'recipient_first_name' => $data->recipientFirstName,
                 'recipient_middle_name' => $data->recipientMiddleName,
                 'recipient_last_name' => $data->recipientLastName,
@@ -130,15 +147,27 @@ class EggDistributionModel extends Model
                 'recipient_province' => $data->recipientProvince,
                 'recipient_contact_number' => $data->recipientContactNumber,
                 'date_of_distribution' => $data->dateOfDistribution,
-                'farmer_association' => $data->farmerAssociation,
                 'remarks' => $data->remarks,
             ];
 
-            $result = $this->insert($bind);
+            if (isset($data->recipientUserId)) {
+                $bind['recipient_user_id'] = $data->recipientUserId;
+            }
 
+            if (isset($data->poultryBreedId)) {
+                $bind['poultry_breed_id'] = $data->poultryBreedId;
+            }
+
+            if (isset($data->farmerAssociation)) {
+                $bind['farmer_association'] = $data->farmerAssociation;
+            }
+
+            $result = $this->insert($bind);
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -147,9 +176,7 @@ class EggDistributionModel extends Model
         try {
             $bind = [
                 'number_of_eggs' => $data->numberOfEggs,
-                'poultry_type' => $data->poultryType,
-                'poultry_breed' => $data->poultryBreed,
-                'recipient_user_id' => $data->recipientUserId,
+                'poultry_type_id' => $data->poultryTypeId,
                 'recipient_first_name' => $data->recipientFirstName,
                 'recipient_middle_name' => $data->recipientMiddleName,
                 'recipient_last_name' => $data->recipientLastName,
@@ -158,15 +185,27 @@ class EggDistributionModel extends Model
                 'recipient_province' => $data->recipientProvince,
                 'recipient_contact_number' => $data->recipientContactNumber,
                 'date_of_distribution' => $data->dateOfDistribution,
-                'farmer_association' => $data->farmerAssociation,
                 'remarks' => $data->remarks,
             ];
 
-            $result = $this->update($id, $bind);
+            if (isset($data->recipientUserId)) {
+                $bind['recipient_user_id'] = $data->recipientUserId;
+            }
 
+            if (isset($data->poultryBreedId)) {
+                $bind['poultry_breed_id'] = $data->poultryBreedId;
+            }
+
+            if (isset($data->farmerAssociation)) {
+                $bind['farmer_association'] = $data->farmerAssociation;
+            }
+
+            $result = $this->update($id, $bind);
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 

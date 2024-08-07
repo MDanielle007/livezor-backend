@@ -70,6 +70,37 @@ class LivestockPregnancyModel extends Model
         }
     }
 
+    public function getAllLivestockPregnanciesByLivestockId($id)
+    {
+        try {
+            $whereClause = [
+                'livestocks.id' => $id,
+                'livestock_pregnancies.record_status' => 'Accessible',  
+            ];
+
+            $livestockPregnancies = $this->select('
+                livestock_pregnancies.id,
+                livestocks.livestock_tag_id as livestockTagId,
+                livestock_types.livestock_type_name as livestockType,
+                livestock_pregnancies.outcome as outcome,
+                livestock_pregnancies.pregnancy_start_date as pregnancyStartDate,
+                livestock_pregnancies.expected_delivery_date as expectedDeliveryDate,
+                livestock_pregnancies.actual_delivery_date as actualDeliveryDate,   
+            ')->join('livestock_breedings', 'livestock_breedings.id = livestock_pregnancies.breeding_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_breedings.farmer_id')
+                ->join('livestocks', 'livestocks.id = livestock_pregnancies.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->findAll();
+            return $livestockPregnancies;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
+        }
+    }
+
     public function getReportData($selectClause, $minDate, $maxDate)
     {
         try {
@@ -97,7 +128,15 @@ class LivestockPregnancyModel extends Model
     public function getLivestockPregnancy($id)
     {
         try {
-            $livestockPregnancy = $this->find($id);
+            $livestockPregnancy = $this->select('
+                id,
+                breeding_id as breedingId,
+                livestock_id as livestockId,
+                outcome as outcome,
+                pregnancy_start_date as pregnancyStartDate,
+                expected_delivery_date as expectedDeliveryDate,
+                actual_delivery_date as actualDeliveryDate
+            ')->find($id);
             return $livestockPregnancy;
         } catch (\Throwable $th) {
             //throw $th;
@@ -126,11 +165,10 @@ class LivestockPregnancyModel extends Model
                 livestock_pregnancies.actual_delivery_date as actualDeliveryDate,'
             )
                 ->join('livestock_breedings', 'livestock_breedings.id = livestock_pregnancies.breeding_id')
-
                 ->join('livestocks', 'livestocks.id = livestock_pregnancies.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-
-                ->where($whereClause)->findAll();
+                ->where($whereClause)
+                ->findAll();
 
             return $livestockPregnancies;
         } catch (\Throwable $th) {

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\FarmerAuditModel;
 use App\Models\FarmerLivestockModel;
 use App\Models\LivestockAgeClassModel;
 use App\Models\LivestockModel;
@@ -26,6 +27,7 @@ class LivestockPregnancyController extends ResourceController
     private $livestock;
     private $livestockAgeClass;
     private $farmerLivestock;
+    private $farmerAudit;
 
     public function __construct()
     {
@@ -34,9 +36,12 @@ class LivestockPregnancyController extends ResourceController
         $this->livestock = new LivestockModel();
         $this->livestockAgeClass = new LivestockAgeClassModel();
         $this->farmerLivestock = new FarmerLivestockModel();
+        $this->farmerAudit = new FarmerAuditModel();
+        helper('jwt');
     }
 
-    public function getAllLivestockPregnancies(){
+    public function getAllLivestockPregnancies()
+    {
         try {
             $livestockPregnancies = $this->livestockPregnancy->getAllLivestockPregnancies();
             return $this->respond($livestockPregnancies);
@@ -45,7 +50,8 @@ class LivestockPregnancyController extends ResourceController
         }
     }
 
-    public function getLivestockPregnancyReportData(){
+    public function getLivestockPregnancyReportData()
+    {
         try {
             $selectClause = $this->request->getGet('selectClause');
             $minDate = $this->request->getGet('minDate');
@@ -60,7 +66,8 @@ class LivestockPregnancyController extends ResourceController
         }
     }
 
-    public function getLivestockPregnancy($id){
+    public function getLivestockPregnancy($id)
+    {
         try {
             $livestockPregnancy = $this->livestockPregnancy->getLivestockPregnancy($id);
 
@@ -70,9 +77,13 @@ class LivestockPregnancyController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestockPregnancies($id){
+    public function getAllFarmerLivestockPregnancies()
+    {
         try {
-            $livestockPregnancies = $this->livestockPregnancy->getAllFarmerLivestockPregnancies($id);
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            
+            $livestockPregnancies = $this->livestockPregnancy->getAllFarmerLivestockPregnancies($userId);
 
             return $this->respond($livestockPregnancies);
         } catch (\Throwable $th) {
@@ -132,8 +143,123 @@ class LivestockPregnancyController extends ResourceController
         }
     }
 
+    public function updateLivestockPregnancy()
+    {
+        try {
+            $data = $this->request->getJSON();
+            
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->farmerId = $userId;
+            }
 
-    public function getFarmerPregnantLivestockCount($userId){
+            $outcome = $data->outcome;
+
+            if ($outcome == 'Successful') {
+                $result = $this->livestockPregnancy->updateLivestockPregnancyOutcomeSuccessful($data->id, (object)[
+                    'outcome'=> $data->outcome,
+                    'actualDeliveryDate' => $data->actualDeliveryDate,
+                ]);
+
+                $data->pregnancyId = $data->id;
+
+                $offspringAgeClass = $this->livestockAgeClass->getLivestockTypeOffspring($data->livestockTypeId);
+                $data->livestockAgeClassId = $offspringAgeClass['id'];
+                $data->category = "Livestock";
+                $data->ageDays = 0;
+                $data->ageWeeks = 0;
+                $data->ageMonths = 0;
+                $data->ageYears = 0;
+                $data->dateOfBirth = $data->actualDeliveryDate;
+                $data->birthDate = $data->actualDeliveryDate;
+                $data->acquiredDate = $data->actualDeliveryDate;
+                $data->breedingEligibility = 'Not Age-Suited';
+
+
+                if ($data->maleOffsprings > 0) {
+                    $data->sex = 'Male';
+                    for ($i = 1; $i <= $data->maleOffsprings; $i++) {
+
+                        $livestockId = $this->livestock->insertLivestock($data);
+                        $data->livestockId = $livestockId;
+                        $result = $this->livestockOffspring->insertLivestockOffspring($data);
+                        $result = $this->farmerLivestock->associateFarmerLivestock($data);
+                    }
+                }
+
+                if ($data->femaleOffsprings > 0) {
+                    $data->sex = 'Female';
+                    for ($i = 1; $i <= $data->femaleOffsprings; $i++) {
+                        $livestockId = $this->livestock->insertLivestock($data);
+
+                        $data->livestockId = $livestockId;
+                        $result = $this->livestockOffspring->insertLivestockOffspring($data);
+                        $result = $this->farmerLivestock->associateFarmerLivestock($data);
+                    }
+                }
+            }else{
+                $result = $this->livestockPregnancy->updateLivestockPregnancyOutcome($data->id, (object)['outcome'=> $data->outcome]);
+            }
+
+            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+            
+            $auditLog = (object)[
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Edit",
+                'title' => "Updated Pregnancy Outcome",
+                'description' => "Updated Livestock Pregnancy Outcome $livestockTagId to $outcome",
+                'entityAffected' => "Pregnancy",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+
+            return $this->respond(['success' => true, 'message' => 'Livestock Pregnancy Successfully Added'], 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->respond(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function deleteLivestockPregnancy()
+    {
+        try {
+            $id = $this->request->getGet('pregnancy');
+
+            $livestock = $this->livestock->getLivestockByPregnancy($id);
+            $response = $this->livestockPregnancy->deleteLivestockPregnancy($id);
+
+            $livestockTagId = $livestock['livestock_tag_id'];
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
+            $auditLog = (object) [
+                'livestockId' => $livestock['id'],
+                'farmerId' => $userId,
+                'action' => "Delete",
+                'title' => "Delete Livestock Pregnancy",
+                'entityAffected' => "Pregnancy",
+                'description' => "Deleted Pregnancy Livestock $livestockTagId"
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            return $this->respond(['result' => $response], 200, 'Livestock Pregnancy Successfully Deleted');
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete record', ResponseInterface::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function getFarmerPregnantLivestockCount($userId)
+    {
         try {
             $data = $this->livestockPregnancy->getFarmerPregnantLivestockCount($userId);
 
@@ -446,5 +572,18 @@ class LivestockPregnancyController extends ResourceController
         ob_end_clean();
 
         return $html;
+    }
+
+    public function getAllLivestockPregnanciesByLivestock()
+    {
+        try {
+            $livestockId = $this->request->getGet('livestock');
+
+            $data = $this->livestockPregnancy->getAllLivestockPregnanciesByLivestockId($livestockId);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 }

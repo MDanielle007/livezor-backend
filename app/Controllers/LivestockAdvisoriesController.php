@@ -18,6 +18,7 @@ class LivestockAdvisoriesController extends ResourceController
         $this->livestockAdvisories = new LivestockAdvisoriesModel();
         $this->userModel = new UserModel();
         helper('firebasenotifications');
+        helper('jwt');
     }
 
     public function getAllLivestockAdvisories()
@@ -54,9 +55,12 @@ class LivestockAdvisoriesController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestockAdvisories($userId)
+    public function getAllFarmerLivestockAdvisories()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
             $livestockAdvisories = $this->livestockAdvisories->getAllFarmerLivestockAdvisories($userId);
 
             return $this->respond($livestockAdvisories);
@@ -135,28 +139,4 @@ class LivestockAdvisoriesController extends ResourceController
             return $this->respond(['result' => $th->getMessage()]);
         }
     }
-
-    // public function updateLivestockAdvisoryRecordStatus($id)
-    // {
-    //     try {
-    //         $data = $this->request->getJSON();
-
-    //         $response = $this->livestockAdvisories->updateLivestockAdvisoryRecordStatus($id, $data);
-
-    //         return $this->respond(['result' => $response, 'message' => 'Livestock Advisory Record Status Successfully Updated'], 200);
-    //     } catch (\Throwable $th) {
-    //         //throw $th;
-    //     }
-    // }
-
-    // public function deleteLivestockAdvisory($id)
-    // {
-    //     try {
-    //         $response = $this->livestockAdvisories->deleteLivestockAdvisory($id);
-
-    //         return $this->respond(['result' => $response, 'message' => 'Livestock Advisory Successfully Deleted'], 200);
-    //     } catch (\Throwable $th) {
-    //         //throw $th;
-    //     }
-    // }
 }

@@ -132,11 +132,10 @@ class UserModel extends Model
     public function getUser($id)
     {
         try {
-            $user = $this->select(
-                'id,
+            $user = $this->select('
+                id,
                 user_id as userId,
                 username,
-                password,
                 email,
                 first_name as firstName,
                 middle_name as middleName,
@@ -151,9 +150,10 @@ class UserModel extends Model
                 phone_number as phoneNumber,
                 user_image as userImage,
                 user_role as userRole,
-                user_status as userStatus,
-                last_login_date as lastLoginDate'
-            )->find($id);
+                user_status as userStatus
+            ')
+            ->where('user_id',$id)
+            ->first();
 
             return $user;
         } catch (\Throwable $th) {
@@ -192,8 +192,8 @@ class UserModel extends Model
 
             return $user;
         } catch (\Throwable $th) {
-            //throw $th;
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -264,13 +264,11 @@ class UserModel extends Model
         try {
             $bind = [
                 'first_name' => $data->firstName,
-                'user_id' => $data->userId,
                 'middle_name' => $data->middleName,
                 'last_name' => $data->lastName,
                 'date_of_birth' => $data->dateOfBirth,
                 'gender' => $data->gender,
                 'civil_status' => $data->civilStatus,
-                'user_role' => $data->userType,
                 'sitio' => $data->sitio,
                 'barangay' => $data->barangay,
                 'city' => $data->city,
@@ -281,7 +279,8 @@ class UserModel extends Model
             $result = $this->update($id, $bind);
             return $result;
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -428,7 +427,10 @@ class UserModel extends Model
             $farmers = $this->select('
                 id,
                 user_id as userId,
-                CONCAT(first_name, " ", last_name) as userName
+                CONCAT(first_name, " ", last_name) as userName,
+                first_name as firstName,
+                middle_name as middleName,
+                last_name as lastName,
             ')->where($whereClause)->findAll();
 
             return $farmers;

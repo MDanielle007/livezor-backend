@@ -151,6 +151,39 @@ class LivestockVaccinationModel extends Model
         return $livestockVaccination;
     }
 
+    public function getLivestockVaccinationByLivestockId($id)
+    {
+        try {
+            $whereClause = [
+                'livestock_vaccinations.record_status' => 'Accessible',
+                'livestocks.id' => $id
+            ];
+
+            $livestockVaccination = $this->select(
+                'livestock_vaccinations.id,
+                livestock_vaccinations.vaccine_administrator_id as vaccineAdministratorId,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as vaccineAdministratorName,
+                livestocks.livestock_tag_id as livestockTagId,
+                livestock_types.livestock_type_name as livestockType,
+                livestock_vaccinations.vaccination_name as vaccinationName,
+                livestock_vaccinations.vaccination_description as vaccinationDescription,
+                livestock_vaccinations.vaccination_remarks as remarks,
+                livestock_vaccinations.vaccination_date as vaccinationDate'
+            )->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+                ->where($whereClause)
+                ->orderBy('livestock_vaccinations.created_at', 'DESC')
+                ->findAll();
+            return $livestockVaccination;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
+        }
+    }
+
     public function getAllFarmerLivestockVaccinations($userId)
     {
         $whereClause = [
@@ -190,8 +223,9 @@ class LivestockVaccinationModel extends Model
         )->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
             ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
             ->where($whereClause)
+            ->orderBy('livestock_vaccinations.created_at', 'DESC')
             ->orderBy('livestocks.livestock_tag_id', 'ASC')
-            ->orderBy('livestock_vaccinations.created_at', 'DESC')->findAll();
+            ->findAll();
 
         return $livestockVaccinations;
     }
@@ -398,6 +432,8 @@ class LivestockVaccinationModel extends Model
             $startDate = new \DateTime($earliestDate['earliest_date']);
             $endDate = new \DateTime($latestDate['latest_date']);
 
+            $endDate->modify('first day of next month');
+
             // Get the monthly counts from the database
             $dbResults = $this->select('YEAR(livestock_vaccinations.vaccination_date) as year, MONTH(livestock_vaccinations.vaccination_date) as month, COUNT(*) as count')
                 ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
@@ -411,6 +447,7 @@ class LivestockVaccinationModel extends Model
             $completeResults = [];
             $interval = new \DateInterval('P1M');
             $period = new \DatePeriod($startDate, $interval, $endDate);
+
 
             foreach ($period as $dt) {
                 $year = $dt->format('Y');
@@ -432,7 +469,8 @@ class LivestockVaccinationModel extends Model
             return array_values($completeResults);
         } catch (\Throwable $th) {
             // Log the exception or handle it as needed
-            log_message('error', $th->getMessage());
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return [];
         }
     }
@@ -515,32 +553,32 @@ class LivestockVaccinationModel extends Model
     public function getVaccinationCountLast4Months()
     {
         try {
-            $currentMonth = date('F');
-            $currentYear = date('Y');
+            $currentDate = new \DateTime();
 
-            $months = [];
-            for ($i = 3; $i >= 0; $i--) {
-                $month = date('F', strtotime("-$i months"));
-                $months[] = $month;
-            }
+            $data = [];
 
-            $vaccinationCounts = [];
-            foreach ($months as $month) {
-                $count = $this->select('COUNT(*) as vaccinationCount')
-                    ->where('MONTH(vaccination_date)', date('m', strtotime($month)))
-                    ->where('YEAR(vaccination_date)', $currentYear)
-                    ->get()
-                    ->getRowArray();
+            for ($i = 0; $i < 4; $i++) {
+                $currentDate->modify('-1 month');
 
-                $vaccinationCounts[] = [
-                    'month' => $month,
-                    'vaccinationCount' => $count['vaccinationCount'] ?? 0,
+                $month = $currentDate->format('n'); // Numeric month
+                $year = $currentDate->format('Y'); // Year
+
+                $count = $this->selectCount('id')
+                ->where('MONTH(vaccination_date)', $month)
+                ->where('YEAR(vaccination_date)', $year)
+                ->countAllResults();
+
+                $data[] = [
+                    'month' => $currentDate->format('F'),
+                    'vaccinationCount' => $count ?? 0,
                 ];
             }
 
-            return $vaccinationCounts;
+            return $data;
         } catch (\Throwable $th) {
             // Handle exceptions
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return [];
         }
     }

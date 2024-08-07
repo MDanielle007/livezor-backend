@@ -19,6 +19,7 @@ class CreateFarmerAuditTable extends Migration
             'livestock_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
+                'null' => true,
             ],
             'farmer_id' => [
                 'type' => 'INT',
@@ -39,7 +40,7 @@ class CreateFarmerAuditTable extends Migration
             ],
             'entity_affected' => [
                 'type' => 'ENUM',
-                'constraint' => ['Livestock', 'Vaccination', 'Deworming', 'Egg Production','Breeding', 'Mortality'],
+                'constraint' => ['Livestock', 'Poultry', 'Vaccination', 'Deworming', 'Egg Production','Breeding', 'Mortality', 'Pregnancy', 'Fecal Sample', 'Blood Sample', 'Audit', 'Advisories','Egg Distribution'],
                 'null' => false,
             ],
             'timestamp' => [

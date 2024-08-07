@@ -37,6 +37,7 @@ class LivestockBreedingsController extends ResourceController
         $this->userModel = new UserModel();
         $this->farmerAudit = new FarmerAuditModel();
         $this->livestockType = new LivestockTypeModel();
+        helper('jwt');
     }
 
     public function getAllLivestockBreedings()
@@ -51,7 +52,8 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function getLivestockBreedingReportData(){
+    public function getLivestockBreedingReportData()
+    {
         try {
             $selectClause = $this->request->getGet('selectClause');
             $minDate = $this->request->getGet('minDate');
@@ -78,9 +80,12 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function getAllFarmerLivestockBreedings($userId)
+    public function getAllFarmerLivestockBreedings()
     {
         try {
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
             $livestockBreedings = $this->livestockBreeding->getAllFarmerLivestockBreedings($userId);
 
             return $this->respond($livestockBreedings);
@@ -95,23 +100,41 @@ class LivestockBreedingsController extends ResourceController
         try {
             $data = $this->request->getJSON();
 
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if($userType == 'Farmer'){
+                $data->farmerId = $userId;
+            }
+
             $breedingId = $this->livestockBreeding->insertLivestockBreeding($data);
-            $data->action = "Add";
-            $data->title = "Breed Livestock";
-            $data->entityAffected = "Breeding";
+
+            $auditLog = (object) [
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Breed Livestock",
+                'entityAffected' => "Breeding",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
             $maleLivestockTagId = $data->maleLivestockTagId;
             $femaleLivestockTagId = $data->femaleLivestockTagId;
 
             $maleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->maleLivestockTagId, $data->farmerId);
 
-            $data->description = "Breed Livestock $maleLivestockTagId and $femaleLivestockTagId";
-            $data->livestockId = $maleLivestock;
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $auditLog->description = "Breed Livestock $maleLivestockTagId and $femaleLivestockTagId";
+            $auditLog->livestockId = $maleLivestock;
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
             $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
+            $data->auditLog = $femaleLivestock;
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
             $data->livestockId = $femaleLivestock;
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
             $livestockType = $this->livestockType->getLivestockTypeName($data->livestockId);
 
             $result = null;
@@ -160,29 +183,51 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function updateLivestockBreeding($id)
+    public function updateLivestockBreeding()
     {
         try {
             $data = $this->request->getJSON();
-
-            $response = $this->livestockBreeding->updateLivestockBreeding($id, $data);
+            
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if ($userType == 'Farmer') {
+                $data->farmerId = $userId;
+            }
+            
+            $response = $this->livestockBreeding->updateLivestockBreeding($data->id, $data);
 
             $data->action = "Edit";
             $data->title = "Updated Livestock Breeding";
             $data->entityAffected = "Breeding";
 
+            $auditLog = (object) [
+                'farmerId' => $userId,
+                'action' => "Edit",
+                'title' => "Updated Livestock Breeding",
+                'entityAffected' => "Breeding",
+            ];
+
             $maleLivestockTagId = $data->maleLivestockTagId;
             $femaleLivestockTagId = $data->femaleLivestockTagId;
 
-            $data->description = "Updated Livestock Breeding of Livestock $maleLivestockTagId and $femaleLivestockTagId";
+            $maleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->maleLivestockTagId, $data->farmerId);
+
+            $auditLog->description = "Updated Livestock Breeding of Livestock $maleLivestockTagId and $femaleLivestockTagId";
+            $auditLog->livestockId = $maleLivestock;
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
             $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
-            $data->livestockId = $femaleLivestock;
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            $auditLog->livestockId = $femaleLivestock;
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
-            return $this->respond(['success' => true, 'message' => 'Livestock Breeding Successfully Updated'], 200);
-
+            return $this->respond(['success' => true, 'message' => 'Livestock Breeding Successfully Updated','data' => $auditLog], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -212,29 +257,38 @@ class LivestockBreedingsController extends ResourceController
         }
     }
 
-    public function deleteLivestockBreeding($id)
+    public function deleteLivestockBreeding()
     {
         try {
-            $response = $this->livestockBreeding->deleteLivestockBreeding($id);
+            $id = $this->request->getGet('breeding');
+            $farmerId = $this->request->getGet('fui');
 
             $livestock = $this->livestockBreeding->getLivestockByBreeding($id);
+            $response = $this->livestockBreeding->deleteLivestockBreeding($id);
 
-            $data = new \stdClass();
-            $data->farmerId = $data->userId;
-            $data->action = "Delete";
-            $data->title = "Dee Livestock Breeding";
-            $data->entityAffected = "Breeding";
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
 
             $maleLivestockTagId = $livestock['maleLivestockTagId'];
             $femaleLivestockTagId = $livestock['femaleLivestockTagId'];
 
-            $data->description = "Updated Livestock Breeding of Livestock $maleLivestockTagId and $femaleLivestockTagId";
-            $data->livestockId = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->userId);
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
-            return $this->respond(['result' => $response, 'message' => 'Livestock Breeding Successfully Deleted'], 200);
+            $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($femaleLivestockTagId, $farmerId);
+            $auditLog = (object) [
+                'livestockId' => $femaleLivestock['id'],
+                'farmerId' => $userId,
+                'action' => "Delete",
+                'title' => "Delete Livestock Breeding",
+                'entityAffected' => "Breeding",
+                'description' => "Updated Livestock Breeding of Livestock $maleLivestockTagId and $femaleLivestockTagId"
+            ];
 
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            return $this->respond(['result' => $auditLog], 200, 'Livestock Breeding Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete record', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
@@ -658,6 +712,20 @@ class LivestockBreedingsController extends ResourceController
         ob_end_clean();
 
         return $html;
+    }
+
+    public function getAllLivestockBreedingsByLivestock()
+    {
+        try {
+            $farmerId = $this->request->getGet('farmer');
+            $livestockId = $this->request->getGet('livestock');
+
+            $data = $this->livestockBreeding->getAllLivestockBreedingsByLivestockId($livestockId, $farmerId);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
 }

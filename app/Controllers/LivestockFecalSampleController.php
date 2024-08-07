@@ -3,7 +3,9 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\FarmerAuditModel;
 use App\Models\LivestockFecalSampleModel;
+use App\Models\LivestockModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -18,10 +20,15 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 class LivestockFecalSampleController extends ResourceController
 {
     private $livestockFecalSamples;
+    private $farmerAudit;
+    private $livestock;
 
     public function __construct()
     {
         $this->livestockFecalSamples = new LivestockFecalSampleModel();
+        $this->farmerAudit = new FarmerAuditModel();
+        $this->livestock = new LivestockModel();
+        helper('jwt');
     }
 
     public function getAllLivestockFecalSample()
@@ -33,8 +40,9 @@ class LivestockFecalSampleController extends ResourceController
             //throw $th;
         }
     }
-    
-    public function getFecalSampleReportData(){
+
+    public function getFecalSampleReportData()
+    {
         try {
             $selectClause = $this->request->getGet('selectClause');
             $minDate = $this->request->getGet('minDate');
@@ -76,9 +84,26 @@ class LivestockFecalSampleController extends ResourceController
 
             $result = $this->livestockFecalSamples->insertLivestockFecalSample($data);
 
+            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object) [
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Add Fecal Sample",
+                'description' => "Add New Livestock Fecal Sample $livestockTagId",
+                'entityAffected' => "Fecal Sample",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
             return $this->respond(['success' => $result, 'message' => 'Livestock Fecal Sample Successfully Added']);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -89,26 +114,57 @@ class LivestockFecalSampleController extends ResourceController
 
             $livestocks = $data->livestock;
 
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object) [
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Add New Fecal Sample",
+                'entityAffected' => "Fecal Sample",
+            ];
+
             $result = null;
             foreach ($livestocks as $ls) {
                 $data->livestockId = $ls;
 
+                $auditLog->livestockId = $ls;
+                $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+                $auditLog->description = "Add New Livestock Fecal Sample $livestockTagId";
+
                 $result = $this->livestockFecalSamples->insertLivestockFecalSample($data);
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
             }
 
             return $this->respond(['success' => $result, 'message' => 'Livestock Fecal Sample Successfully Added']);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => $th->getMessage()]);
         }
     }
 
-    public function updateLivestockFecalSample($id)
+    public function updateLivestockFecalSample()
     {
         try {
             $data = $this->request->getJSON();
 
-            $result = $this->livestockFecalSamples->updateLivestockFecalSample($id, $data);
+            $result = $this->livestockFecalSamples->updateLivestockFecalSample($data->id, $data);
+
+            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object) [
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Edit",
+                'title' => "Updated Fecal Sample",
+                'description' => "Updated Livestock Fecal Sample $livestockTagId",
+                'entityAffected' => "Fecal Sample",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
             return $this->respond(['success' => $result, 'message' => 'Livestock Fecal Sample Successfully Updated']);
         } catch (\Throwable $th) {
@@ -117,18 +173,41 @@ class LivestockFecalSampleController extends ResourceController
         }
     }
 
-    public function deleteLivestockFecalSample($id)
+    public function deleteLivestockFecalSample()
     {
         try {
-            $result = $this->livestockFecalSamples->deleteLivestockFecalSample($id);
+            $id = $this->request->getGet('sample');
 
-            return $this->respond(['success' => $result, 'message' => 'Livestock Fecal Sample Successfully Deleted']);
+            $livestock = $this->livestock->getLivestockByFecalSample($id);
+
+            $response = $this->livestockFecalSamples->deleteLivestockFecalSample($id);
+
+            $livestockTagId = $livestock['livestock_tag_id'];
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
+            $auditLog = (object) [
+                'farmerId' => $userId,
+                'livestockId' => $livestock['id'],
+                'action' => "Delete",
+                'title' => "Deleted Livestock Fecal Sample",
+                'description' => "Deleted Livestock Fecal Sample of Livestock $livestockTagId",
+                'entityAffected' => "Fecal Sample",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+            return $this->respond(['result' => $response], 200, 'Livestock Fecal Sample Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete record', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
-    public function getOverallLivestockFecalSampleCount(){
+    public function getOverallLivestockFecalSampleCount()
+    {
         try {
             $result = $this->livestockFecalSamples->getOverallLivestockFecalSampleCount();
 
@@ -138,7 +217,8 @@ class LivestockFecalSampleController extends ResourceController
         }
     }
 
-    public function getFarmerOverallLivestockFecalSampleCount($userId){
+    public function getFarmerOverallLivestockFecalSampleCount($userId)
+    {
         try {
             $result = $this->livestockFecalSamples->getFarmerOverallLivestockFecalSampleCount($userId);
 
@@ -147,8 +227,9 @@ class LivestockFecalSampleController extends ResourceController
             //throw $th;
         }
     }
-    
-    public function getRecentLivestockFecalSample(){
+
+    public function getRecentLivestockFecalSample()
+    {
         try {
             $livestockFecalSample = $this->livestockFecalSamples->getRecentLivestockFecalSample();
 
@@ -158,7 +239,8 @@ class LivestockFecalSampleController extends ResourceController
         }
     }
 
-    public function getTopLivestockObservations(){
+    public function getTopLivestockObservations()
+    {
         try {
             $livestockObservations = $this->livestockFecalSamples->getTopLivestockObservations();
 
@@ -168,7 +250,8 @@ class LivestockFecalSampleController extends ResourceController
         }
     }
 
-    public function getTopFecalSampleFindings(){
+    public function getTopFecalSampleFindings()
+    {
         try {
             $findings = $this->livestockFecalSamples->getTopFecalSampleFindings();
 
@@ -189,7 +272,8 @@ class LivestockFecalSampleController extends ResourceController
         }
     }
 
-    public function getFecalSampleCountByMonth(){
+    public function getFecalSampleCountByMonth()
+    {
         try {
             $livestockFecalSampleCountByMonth = $this->livestockFecalSamples->getFecalSampleCountByMonth();
 

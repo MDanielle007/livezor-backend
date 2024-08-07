@@ -3,7 +3,9 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\FarmerAuditModel;
 use App\Models\LivestockBloodSampleModel;
+use App\Models\LivestockModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -18,9 +20,14 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 class LivestockBloodSampleController extends ResourceController
 {
     private $livestockBloodSample;
+    private $farmerAudit;
+    private $livestock;
     public function __construct()
     {
         $this->livestockBloodSample = new LivestockBloodSampleModel();
+        $this->farmerAudit = new FarmerAuditModel();
+        $this->livestock = new LivestockModel();
+        helper('jwt');
     }
 
     public function getAllLivestockBloodSamples()
@@ -77,9 +84,26 @@ class LivestockBloodSampleController extends ResourceController
 
             $result = $this->livestockBloodSample->insertLivestockBloodSample($data);
 
+            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object)[
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Add New Livestock Blood Sample",
+                'description' => "Add New Livestock Blood Sample $livestockTagId",
+                'entityAffected' => "Blood Sample",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
             return $this->respond(['message' => 'Livestock Blood Sample Successfully Added', 'success' => $result], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
@@ -88,28 +112,59 @@ class LivestockBloodSampleController extends ResourceController
         try {
             $data = $this->request->getJSON();
 
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object)[
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Add New Livestock Blood Sample",
+                'entityAffected' => "Blood Sample",
+            ];
 
             $livestocks = $data->livestock;
 
             $result = null;
             foreach ($livestocks as $ls) {
                 $data->livestockId = $ls;
+                $auditLog->livestockId = $ls;
+    
+                $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+                $auditLog->description = "Add New Livestock Blood Sample $livestockTagId";
 
                 $result = $this->livestockBloodSample->insertLivestockBloodSample($data);
+                
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
             }
 
             return $this->respond(['success' => $result, 'message' => 'Livestock Blood Sample Successfully Added']);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
         }
     }
 
-    public function updateLivestockBloodSample($id)
+    public function updateLivestockBloodSample()
     {
         try {
             $data = $this->request->getJSON();
 
-            $result = $this->livestockBloodSample->updateLivestockBloodSample($id, $data);
+            $result = $this->livestockBloodSample->updateLivestockBloodSample($data->id, $data);
+
+            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object)[
+                'livestockId' => $data->livestockId,
+                'farmerId' => $userId,
+                'action' => "Edit",
+                'title' => "Updated Livestock Blood Sample",
+                'description' => "Updated Livestock Blood Sample $livestockTagId",
+                'entityAffected' => "Blood Sample",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
             return $this->respond(['message' => 'Livestock Blood Sample Successfully Updated', 'success' => $result], 200);
         } catch (\Throwable $th) {
@@ -117,14 +172,36 @@ class LivestockBloodSampleController extends ResourceController
         }
     }
 
-    public function deleteLivestockBloodSample($id)
+    public function deleteLivestockBloodSample()
     {
         try {
+            $id = $this->request->getGet('sample');
+
+            $livestock = $this->livestock->getLivestockByBloodSample($id);
+
             $response = $this->livestockBloodSample->deleteLivestockBloodSample($id);
 
-            return $this->respond(['message' => 'Livestock Blood Sample Successfully Deleted', 'result' => $response], 200);
+            $livestockTagId = $livestock['livestock_tag_id'];
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+
+            $auditLog = (object) [
+                'farmerId' => $userId,
+                'livestockId' => $livestock['id'],
+                'action' => "Delete",
+                'title' => "Deleted Livestock Blood Sample",
+                'description' => "Deleted Livestock Blood Sample of Livestock $livestockTagId",
+                'entityAffected' => "Blood Sample",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+            return $this->respond([ 'result' => $response], 200, 'Livestock Blood Sample Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete record', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 

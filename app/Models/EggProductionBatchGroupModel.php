@@ -112,46 +112,67 @@ class EggProductionBatchGroupModel extends Model
 
     public function insertEggProductionBatch($data)
     {
-        $bind = [
-            'record_owner' => $data->recordOwner,
-            'batch_name' => $data->batchName,
-            'batch_status' => $data->batchStatus,
-        ];
-
-        if (isset($data->userId)) {
-            $bind['user_id'] = $data->userId;
+        try {
+            $bind = [
+                'record_owner' => $data->recordOwner,
+                'batch_name' => $data->batchName,
+                'batch_status' => $data->batchStatus,
+            ];
+    
+            if (isset($data->userId)) {
+                $bind['user_id'] = $data->userId;
+            }
+    
+            $result = $this->insert($bind);
+    
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
-
-        $result = $this->insert($bind);
-
-        return $result;
     }
 
     public function updateEggProductionBatch($id, $data)
     {
-        $bind = [
-            'batch_name' => $data->batchName,
-            'batch_status' => $data->batchStatus,
-        ];
-
-        if (isset($data->userId)) {
-            $bind['user_id'] = $data->userId;
+        try {
+            $bind = [
+                'batch_name' => $data->batchName,
+                'batch_status' => $data->batchStatus,
+            ];
+    
+            if (isset($data->userId)) {
+                $bind['user_id'] = $data->userId;
+            }
+    
+            $result = $this->update($id, $bind);
+    
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
-
-        $result = $this->update($id, $bind);
-
-        return $result;
     }
 
     public function updateEggProductionBatchStatus($id, $status)
     {
-        $bind = [
-            'batch_status' => $status,
-        ];
-
-        $result = $this->update($id, $bind);
-
-        return $result;
+        try {
+            $bind = [
+                'batch_status' => $status,
+            ];
+    
+            $result = $this->update($id, $bind);
+    
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
+        }
     }
 
     public function updateEggProductionBatchRecordStatus($id, $status)

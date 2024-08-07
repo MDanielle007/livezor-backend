@@ -137,9 +137,9 @@ class LivestockTypeModel extends Model
                 return null; // or handle the case where the record is not found
             }
         } catch (\Throwable $th) {
-            // Handle exceptions appropriately
-            // For now, let's just suppress them
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -205,13 +205,13 @@ class LivestockTypeModel extends Model
         }
     }
 
-    public function getAllLivestockTypeName()
+    public function getAllLivestockTypeName($category = 'Livestock')
     {
         try {
             $livestockTypes = $this->select(
                 'livestock_type_name as livestockTypeName'
             )
-                ->where('category', 'Livestock')
+                ->where('category', $category)
                 ->findAll();
 
             return $livestockTypes;

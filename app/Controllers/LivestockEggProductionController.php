@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\EggProductionBatchGroupModel;
+use App\Models\FarmerAuditModel;
 use App\Models\LivestockEggProductionModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -20,11 +21,14 @@ class LivestockEggProductionController extends ResourceController
 {
     private $livestockEggProduction;
     private $eggProductionBatchGroup;
+    private $farmerAudit;
 
     public function __construct()
     {
         $this->livestockEggProduction = new LivestockEggProductionModel();
         $this->eggProductionBatchGroup = new EggProductionBatchGroupModel();
+        $this->farmerAudit = new FarmerAuditModel();
+        helper('jwt');
     }
 
     public function getAllEggProductions()
@@ -97,17 +101,28 @@ class LivestockEggProductionController extends ResourceController
                 $data->batchGroupId = $batchName->code;
             }
 
-            $response = "";
-            if (isset($data->batchGroupId)) {
-                $response = $this->livestockEggProduction->insertEggProductionWithBatch($data);
-            } else {
-                $response = $this->livestockEggProduction->insertEggProduction($data);
-            }
+            $response = $this->livestockEggProduction->insertEggProduction($data);
 
-            return $this->respond(['success' => $response, 'message' => 'Livestock Egg Production Successfully Added'], 200);
+            $eggProduction = $this->livestockEggProduction->getEggProduction($response);
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object)[
+                'farmerId' => $userId,
+                'action' => "Add",
+                'title' => "Add New Egg Production",
+                'description' => "Add New Egg Production ". $eggProduction['batchGroupName'],
+                'entityAffected' => "Egg Production",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+            return $this->respond(['result' => $response], 200, 'Livestock Egg Production Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to add Egg Production', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
@@ -117,24 +132,40 @@ class LivestockEggProductionController extends ResourceController
 
             $response = $this->livestockEggProduction->setEggProductionBatch($id, $data->batchId);
 
-            return $this->respond(['success' => $response, 'message' => 'Livestock Egg Production Successfully Added'], 200);
+            return $this->respond(['result' => $response, 'message' => 'Livestock Egg Production Successfully Added'], 200);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);
         }
     }
 
-    public function updateEggProduction($id)
+    public function updateEggProduction()
     {
         try {
             $data = $this->request->getJSON();
 
-            $response = $this->livestockEggProduction->updateEggProduction($id, $data);
+            $response = $this->livestockEggProduction->updateEggProduction($data->id, $data);
 
-            return $this->respond(['success' => $response, 'message' => 'Livestock Egg Production Successfully Updated'], 200);
+            $eggProduction = $this->livestockEggProduction->getEggProduction($data->id);
 
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object)[
+                'farmerId' => $userId,
+                'action' => "Edit",
+                'title' => "Updated Egg Production",
+                'description' => "Updated Egg Production of ". $eggProduction['batchGroupName'],
+                'entityAffected' => "Egg Production",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+            return $this->respond(['result' => $response], 200, 'Livestock Egg Production Successfully Updated');
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to add egg production', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
@@ -149,18 +180,39 @@ class LivestockEggProductionController extends ResourceController
 
         } catch (\Throwable $th) {
             //throw $th;
+            
         }
     }
 
-    public function deleteEggProduction($id)
+    public function deleteEggProduction()
     {
         try {
-            $response = $this->livestockEggProduction->deleteLivestockVaccination($id);
+            $id = $this->request->getGet('eggProduction');
 
-            return $this->respond(['result' => $response, 'message' => 'Livestock Vaccination Successfully Deleted'], 200);
+            $eggProduction = $this->livestockEggProduction->getEggProduction($id);
+
+            $response = $this->livestockEggProduction->deleteEggProduction($id);
+            $this->eggProductionBatchGroup->deleteEggProductionBatch($eggProduction['batchGroupId']);
+
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $auditLog = (object)[
+                'farmerId' => $userId,
+                'action' => "Delete",
+                'title' => "Deleted Egg Production",
+                'description' => "Deleted Egg Production of ". $eggProduction['batchGroupName'],
+                'entityAffected' => "Egg Production",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+            return $this->respond(['result' => $response], 200, 'Egg Production Successfully Deleted');
 
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete egg production', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
