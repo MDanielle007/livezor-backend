@@ -7,7 +7,8 @@ class ArimaPredictionLibrary
 {
     public function sendToFlask($timeSeries, $steps)
     {
-        $url = 'http://127.0.0.1:5000/api/arimavax';
+
+        $url = getenv('ARIMA_URL');
         $client = \Config\Services::curlrequest();
         $payload = json_encode(['time_series' => $timeSeries, 'steps' => $steps]);
 
