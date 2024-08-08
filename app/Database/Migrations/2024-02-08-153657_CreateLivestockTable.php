@@ -61,6 +61,10 @@ class CreateLivestockTable extends Migration
                 'constraint' => ['Age-Suited', 'Not Age-Suited'],
                 'default' => 'Not Age-Suited',
             ],
+            'is_pregnant' => [
+                'type' => 'BOOL',
+                'default' => false,
+            ],
             'date_of_birth' => [
                 'type' => 'DATE',
             ],

@@ -12,7 +12,7 @@ class LivestockModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'category', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'date_of_birth', 'livestock_health_status', 'origin', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'category', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'is_pregnant','date_of_birth', 'livestock_health_status', 'origin', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -331,6 +331,10 @@ class LivestockModel extends Model
                 $bind['origin'] = $data->origin;
             }
 
+            if (isset($data->isPregnant)) {
+                $bind['is_pregnant'] = $data->isPregnant;
+            }
+
             $result = $this->insert($bind);
 
             return $result;
@@ -358,6 +362,10 @@ class LivestockModel extends Model
 
             if (isset($data->livestockBreedId)) {
                 $bind['livestock_breed_id'] = $data->livestockBreedId;
+            }
+
+            if (isset($data->isPregnant)) {
+                $bind['is_pregnant'] = $data->isPregnant;
             }
 
             $result = $this->update($id, $bind);
@@ -396,6 +404,22 @@ class LivestockModel extends Model
         try {
             $bind = [
                 'record_status' => $status,
+            ];
+
+            $result = $this->update($id, $bind);
+
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $th->getMessage();
+        }
+    }
+
+    public function updateLivestockPregnantStatus($id, $status)
+    {
+        try {
+            $bind = [
+                'is_pregnant' => $status,
             ];
 
             $result = $this->update($id, $bind);
@@ -1335,7 +1359,8 @@ class LivestockModel extends Model
                 'livestocks.breeding_eligibility' => 'Age-Suited',
                 'livestocks.record_status' => 'Accessible',
                 'farmer_livestocks.farmer_id' => $userId,
-                'livestocks.category' => 'Livestock'
+                'livestocks.category' => 'Livestock',
+                'livestocks.is_pregnant' => 0,
             ];
 
             $data = $this->select('

@@ -82,7 +82,7 @@ class LivestockPregnancyController extends ResourceController
         try {
             $header = $this->request->getHeader("Authorization");
             $userId = getTokenUserId($header);
-            
+
             $livestockPregnancies = $this->livestockPregnancy->getAllFarmerLivestockPregnancies($userId);
 
             return $this->respond($livestockPregnancies);
@@ -147,20 +147,22 @@ class LivestockPregnancyController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
-            
+
             $header = $this->request->getHeader("Authorization");
             $userId = getTokenUserId($header);
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
-            if($userType == 'Farmer'){
+            if ($userType == 'Farmer') {
                 $data->farmerId = $userId;
             }
 
             $outcome = $data->outcome;
 
+            $parentLivestockId = $data->livestockId;
+
             if ($outcome == 'Successful') {
-                $result = $this->livestockPregnancy->updateLivestockPregnancyOutcomeSuccessful($data->id, (object)[
-                    'outcome'=> $data->outcome,
+                $result = $this->livestockPregnancy->updateLivestockPregnancyOutcomeSuccessful($data->id, (object) [
+                    'outcome' => $data->outcome,
                     'actualDeliveryDate' => $data->actualDeliveryDate,
                 ]);
 
@@ -200,14 +202,19 @@ class LivestockPregnancyController extends ResourceController
                         $result = $this->farmerLivestock->associateFarmerLivestock($data);
                     }
                 }
-            }else{
-                $result = $this->livestockPregnancy->updateLivestockPregnancyOutcome($data->id, (object)['outcome'=> $data->outcome]);
+
+            } else {
+                $result = $this->livestockPregnancy->updateLivestockPregnancyOutcome($data->id, (object) ['outcome' => $data->outcome]);
             }
 
-            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
-            
-            $auditLog = (object)[
-                'livestockId' => $data->livestockId,
+            if ($outcome !== 'Pending') {
+                $livestockPregnantStatus = $this->livestock->updateLivestockPregnantStatus($parentLivestockId, false);
+            }
+
+            $livestockTagId = $this->livestock->getLivestockTagIdById($parentLivestockId);
+
+            $auditLog = (object) [
+                'livestockId' => $parentLivestockId,
                 'farmerId' => $userId,
                 'action' => "Edit",
                 'title' => "Updated Pregnancy Outcome",

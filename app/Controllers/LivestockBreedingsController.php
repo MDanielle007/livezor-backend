@@ -136,6 +136,7 @@ class LivestockBreedingsController extends ResourceController
 
             $data->livestockId = $femaleLivestock;
             $livestockType = $this->livestockType->getLivestockTypeName($data->livestockId);
+            $livestockPregnantStatus = $this->livestock->updateLivestockPregnantStatus($data->livestockId, true);
 
             $result = null;
 
