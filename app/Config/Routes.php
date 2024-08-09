@@ -54,6 +54,8 @@ $routes->group('api', function ($routes) {
 
     // Admin endpoint routes
     $routes->group('admin', ['filter' => 'authAdminFilter'], function ($routes) {
+        $routes->get('get-user-image/(:any)', 'UserController::getUserImage/$1');
+
         // Admin Dashboard routes
         $routes->get('livestock-type-count', 'LivestocksController::getAllLivestockTypeCount');
         $routes->get('livestock-type-ageclass-count', 'LivestocksController::getAllLivestockTypeAgeClassCount');
@@ -405,6 +407,8 @@ $routes->group('api', function ($routes) {
 
     // Farmers endpoint routes
     $routes->group('farmer', ['filter' => 'authFarmerFilter'], function ($routes) {
+        $routes->get('get-user-image/(:any)', 'UserController::getUserImage/$1');
+
         $routes->get('distinct-livestock-types', 'LivestocksController::getFarmerDistinctLivestockType');
         $routes->get('livestock-types-sex', 'LivestocksController::getAllFarmerLivestocksBySexAndType');
         $routes->get('distinct-poultry-types/(:any)', 'PoultryController::getFarmerDistinctPoultryType/$1');

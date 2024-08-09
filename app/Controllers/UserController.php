@@ -102,9 +102,14 @@ class UserController extends ResourceController
 
             $file = $this->request->getFile('userImage');
             $newName = "";
+
+            $uploadPath = WRITEPATH . 'uploads/userImage/';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true); // Create directory if it doesn't exist
+            }
             if ($file && $file->isValid() && !$file->hasMoved()) {
                 $newName = $file->getRandomName();
-                $file->move('./uploads', $newName);
+                $file->move($uploadPath, $newName);
                 // You can also save the file path to your database
             } else {
                 return $this->fail('Invalid file upload');
@@ -180,6 +185,31 @@ class UserController extends ResourceController
             return $this->respond($file, 200);
         } catch (\Throwable $th) {
             return $this->respond(['error' => $th->getMessage()], 401);
+        }
+    }
+
+    public function getUserImage($filename)
+    {
+        try {
+            $filePath = WRITEPATH . 'uploads/userImage/' . $filename;
+
+            if (file_exists($filePath)) {
+                // Determine the file MIME type
+                $mimeType = mime_content_type($filePath);
+        
+                // Set the headers for file download
+                return $this->response
+                    ->setHeader('Content-Type', $mimeType)
+                    ->setHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
+                    ->setBody(file_get_contents($filePath));
+            } else {
+                return $this->failNotFound('Image not found.');
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failNotFound('Image not found.');
         }
     }
 
@@ -264,7 +294,7 @@ class UserController extends ResourceController
             $header = $this->request->getHeader("Authorization");
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
-            if($userType == 'Farmer'){
+            if ($userType == 'Farmer') {
                 $data->id = $decoded->sub->id;
             }
 
@@ -274,7 +304,7 @@ class UserController extends ResourceController
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->fail('Failed to update profile',400);            
+            return $this->fail('Failed to update profile', 400);
         }
     }
 
@@ -442,15 +472,11 @@ class UserController extends ResourceController
         try {
             $header = $this->request->getHeader("Authorization");
             $userId = getTokenUserId($header);
-            
+
             $admin = $this->userModel->getAdminUserInfo($userId);
 
-            if (isset($admin['userImage'])) {
-                $imageFilename = $admin['userImage'];
-                $imagePath = base_url("/uploads/" . $imageFilename);
-                $admin['userImageURL'] = $imagePath;
-            } else {
-                $admin['userImageURL'] = null; // or set a default image URL if needed
+            if (!isset($admin['userImage'])) {
+                $admin['userImage'] = null; // or set a default image URL if needed
             }
 
             return $this->respond($admin, 200);
