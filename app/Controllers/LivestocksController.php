@@ -126,7 +126,7 @@ class LivestocksController extends ResourceController
             $data = $this->request->getJSON();
             $data->category = "Livestock";
 
-            if($userType == 'Farmer'){
+            if ($userType == 'Farmer') {
                 $data->farmerId = $userId;
             }
 
@@ -139,7 +139,7 @@ class LivestocksController extends ResourceController
             $livestockType = $this->livestockTypes->getLivestockTypeName($data->livestockTypeId);
             $livestockTagId = $data->livestockTagId;
 
-            $auditLog = (object)[
+            $auditLog = (object) [
                 'livestockId' => $data->livestockId,
                 'farmerId' => $userId,
                 'action' => "Add",
@@ -170,11 +170,11 @@ class LivestocksController extends ResourceController
 
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
-            if($userType == 'Farmer'){
+            if ($userType == 'Farmer') {
                 $data->farmerId = $userId;
             }
 
-            $auditLog = (object)[
+            $auditLog = (object) [
                 'farmerId' => $userId,
                 'action' => "Add",
                 'title' => "Add New Livestock",
@@ -231,7 +231,7 @@ class LivestocksController extends ResourceController
             $data->category = "Livestock";
 
             $userType = $decoded->aud;
-            if($userType == 'Farmer'){
+            if ($userType == 'Farmer') {
                 $data->farmerId = $userId;
             }
 
@@ -239,7 +239,7 @@ class LivestocksController extends ResourceController
 
             $livestockTagId = $data->livestockTagId;
 
-            $auditLog = (object)[
+            $auditLog = (object) [
                 'livestockId' => $data->id,
                 'farmerId' => $userId,
                 'action' => "Edit",
@@ -314,7 +314,7 @@ class LivestocksController extends ResourceController
             $livestockTagId = $this->livestock->getLivestockTagIdById($id);
             $response = $this->livestock->deleteLivestock($id);
 
-            $auditLog = (object)[
+            $auditLog = (object) [
                 'livestockId' => $id,
                 'farmerId' => $userId,
                 'action' => "Delete",
@@ -324,12 +324,12 @@ class LivestocksController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
-            return $this->respond(['result' => $response], 200,'Livestock Successfully Deleted');
+            return $this->respond(['result' => $response], 200, 'Livestock Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            $this->fail('Failed to delete record',ResponseInterface::HTTP_BAD_REQUEST);
+            $this->fail('Failed to delete record', ResponseInterface::HTTP_BAD_REQUEST);
         }
     }
 
@@ -362,7 +362,7 @@ class LivestocksController extends ResourceController
             }
 
             $filteredMappingData = array_filter($mappingData, function ($md) {
-                return !empty ($md['livestock']);
+                return !empty($md['livestock']);
             });
 
             return $this->respond(['farmers' => array_values($filteredMappingData)]);
@@ -518,10 +518,10 @@ class LivestocksController extends ResourceController
             $userId = null;
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
-            if($userType == 'Farmer'){
-               $userId = $decoded->sub->id;
-            }else{
-               $userId = $this->request->getGet('fui');
+            if ($userType == 'Farmer') {
+                $userId = $decoded->sub->id;
+            } else {
+                $userId = $this->request->getGet('fui');
             }
 
             $data = $this->livestock->getFarmerDistinctLivestockType($userId);
@@ -540,10 +540,10 @@ class LivestocksController extends ResourceController
             $userId = null;
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
-            if($userType == 'Farmer'){
-               $userId = $decoded->sub->id;
-            }else{
-               $userId = $this->request->getGet('fui');
+            if ($userType == 'Farmer') {
+                $userId = $decoded->sub->id;
+            } else {
+                $userId = $this->request->getGet('fui');
             }
 
             $data = $this->livestock->getAllFarmerLivestocksBySexAndType($userId);
@@ -553,7 +553,7 @@ class LivestocksController extends ResourceController
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            
+
         }
     }
 
@@ -630,7 +630,7 @@ class LivestocksController extends ResourceController
 
             $data = [];
             $i = 1;
-            foreach ($cities as $city){
+            foreach ($cities as $city) {
                 $livestockTypeCount = $this->livestock->getAllLivestockTypeCountByCity($city);
 
                 $totalLivestockCount = $this->livestock->getLivestockCountBycity($city);
@@ -640,7 +640,7 @@ class LivestocksController extends ResourceController
                     'totalLivestockCount' => $totalLivestockCount
                 ];
             }
-            
+
             return $this->respond($data);
         } catch (\Throwable $th) {
             return $this->respond($th->getMessage());
@@ -1056,7 +1056,7 @@ class LivestocksController extends ResourceController
 
             $headers = [];
 
-            if(strtoupper($category) == 'LIVESTOCK'){
+            if (strtoupper($category) == 'LIVESTOCK') {
                 $headers = [
                     'Livestock Tag ID',
                     'Livestock Type',
@@ -1071,8 +1071,8 @@ class LivestocksController extends ResourceController
                     'Date of Birth',
                     'Health Status',
                     'Origin'
-                ];    
-            }else if(strtoupper($category) == 'POULTRY'){
+                ];
+            } else if (strtoupper($category) == 'POULTRY') {
                 $headers = [
                     'Poultry Tag ID',
                     'Poultry Type',
@@ -1087,11 +1087,11 @@ class LivestocksController extends ResourceController
                     'Date of Birth',
                     'Health Status',
                     'Origin'
-                ];    
+                ];
             }
 
             // 10th Row: Column Headers
-            
+
             $headerStyles = [
                 'font' => [
                     'name' => 'Arial',
@@ -1139,7 +1139,7 @@ class LivestocksController extends ResourceController
             }
 
             // Set column widths
-            $columnWidths = [16, 16, 16, 16, 16, 20, 30, 12, 12, 12, 12,12,14];
+            $columnWidths = [16, 16, 16, 16, 16, 20, 30, 12, 12, 12, 12, 12, 14];
             foreach (range('A', 'M') as $index => $columnID) {
                 $sheet->getColumnDimension($columnID)->setWidth($columnWidths[$index]);
             }
@@ -1235,9 +1235,10 @@ class LivestocksController extends ResourceController
         return $html;
     }
 
-    private function getLivestockOrPoultry($string) {
+    private function getLivestockOrPoultry($string)
+    {
         $patterns = ['livestock', 'poultry'];
-        
+
         foreach ($patterns as $pattern) {
             if (preg_match("/$pattern/", $string)) {
                 return $pattern;
@@ -1246,34 +1247,30 @@ class LivestocksController extends ResourceController
         return 'none';
     }
 
-    private function splitAndCapitalize($string) {
+    private function splitAndCapitalize($string)
+    {
         // Step 1: Insert a space before each capital letter (except the first letter)
         $spacedString = preg_replace('/(?<!^)([A-Z])/', ' $1', $string);
-    
+
         // Step 2: Convert the entire string to lowercase
         $lowercasedString = strtolower($spacedString);
-    
+
         // Step 3: Capitalize the first letter of each word
         $capitalizedString = ucwords($lowercasedString);
-    
+
         return $capitalizedString;
     }
 
-    public function getLivestockDisProdForReport()
+    private function getLivestockDisProdFarmerForReport($category, $origin, $minDate, $maxDate)
     {
         try {
-            $dbTableName = $this->request->getGet('category');
-            $origin = $dbTableName == 'livestockDistribution' ? 'Distributed' : 'Produced';
+            $originTable = $origin === 'Distribution' ? 'Distributed' : 'Produced';
 
-            $category = $this->getLivestockOrPoultry($dbTableName);
-            $minDate = $this->request->getGet('minDate');
-            $maxDate = $this->request->getGet('maxDate');
-
-            $livestockRecordsReport = $this->livestock->getLivestockDisProdForReport($category, $minDate, $maxDate, $origin);
+            $livestockRecordsReport = $this->livestock->getLivestockDisProdForReport($category, $minDate, $maxDate, $originTable);
 
             // Check if the report data is not null
             if (is_null($livestockRecordsReport) || empty($livestockRecordsReport)) {
-                return $this->failNotFound('No data found for the given date range.');
+                return ['error'=> true, 'message' => 'No data found for the given date range.'];
             }
 
             // Generate Excel file using PhpSpreadsheet
@@ -1340,7 +1337,7 @@ class LivestocksController extends ResourceController
 
             $sheet->getRowDimension(4)->setRowHeight(15);
 
-            $title = $this->splitAndCapitalize($dbTableName);
+            $title = "$category $origin";
             // 5th Row: LIVESTOCK VACCINATIONS
             $sheet->mergeCells('A5:M5');
             $sheet->setCellValue('A5', strtoupper($title));
@@ -1422,18 +1419,12 @@ class LivestocksController extends ResourceController
                 'Contact',
                 'Animal',
                 'Breed',
-                'No. of Heads'
+                'No. of Heads',
+                'Date of ' . $origin
             ];
-            
-            // Check the value of $dbTableName and append the appropriate header
-            if ($dbTableName == 'livestockDistribution') {
-                $headers[] = 'Date of Distribution';
-            } elseif ($dbTableName == 'livestockProduction') {
-                $headers[] = 'Date of Production';
-            }            
 
             // 10th Row: Column Headers
-            
+
             $headerStyles = [
                 'font' => [
                     'name' => 'Arial',
@@ -1481,7 +1472,7 @@ class LivestocksController extends ResourceController
             }
 
             // Set column widths
-            $columnWidths = [8, 16, 20, 10, 10, 10, 10, 12, 12, 16, 16, 12, 16];
+            $columnWidths = [8, 16, 20, 10, 10, 10, 10, 12, 12, 16, 16, 12, 12];
             foreach (range('A', 'M') as $index => $columnID) {
                 $sheet->getColumnDimension($columnID)->setWidth($columnWidths[$index]);
             }
@@ -1511,7 +1502,7 @@ class LivestocksController extends ResourceController
             $uniqueId = uniqid();
 
             // Format filenames
-            $fileName = strtoupper($category) == 'LIVESTOCK' ? "{$dbTableName}sReport_{$minDate}_{$maxDate}_{$uniqueId}" : "PoultryRecordsReport_{$minDate}_{$maxDate}_{$uniqueId}";
+            $fileName = "{$category}{$origin}sReport_{$minDate}_{$maxDate}_{$uniqueId}";
             $excelFilePath = $excelDirectory . "{$fileName}.xlsx";
             $pdfFilePath = $pdfDirectory . "{$fileName}.pdf";
 
@@ -1553,19 +1544,20 @@ class LivestocksController extends ResourceController
             unlink($pdfFilePath);
 
             // Return both Excel and PDF as base64 encoded strings
-            return $this->respond([
+            return [
                 'excel' => base64_encode($excelContent),
                 'pdf' => base64_encode($pdfContent),
                 'fileName' => $fileName
-            ]);
+            ];
         } catch (\Throwable $th) {
             log_message('error', $th->getMessage());
             log_message('error', json_encode($th->getTrace()));
-            return $this->failServerError($th->getMessage());
+            return $th->getMessage();
         }
     }
 
-    public function getLivestockTypeCountMonitoring(){
+    public function getLivestockTypeCountMonitoring()
+    {
         try {
             $category = $this->request->getGet('category');
             $data = $this->livestock->getLivestockTypeCountMonitoring($category);
@@ -1579,7 +1571,8 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getLivestockBreedCountMonitoring(){
+    public function getLivestockBreedCountMonitoring()
+    {
         try {
             $category = $this->request->getGet('category');
             $data = $this->livestock->getLivestockBreedCountMonitoring($category);
@@ -1593,7 +1586,8 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getLivestockAgeCountMonitoring(){
+    public function getLivestockAgeCountMonitoring()
+    {
         try {
             $category = $this->request->getGet('category');
             $data = $this->livestock->getLivestockAgeCountMonitoring($category);
@@ -1604,6 +1598,342 @@ class LivestocksController extends ResourceController
             log_message('error', $th->getMessage());
             log_message('error', json_encode($th->getTrace()));
             return $this->failServerError($th->getMessage());
+        }
+    }
+
+    private function getLivestockDisProdMunicipalityForReport($category, $origin, $minDate, $maxDate)
+    {
+        try {
+            $cities = [
+                'Puerto Galera',
+                'San Teodoro',
+                'Baco',
+                'Calapan City',
+                'Naujan',
+                'Victoria',
+                'Socorro',
+                'Pinamalayan',
+                'Gloria',
+                'Bansud',
+                'Bongabong',
+                'Roxas',
+                'Mansalay',
+                'Bulalacao'
+            ];
+
+            $originTable = $origin === 'Distribution' ? 'Distributed' : 'Produced';
+
+            $data = $this->livestock->getLivestockDistributionForCities($category, $minDate, $maxDate, $originTable, $cities);
+            // Check if the report data is not null
+            if (is_null($data) || empty($data)) {
+                return ['error'=> true, 'message' => 'No data found for the given date range.'];
+            }
+
+            // Generate Excel file using PhpSpreadsheet
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $sheet->getPageSetup()
+                ->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_PORTRAIT)
+                ->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_LEGAL);
+
+            // Set narrow margins
+            $sheet->getPageMargins()->setTop(0.25);
+            $sheet->getPageMargins()->setRight(0.25);
+            $sheet->getPageMargins()->setLeft(0.25);
+            $sheet->getPageMargins()->setBottom(0.25);
+
+            // Fit to one page width
+            $sheet->getPageSetup()->setFitToWidth(1);
+            $sheet->getPageSetup()->setFitToHeight(0);
+
+            // 1st Row: LIVESTOCK VACCINATIONS
+            $sheet->mergeCells('A1:I1');
+            $sheet->setCellValue('A1', 'Department of Agriculture- MiMaRoPa');
+            $sheet->getStyle('A1:I1')->applyFromArray([
+                'font' => [
+                    'name' => 'Arial',
+                    'size' => 12,
+                    'bold' => true,
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+
+            // 1st Row: LIVESTOCK VACCINATIONS
+            $sheet->mergeCells('A2:I2');
+            $sheet->setCellValue('A2', 'Research Division-Livestock Department');
+            $sheet->getStyle('A2:I2')->applyFromArray([
+                'font' => [
+                    'name' => 'Arial',
+                    'size' => 11,
+                    'bold' => true,
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+
+            // 1st Row: LIVESTOCK VACCINATIONS
+            $sheet->mergeCells('A3:I3');
+            $sheet->setCellValue('A3', 'Barcenaga, Naujan Oriental Mindoro');
+            $sheet->getStyle('A3:I3')->applyFromArray([
+                'font' => [
+                    'name' => 'Arial',
+                    'size' => 11,
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+
+            $sheet->getRowDimension(4)->setRowHeight(15);
+
+            $title = "$category $origin";
+            // 5th Row: LIVESTOCK VACCINATIONS
+            $sheet->mergeCells('A5:I5');
+            $sheet->setCellValue('A5', strtoupper($title));
+            $sheet->getStyle('A5:I5')->applyFromArray([
+                'font' => [
+                    'name' => 'Arial',
+                    'bold' => true,
+                    'size' => 14,
+                    'color' => ['argb' => 'FFFFFFFF'],
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'color' => ['argb' => 'FF203764'],
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+
+            // 6th Row: Date Range
+            $sheet->mergeCells('A6:I6');
+            $startDate = date('F Y', strtotime($minDate));
+            $endDate = date('F Y', strtotime($maxDate));
+            $sheet->setCellValue('A6', "$startDate To $endDate");
+            $sheet->getStyle('A6:I6')->applyFromArray([
+                'font' => [
+                    'name' => 'Arial',
+                    'bold' => false,
+                    'size' => 11,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'color' => ['argb' => 'FFD9E1F2'],
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+
+            // 7th Row: Blank Row
+            $sheet->getRowDimension(7)->setRowHeight(15);
+
+            // 8th Row: Date Exported
+            $sheet->mergeCells('A8:I8');
+            $dateExported = date('F j, Y');
+            $sheet->setCellValue('A8', "Date Exported: $dateExported");
+            $sheet->getStyle('A8:I8')->applyFromArray([
+                'font' => [
+                    'name' => 'Arial',
+                    'bold' => false,
+                    'size' => 11,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'color' => ['argb' => 'FFFFD966'],
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+
+            // 9th Row: Blank Row
+            $sheet->getRowDimension(9)->setRowHeight(15);
+
+            $headers = [
+                'Barangay',
+                'Municipality/City',
+                'Province',
+                'Livestock Type',
+                'Breed',
+                'Age Classification',
+                'Alive',
+                'Dead',
+                'No. of Heads',
+            ];
+
+            // 10th Row: Column Headers
+
+            $headerStyles = [
+                'font' => [
+                    'name' => 'Arial',
+                    'bold' => true,
+                    'size' => 12,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'color' => ['argb' => 'FFD9E1F2'],
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP, // Top align the text
+                    'wrapText' => true, // Word wrap the text
+                ],
+                'borders' => [
+                    'outline' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        'color' => ['argb' => 'FF000000'],
+                    ],
+                ],
+            ];
+
+            // Data Styles with Borders
+            $dataStyles = [
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP, // Top align the text
+                    'wrapText' => true, // Word wrap the text
+                ],
+                'borders' => [
+                    'outline' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                        'color' => ['argb' => 'FF000000'],
+                    ],
+                ],
+            ];
+
+            $columnLetter = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($columnLetter . '10', $header);
+                $sheet->getStyle($columnLetter . '10')->applyFromArray($headerStyles);
+                $columnLetter++;
+            }
+
+            // Set column widths
+            $columnWidths = [15, 20, 20, 17, 17, 17, 12, 12, 12];
+            foreach (range('A', 'I') as $index => $columnID) {
+                $sheet->getColumnDimension($columnID)->setWidth($columnWidths[$index]);
+            }
+
+            // Add data to the sheet starting from the 7th row
+            $rowIndex = 11;
+            foreach ($data as $record) {
+                $columnLetter = 'A';
+                foreach ($record as $value) {
+                    $sheet->setCellValue($columnLetter . $rowIndex, $value);
+                    $sheet->getStyle($columnLetter . $rowIndex)->applyFromArray($dataStyles);
+                    $columnLetter++;
+                }
+                $rowIndex++;
+            }
+
+            $excelDirectory = WRITEPATH . "exports/excel/";
+            $pdfDirectory = WRITEPATH . "exports/pdf/";
+            if (!is_dir($excelDirectory)) {
+                mkdir($excelDirectory, 0777, true); // Recursive directory creation
+            }
+            if (!is_dir($pdfDirectory)) {
+                mkdir($pdfDirectory, 0777, true); // Recursive directory creation
+            }
+
+            // Generate unique ID
+            $uniqueId = uniqid();
+
+            // Format filenames
+            $fileName = "{$category}{$origin}sReport_{$minDate}_{$maxDate}_{$uniqueId}";
+            $excelFilePath = $excelDirectory . "{$fileName}.xlsx";
+            $pdfFilePath = $pdfDirectory . "{$fileName}.pdf";
+
+            $excelContent = null;
+            $pdfContent = null;
+
+            try {
+                $writer = new Xlsx($spreadsheet);
+                $writer->save($excelFilePath);
+                $excelContent = file_get_contents($excelFilePath);
+            } catch (\Throwable $th) {
+                //throw $th;
+                log_message('error', $th->getMessage());
+                log_message('error', json_encode($th->getTrace()));
+            }
+
+            $spreadsheet->getActiveSheet()->setShowGridlines(false);
+            try {
+                //code...
+                $html = $this->generateHtmlFromSpreadsheet($spreadsheet);
+                $options = new Options();
+                $options->set('isHtml5ParserEnabled', true);
+                $dompdf = new Dompdf($options);
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('legal', 'portrait');
+                $dompdf->render();
+                $pdfOutput = $dompdf->output();
+                $pdfFilePath = $pdfDirectory . "{$fileName}.pdf";
+                file_put_contents($pdfFilePath, $pdfOutput);
+                $pdfContent = file_get_contents($pdfFilePath);
+            } catch (\Throwable $th) {
+                //throw $th;
+                log_message('error', $th->getMessage());
+                log_message('error', json_encode($th->getTrace()));
+            }
+
+            // Delete the files after reading
+            unlink($excelFilePath);
+            unlink($pdfFilePath);
+
+            // Return both Excel and PDF as base64 encoded strings
+            return [
+                'excel' => base64_encode($excelContent),
+                'pdf' => base64_encode($pdfContent),
+                'fileName' => $fileName
+            ];
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->respond($th->getMessage());
+        }
+    }
+
+    public function getLivestockDisProdForReport()
+    {
+        try {
+            //code...
+            $category = $this->request->getGet('category');
+            $origin = $this->request->getGet('origin');
+            $type = $this->request->getGet('type');
+            $minDate = $this->request->getGet('minDate');
+            $maxDate = $this->request->getGet('maxDate');
+
+            $data = null;
+
+            if ($type == 'Farmer') {
+                $data = $this->getLivestockDisProdFarmerForReport($category, $origin, $minDate, $maxDate);
+            } else {
+                $data = $this->getLivestockDisProdMunicipalityForReport($category, $origin, $minDate, $maxDate);
+            }
+            if(isset($data['error'])){
+                return $this->failNotFound($data['message']);
+            }
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->respond($th->getMessage());
         }
     }
 

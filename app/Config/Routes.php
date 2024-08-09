@@ -154,7 +154,6 @@ $routes->group('api', function ($routes) {
         $routes->get('get-livestock-freport', 'LivestocksController::getLivestockRecordsForReport');
         $routes->get('get-livestock-disprod-freport', 'LivestocksController::getLivestockDisProdForReport');
 
-
         // Poultry endpoints routes
         $routes->get('all-poultries', 'PoultryController::getAllPoultries');
         $routes->get('all-farmer-poultries/(:any)', 'PoultryController::getFarmerAllPoultries/$1');

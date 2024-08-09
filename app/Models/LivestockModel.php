@@ -12,7 +12,7 @@ class LivestockModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'category', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'is_pregnant','date_of_birth', 'livestock_health_status', 'origin', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'category', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'is_pregnant', 'date_of_birth', 'livestock_health_status', 'origin', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -1425,7 +1425,7 @@ class LivestockModel extends Model
                         'MONTH(livestocks.date_of_birth)' => $month,
                     ];
 
-                    if($origin !== 'All'){
+                    if ($origin !== 'All') {
                         $whereClause['livestocks.origin'] = $origin;
                     }
 
@@ -1439,7 +1439,7 @@ class LivestockModel extends Model
                         'year' => $year,
                         'month' => (string) $month,
                         'livestock_type_name' => $livestockTypeName,
-                        'livestock_count' => (string)$count,
+                        'livestock_count' => (string) $count,
                     ];
                 }
             }
@@ -2175,7 +2175,7 @@ class LivestockModel extends Model
                     livestock_types.livestock_type_name as livestockType,
                     COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
                     COUNT(*) as livestockCount,
-                    farmer_livestocks.acquired_date as acquiredDate
+                    farmer_livestocks.acquired_date as acquiringDate,
                 ')
                 ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
                 ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
@@ -2208,4 +2208,60 @@ class LivestockModel extends Model
             log_message('error', $th->getMessage());
         }
     }
+
+    public function getLivestockDistributionForCities($category, $minDate, $maxDate, $origin, $cities)
+    {
+        try {
+            $whereClause = [
+                'farmer_livestocks.record_status' => 'Accessible',
+                'livestocks.category' => $category,
+                'farmer_livestocks.acquired_date >=' => $minDate,
+                'farmer_livestocks.acquired_date <=' => $maxDate,
+                'livestocks.origin' => $origin,
+            ];
+
+            $data = $this->select('
+                user_accounts.barangay,
+                user_accounts.city,
+                user_accounts.province,
+                livestock_types.livestock_type_name as livestockType,
+                COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                livestock_age_class.livestock_age_classification as livestockAgeClassification,
+                SUM(CASE WHEN livestocks.livestock_health_status = "Alive" THEN 1 ELSE 0 END) as aliveCount,
+                SUM(CASE WHEN livestocks.livestock_health_status = "Dead" THEN 1 ELSE 0 END) as deadCount,
+                COUNT(*) as totalLivestockCount,
+            ')
+                ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id', 'left') // Use left join if breed can be null
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id','left')
+                ->where($whereClause)
+                ->whereIn('user_accounts.city', $cities) // Filter by cities
+                ->groupBy([
+                    'user_accounts.barangay',
+                    'user_accounts.city',
+                    'user_accounts.province',
+                    'livestock_types.livestock_type_name',
+                    'livestock_breeds.livestock_breed_name',
+                    'livestock_age_class.livestock_age_classification'
+                ])
+                ->orderBy('FIELD(user_accounts.city, '. implode(',', array_map(function($city) {
+                    return '"' . $city . '"';
+                }, $cities)) . ')')    
+                ->orderBy('user_accounts.barangay', 'ASC')
+                ->orderBy('livestock_types.livestock_type_name', 'ASC')
+                ->orderBy('livestock_breeds.livestock_breed_name', 'ASC')
+                ->orderBy('livestock_age_class.livestock_age_classification', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage());
+            return $th->getMessage();
+        }
+    }
+
+
+
 }
