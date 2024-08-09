@@ -12,7 +12,7 @@ class UserModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
-    protected $allowedFields = ['user_id', 'username', 'password', 'email', 'first_name', 'middle_name', 'last_name', 'date_of_birth', 'gender', 'civil_status', 'sitio', 'barangay', 'city', 'province', 'phone_number', 'user_image', 'user_role', 'user_status', 'last_login_date', 'remember_token', 'firebase_token', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['user_id', 'username', 'password', 'email', 'first_name', 'middle_name', 'last_name', 'date_of_birth', 'gender', 'civil_status', 'sitio', 'barangay', 'city', 'province', 'phone_number', 'user_image', 'user_role', 'user_status', 'last_login_date', 'remember_token', 'firebase_token', 'reset_token', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -152,8 +152,8 @@ class UserModel extends Model
                 user_role as userRole,
                 user_status as userStatus
             ')
-            ->where('user_id',$id)
-            ->first();
+                ->where('user_id', $id)
+                ->first();
 
             return $user;
         } catch (\Throwable $th) {
@@ -167,7 +167,7 @@ class UserModel extends Model
         try {
             $whereClause = [
                 'user_role' => 'Farmer',
-               'record_status' => 'Accessible',
+                'record_status' => 'Accessible',
             ];
 
             $user = $this->select(
@@ -202,7 +202,7 @@ class UserModel extends Model
         try {
             $whereClause = [
                 'user_role' => 'DA Personnel',
-               'record_status' => 'Accessible',
+                'record_status' => 'Accessible',
             ];
 
             $user = $this->select(
@@ -229,6 +229,26 @@ class UserModel extends Model
         } catch (\Throwable $th) {
             //throw $th;
             return $th->getMessage();
+        }
+    }
+
+    public function checkUserEmailorUsername($emailOrUsername)
+    {
+        try {
+            $user = $this->select('
+                id,
+                email,
+                username,
+                CONCAT(first_name, " ", last_name) as name,
+            ')->where('email', $emailOrUsername)
+                ->orWhere('username', $emailOrUsername)
+                ->first();
+
+            return $user;
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -301,16 +321,18 @@ class UserModel extends Model
         }
     }
 
-    public function updateUserPassword($id, $data)
+    public function updateUserPassword($id, $password)
     {
         try {
             $bind = [
-                'password' => password_hash($data->password, PASSWORD_DEFAULT),
+                'password' => password_hash($password, PASSWORD_DEFAULT),
             ];
 
             $result = $this->update($id, $bind);
             return $result;
         } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $th->getMessage();
         }
     }
@@ -393,7 +415,7 @@ class UserModel extends Model
             $userData = $this->select(
                 'CONCAT(first_name, " ", last_name) as userName'
             )->find($id);
-    
+
             return $userData;
         } catch (\Throwable $th) {
             //throw $th;
@@ -407,9 +429,9 @@ class UserModel extends Model
                 'user_role' => 'Farmer',
                 'record_status' => 'Accessible',
             ];
-    
+
             $farmerCount = $this->where($whereClause)->countAllResults();
-    
+
             return $farmerCount;
         } catch (\Throwable $th) {
             //throw $th;
@@ -439,7 +461,8 @@ class UserModel extends Model
         }
     }
 
-    public function getFarmerCountByCity($city){
+    public function getFarmerCountByCity($city)
+    {
         try {
             $whereClause = [
                 'user_role' => 'Farmer',
@@ -455,7 +478,8 @@ class UserModel extends Model
         }
     }
 
-    public function getFarmerByLivestock($id){
+    public function getFarmerByLivestock($id)
+    {
         try {
             $whereClause = [
                 'user_accounts.user_role' => 'Farmer',
@@ -469,9 +493,9 @@ class UserModel extends Model
                 user_accounts.user_id as userId,
                 CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as userName
             ')
-            ->join('farmer_livestocks','farmer_livestocks.farmer_id = user_accounts.id')
-            ->join('livestocks','livestocks.id = farmer_livestocks.livestock_id')
-            ->where($whereClause)->findAll();
+                ->join('farmer_livestocks', 'farmer_livestocks.farmer_id = user_accounts.id')
+                ->join('livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
+                ->where($whereClause)->findAll();
 
             return $farmer;
         } catch (\Throwable $th) {
@@ -479,7 +503,8 @@ class UserModel extends Model
         }
     }
 
-    public function getFarmerNameAddress(){
+    public function getFarmerNameAddress()
+    {
         try {
             $whereClause = [
                 'user_role' => 'Farmer',
@@ -497,7 +522,7 @@ class UserModel extends Model
                 province,
                 user_image as userImage
             ')
-            ->where($whereClause)->findAll();
+                ->where($whereClause)->findAll();
 
             return $farmer;
         } catch (\Throwable $th) {
@@ -505,22 +530,23 @@ class UserModel extends Model
         }
     }
 
-    public function getFarmerNameSpecifiedAddress($barangay, $city, $province){
+    public function getFarmerNameSpecifiedAddress($barangay, $city, $province)
+    {
         try {
             $whereClause = [
                 'user_role' => 'Farmer',
                 'record_status' => 'Accessible',
             ];
 
-            if($barangay){
+            if ($barangay) {
                 $whereClause['barangay'] = $barangay;
             }
 
-            if($city){
+            if ($city) {
                 $whereClause['city'] = $city;
             }
 
-            if($province){
+            if ($province) {
                 $whereClause['province'] = $province;
             }
 
@@ -535,7 +561,7 @@ class UserModel extends Model
                 province,
                 user_image as userImage
             ')
-            ->where($whereClause)->findAll();
+                ->where($whereClause)->findAll();
 
             return $farmer;
         } catch (\Throwable $th) {
@@ -543,7 +569,8 @@ class UserModel extends Model
         }
     }
 
-    public function getIdByUserId($userId){
+    public function getIdByUserId($userId)
+    {
         try {
             $whereClause = [
                 'user_id' => $userId

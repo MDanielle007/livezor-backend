@@ -27,6 +27,7 @@ class Filters extends BaseConfig
         'authFilter' => \App\Filters\AuthFilter::class,
         'authAdminFilter' => \App\Filters\AuthAdminFilter::class,
         'authFarmerFilter' => \App\Filters\AuthFarmerFilter::class,
+        'resetPassFilter' =>\App\Filters\ResetPassFilter::class
     ];
 
     /**

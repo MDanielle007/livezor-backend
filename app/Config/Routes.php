@@ -8,8 +8,10 @@ use CodeIgniter\Router\RouteCollection;
 
 // API routes
 $routes->group('api', function ($routes) {
-    $routes->post('login', 'UserController::loginAuth');
-    $routes->put('logout', 'UserController::userLogOut');
+    $routes->post('login', 'AuthController::loginAuth');
+    $routes->put('logout', 'AuthController::userLogOut');
+    $routes->post('password-reset', 'AuthController::requestPasswordLink');
+    $routes->put('password-reset', 'AuthController::requestPasswordReset', ['filter' => 'resetPassFilter']);
 
     // Livestocks endpoint routes
     $routes->group('livestock', ['filter' => 'authFilter'] ,function ($routes) {

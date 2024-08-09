@@ -105,6 +105,10 @@ class CreateUserTable extends Migration
                 'type' => 'TEXT',
                 'null' => true,
             ],
+            'reset_token' => [
+                'type' => 'TEXT',
+                'null' => true,
+            ],
             'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],

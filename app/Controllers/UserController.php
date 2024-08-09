@@ -296,7 +296,7 @@ class UserController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
-            $response = $this->userModel->updateUserPassword($id, $data);
+            $response = $this->userModel->updateUserPassword($id, $data->password);
             return $this->respond($response, 200);
         } catch (\Throwable $th) {
             //throw $th;
