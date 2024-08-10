@@ -35,8 +35,10 @@ class AuthController extends ResourceController
                 $iat = time(); // current timestamp value
                 $exp = $iat + (60 * 60 * 24);
 
+                $iss = getenv('JWT_ISS');
+
                 $payload = array(
-                    "iss" => "OrMin Livestock Management System",
+                    "iss" => $iss,
                     "aud" => $user['user_role'],
                     "sub" => ['id' => $user['id'], 'userId' => $user['user_id']],
                     "iat" => $iat, //Time the JWT issued at
@@ -106,8 +108,10 @@ class AuthController extends ResourceController
             $iat = time(); // current timestamp value
             $exp = $iat + (60 * 60 * 3);
 
+            $iss = getenv('JWT_ISS');
+
             $payload = array(
-                "iss" => "OrMin Livestock Management System",
+                "iss" => $iss,
                 "aud" => $user['email'],
                 "sub" => ['id' => $user['id'], 'userId' => $user['username']],
                 "iat" => $iat, //Time the JWT issued at
