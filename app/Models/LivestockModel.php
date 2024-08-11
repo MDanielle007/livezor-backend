@@ -315,7 +315,7 @@ class LivestockModel extends Model
                 'category' => $data->category
             ];
 
-            if (isset($data->livestockTagId)) {
+            if (isset($data->livestockTagId) && !empty($data->livestockTagId)) {
                 $bind['livestock_tag_id'] = $data->livestockTagId;
             }
 
@@ -708,6 +708,20 @@ class LivestockModel extends Model
                 ->find($id);
 
             return $livestock['livestockTagId'];
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
+        }
+    }
+
+    public function getLivestockCategoryById($id)
+    {
+        try {
+            $livestock = $this->select('category')
+                ->find($id);
+
+            return $livestock['category'];
         } catch (\Throwable $th) {
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
@@ -2235,7 +2249,7 @@ class LivestockModel extends Model
                 ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id', 'left') // Use left join if breed can be null
-                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id','left')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id', 'left')
                 ->where($whereClause)
                 ->whereIn('user_accounts.city', $cities) // Filter by cities
                 ->groupBy([
@@ -2246,9 +2260,9 @@ class LivestockModel extends Model
                     'livestock_breeds.livestock_breed_name',
                     'livestock_age_class.livestock_age_classification'
                 ])
-                ->orderBy('FIELD(user_accounts.city, '. implode(',', array_map(function($city) {
+                ->orderBy('FIELD(user_accounts.city, ' . implode(',', array_map(function ($city) {
                     return '"' . $city . '"';
-                }, $cities)) . ')')    
+                }, $cities)) . ')')
                 ->orderBy('user_accounts.barangay', 'ASC')
                 ->orderBy('livestock_types.livestock_type_name', 'ASC')
                 ->orderBy('livestock_breeds.livestock_breed_name', 'ASC')

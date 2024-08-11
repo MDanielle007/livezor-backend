@@ -161,33 +161,43 @@ class LivestockVaccinationsController extends ResourceController
     {
         try {
             $data = $this->request->getJSON();
+            $header = $this->request->getHeader("Authorization");
+            $userId = getTokenUserId($header);
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if ($userType == 'Farmer') {
+                $data->vaccineAdministratorId = $userId;
+            }
 
             $response = $this->livestockVaccination->insertLivestockVaccination($data);
 
+            if (!$response) {
+                return $this->fail('Failed to add vaccination');
+            }
+
             $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+            $category = $this->livestock->getLivestockCategoryById($data->livestockId);
 
             $vaccine = $data->vaccinationName;
 
-            $header = $this->request->getHeader("Authorization");
-            $userId = getTokenUserId($header);
             $auditLog = (object) [
                 'livestockId' => $data->livestockId,
                 'farmerId' => $userId,
                 'action' => "Add",
                 'title' => "Adminster Vaccination",
-                'description' => "Administer $vaccine to Livestock $livestockTagId",
+                'description' => "Administer $vaccine to $category $livestockTagId",
                 'entityAffected' => "Vaccination",
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
-            return $this->respond(['success' => true, 'message' => 'Livestock Vaccination Successfully Added'], 200);
+            return $this->respond(['result' => $response], 200, 'Vaccination Successfully Added');
 
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => $th->getMessage(), 'message' => 'Failed Livestock Vaccination'], 200);
+            return $this->fail('Failed to add Vaccination', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -202,7 +212,7 @@ class LivestockVaccinationsController extends ResourceController
             $userId = getTokenUserId($header);
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
-            if($userType == 'Farmer'){
+            if ($userType == 'Farmer') {
                 $data->vaccineAdministratorId = $userId;
             }
 
@@ -213,27 +223,34 @@ class LivestockVaccinationsController extends ResourceController
                 'entityAffected' => "Vaccination",
             ];
 
-
+            $res = null;
             foreach ($livestock as $ls) {
                 $data->livestockId = $ls;
                 $auditLog->livestockId = $ls;
 
                 $response = $this->livestockVaccination->insertLivestockVaccination($data);
 
+                if (!$response) {
+                    return $this->fail('Failed to add vaccination');
+                }
+
                 $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+                $category = $this->livestock->getLivestockCategoryById($data->livestockId);
 
                 $vaccine = $data->vaccinationName;
 
-                $auditLog->description = "Administer $vaccine to Livestock $livestockTagId";
+                $auditLog->description = "Administer $vaccine to $category $livestockTagId";
 
                 $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+                $res = $response;
             }
-            return $this->respond(['success' => true, 'message' => 'Livestock Vaccination Successfully Added'], 200);
+            return $this->respond(['result' => true], 200, 'Vaccination Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => $th->getMessage(), 'message' => 'Failed Livestock Vaccination'], 200);
+            return $this->fail('Failed to add Vaccination', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -246,32 +263,37 @@ class LivestockVaccinationsController extends ResourceController
             $userId = getTokenUserId($header);
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
-            if($userType == 'Farmer'){
+            if ($userType == 'Farmer') {
                 $data->vaccineAdministratorId = $userId;
             }
 
             $response = $this->livestockVaccination->updateLivestockVaccination($data->id, $data);
 
+            if (!$response) {
+                return $this->fail('Failed to update vaccination');
+            }
+
             $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+            $category = $this->livestock->getLivestockCategoryById($data->livestockId);
 
             $auditLog = (object) [
                 'livestockId' => $data->livestockId,
                 'farmerId' => $userId,
                 'action' => "Edit",
                 'title' => "Update Vaccination Details",
-                'description' => "Update Vaccination of Livestock $livestockTagId",
+                'description' => "Update Vaccination of $category $livestockTagId",
                 'entityAffected' => "Vaccination",
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
-            return $this->respond(['success' => true, 'message' => 'Livestock Vaccination Successfully Updated'], ResponseInterface::HTTP_OK);
+            return $this->respond(['result' => $response], 200, 'Vaccination Successfully Updated');
 
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->fail('Failed to add livestock vaccination', ResponseInterface::HTTP_BAD_REQUEST);
+            return $this->fail('Failed to update vaccination', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -312,7 +334,7 @@ class LivestockVaccinationsController extends ResourceController
             $userId = getTokenUserId($header);
 
             $response = $this->livestockVaccination->deleteLivestockVaccination($id);
-            
+
             $auditLog = (object) [
                 'farmerId' => $userId,
                 'livestockId' => $livestock['id'],

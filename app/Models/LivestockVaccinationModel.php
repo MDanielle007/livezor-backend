@@ -223,6 +223,7 @@ class LivestockVaccinationModel extends Model
         )->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
             ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
             ->where($whereClause)
+            ->orderBy('livestock_vaccinations.vaccination_date', 'DESC')
             ->orderBy('livestock_vaccinations.created_at', 'DESC')
             ->orderBy('livestocks.livestock_tag_id', 'ASC')
             ->findAll();
@@ -246,7 +247,9 @@ class LivestockVaccinationModel extends Model
 
             return $result;
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 

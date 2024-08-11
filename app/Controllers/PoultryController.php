@@ -103,6 +103,10 @@ class PoultryController extends ResourceController
 
             $livestockId = $this->poultry->insertLivestock($data);
 
+            if(!$livestockId){
+                return $this->fail('Failed to add poultry');
+            }
+
             $data->livestockId = $livestockId;    
 
             $response = $this->farmerPoultry->associateFarmerLivestock($data);
@@ -116,16 +120,16 @@ class PoultryController extends ResourceController
                 'action' => "Add",
                 'title' => "Add New Poultry",
                 'description' => "Add New Poultry $livestockType, $livestockTagId",
-                'entityAffected' => "Livestock",
+                'entityAffected' => "Poultry",
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
-            return $this->respond(['success' => true, 'message' => 'Poultry Successfully Added'], 200);
+            return $this->respond(['result' => $livestockId], 200, 'Poultry Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => 'Failed to add livestock']);
+            return $this->fail('Failed to add poultry', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -150,7 +154,7 @@ class PoultryController extends ResourceController
                 'farmerId' => $userId,
                 'action' => "Add",
                 'title' => "Add New Poultry",
-                'entityAffected' => "Livestock",
+                'entityAffected' => "Poultry",
             ];
 
             if ($data->malePoultryCount > 0) {
@@ -158,6 +162,9 @@ class PoultryController extends ResourceController
                 for ($i = 1; $i <= $data->malePoultryCount; $i++) {
 
                     $poultryId = $this->poultry->insertLivestock($data);
+                    if(!$poultryId){
+                        return $this->fail('Failed to add poultry');
+                    }   
                     $data->livestockId = $poultryId;
                     $auditLog->livestockId = $poultryId;
                     $result = $this->farmerPoultry->associateFarmerLivestock($data);
@@ -173,6 +180,9 @@ class PoultryController extends ResourceController
                 for ($i = 1; $i <= $data->femalePoultryCount; $i++) {
 
                     $poultryId = $this->poultry->insertLivestock($data);
+                    if(!$poultryId){
+                        return $this->fail('Failed to add poultry');
+                    }   
                     $auditLog->livestockId = $poultryId;
                     $data->livestockId = $poultryId;
                     $result = $this->farmerPoultry->associateFarmerLivestock($data);
@@ -183,12 +193,12 @@ class PoultryController extends ResourceController
                 }
             }
 
-            return $this->respond(['success' => true, 'message' => 'Poultry Successfully Added'], 200);
+            return $this->respond(['result' => $data->livestockId], 200, 'Poultry Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => 'Failed to add poultry','errMsg' => $th->getMessage()]);
+            return $this->fail('Failed to add poultry', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -207,6 +217,9 @@ class PoultryController extends ResourceController
             }
 
             $response = $this->poultry->updateLivestock($data->id, $data);
+            if(!$response){
+                return $this->fail('Failed to update poultry');
+            }   
 
             $livestockTagId = $data->livestockTagId;
 
@@ -216,16 +229,16 @@ class PoultryController extends ResourceController
                 'action' => "Edit",
                 'title' => "Edit Poultry Record",
                 'description' => "Updated details for Poultry $livestockTagId",
-                'entityAffected' => "Livestock",
+                'entityAffected' => "Poultry",
             ];
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
-            return $this->respond(['success' => $response, 'message' => 'Poultry Successfully Updated'], 200);
+            return $this->respond(['result' => $response], 200, 'Poultry Successfully Updated');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => 'Failed to update poultry']);
+            return $this->fail('Failed to update poultry', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -291,7 +304,7 @@ class PoultryController extends ResourceController
                 'action' => "Delete",
                 'title' => "Delete Poultry Record",
                 'description' => "Delete Poultry $livestockTagId",
-                'entityAffected' => "Livestock",
+                'entityAffected' => "Poultry",
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);

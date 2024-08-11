@@ -131,6 +131,10 @@ class LivestocksController extends ResourceController
             }
 
             $livestockId = $this->livestock->insertLivestock($data);
+            
+            if(!$livestockId){
+                return $this->fail('Failed to add livestock');
+            }
 
             $data->livestockId = $livestockId;
 
@@ -149,12 +153,13 @@ class LivestocksController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
-            return $this->respond(['success' => true, 'message' => 'Livestock Successfully Added'], 200);
+            
+            return $this->respond(['result' => $livestockId], 200, 'Livestock Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => 'Failed to add livestock']);
+            return $this->fail('Failed to add livestock', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -186,6 +191,11 @@ class LivestocksController extends ResourceController
                 for ($i = 1; $i <= $data->maleLivestockCount; $i++) {
 
                     $livestockId = $this->livestock->insertLivestock($data);
+
+                    if(!$livestockId){
+                        return $this->fail('Failed to add livestock');
+                    }
+        
                     $auditLog->livestockId = $livestockId;
                     $data->livestockId = $livestockId;
                     $result = $this->farmerLivestock->associateFarmerLivestock($data);
@@ -201,6 +211,9 @@ class LivestocksController extends ResourceController
                 for ($i = 1; $i <= $data->femaleLivestockCount; $i++) {
 
                     $livestockId = $this->livestock->insertLivestock($data);
+                    if(!$livestockId){
+                        return $this->fail('Failed to add livestock');
+                    }        
                     $auditLog->livestockId = $livestockId;
                     $data->livestockId = $livestockId;
                     $result = $this->farmerLivestock->associateFarmerLivestock($data);
@@ -211,12 +224,12 @@ class LivestocksController extends ResourceController
                 }
             }
 
-            return $this->respond(['success' => true, 'message' => 'Livestock Successfully Added'], 200);
+            return $this->respond(['result' => $data->livestockId], 200, 'Livestock Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => 'Failed to add livestock', 'errMsg' => $th->getMessage()]);
+            return $this->fail('Failed to add livestock', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -236,6 +249,9 @@ class LivestocksController extends ResourceController
             }
 
             $response = $this->livestock->updateLivestock($data->id, $data);
+            if(!$response){
+                return $this->fail('Failed to update livestock');
+            }   
 
             $livestockTagId = $data->livestockTagId;
 
@@ -249,12 +265,12 @@ class LivestocksController extends ResourceController
             ];
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
-            return $this->respond(['success' => $response, 'message' => 'Livestock Successfully Updated'], 200);
+            return $this->respond(['result' => $response], 200, 'Livestock Successfully Updated');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => 'Failed to update livestock']);
+            return $this->fail('Failed to add livestock', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

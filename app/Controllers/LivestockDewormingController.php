@@ -104,6 +104,9 @@ class LivestockDewormingController extends ResourceController
             }
 
             $response = $this->livestockDewormings->insertLivestockDeworming($data);
+            if(!$response){
+                return $this->fail('Failed to add deworming');
+            }
 
             $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
 
@@ -121,11 +124,12 @@ class LivestockDewormingController extends ResourceController
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
-            return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Added'], 200);
+            return $this->respond(['result' => $response], 200, 'Livestock Deworming Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to add deworming', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -151,11 +155,16 @@ class LivestockDewormingController extends ResourceController
                 'entityAffected' => "Deworming",
             ];
 
-            foreach ($livestock as $ls) {
-                $response = $this->livestockDewormings->insertLivestockDeworming($data);
+            $res = null;
 
+            foreach ($livestock as $ls) {
                 $data->livestockId = $ls;
                 $auditLog->livestockId = $ls;
+
+                $response = $this->livestockDewormings->insertLivestockDeworming($data);
+                if(!$response){
+                    return $this->fail('Failed to add deworming');
+                }
 
                 $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
 
@@ -165,14 +174,15 @@ class LivestockDewormingController extends ResourceController
                 $auditLog->description = "Deworm $administrationMethod $dosage to Livestock $livestockTagId";
 
                 $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                $res = $response;
             }
 
-            return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Added'], 200);
+            return $this->respond(['result' => $res], 200, 'Livestock Deworming Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => $th->getMessage(), 'message' => 'Livestock Deworming Successfully Added'], 200);
+            return $this->fail('Failed to add deworming', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -190,6 +200,9 @@ class LivestockDewormingController extends ResourceController
             }
 
             $response = $this->livestockDewormings->updateLivestockDeworming($data->id, $data);
+            if(!$response){
+                return $this->fail('Failed to update deworming');
+            }
 
             $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
 
@@ -204,11 +217,12 @@ class LivestockDewormingController extends ResourceController
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
-            return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Successfully Updated'], 200);
+            return $this->respond(['result' => $response], 200, 'Livestock Deworming Successfully Updated');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to update deworming', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

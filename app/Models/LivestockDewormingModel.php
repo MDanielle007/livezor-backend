@@ -225,6 +225,9 @@ class LivestockDewormingModel extends Model
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -246,6 +249,7 @@ class LivestockDewormingModel extends Model
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
+            return null;
         }
     }
 
