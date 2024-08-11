@@ -6,7 +6,14 @@ use CodeIgniter\Config\BaseConfig;
 
 class Email extends BaseConfig
 {
-    public string $fromEmail  = 'marc.danielle.cabatay219@gmail.com';
+    public function __construct()
+    {
+        parent::__construct();
+        
+        // Fetching environment variable
+        $this->fromEmail = getenv('DA_EMAIL');
+    }
+    public string $fromEmail  = '';
     public string $fromName   = 'OrMin Livestock';
     public string $recipients = '';
 
