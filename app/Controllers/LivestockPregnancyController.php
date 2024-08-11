@@ -223,6 +223,9 @@ class LivestockPregnancyController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
 
             return $this->respond(['success' => true, 'message' => 'Livestock Pregnancy Successfully Added'], 200);
@@ -256,6 +259,9 @@ class LivestockPregnancyController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
             return $this->respond(['result' => $response], 200, 'Livestock Pregnancy Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;

@@ -190,6 +190,9 @@ class LivestockVaccinationsController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200, 'Vaccination Successfully Added');
 
@@ -242,6 +245,9 @@ class LivestockVaccinationsController extends ResourceController
                 $auditLog->description = "Administer $vaccine to $category $livestockTagId";
 
                 $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if(!$resultAudit){
+                    return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+                }
 
                 $res = $response;
             }
@@ -286,6 +292,9 @@ class LivestockVaccinationsController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200, 'Vaccination Successfully Updated');
 
@@ -315,6 +324,9 @@ class LivestockVaccinationsController extends ResourceController
             $data->entityAffected = "Vaccination";
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response, 'message' => 'Livestock Vaccination Record Status Successfully Updated'], 200);
 
@@ -345,6 +357,9 @@ class LivestockVaccinationsController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200, 'Livestock Vaccination Successfully Deleted');
         } catch (\Throwable $th) {

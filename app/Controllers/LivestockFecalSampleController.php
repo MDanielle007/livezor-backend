@@ -98,6 +98,9 @@ class LivestockFecalSampleController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['success' => $result, 'message' => 'Livestock Fecal Sample Successfully Added']);
         } catch (\Throwable $th) {
@@ -133,6 +136,9 @@ class LivestockFecalSampleController extends ResourceController
 
                 $result = $this->livestockFecalSamples->insertLivestockFecalSample($data);
                 $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if(!$resultAudit){
+                    return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+                }
             }
 
             return $this->respond(['success' => $result, 'message' => 'Livestock Fecal Sample Successfully Added']);
@@ -165,6 +171,9 @@ class LivestockFecalSampleController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['success' => $result, 'message' => 'Livestock Fecal Sample Successfully Updated']);
         } catch (\Throwable $th) {
@@ -196,6 +205,9 @@ class LivestockFecalSampleController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200, 'Livestock Fecal Sample Successfully Deleted');
         } catch (\Throwable $th) {

@@ -117,8 +117,6 @@ class LivestockBreedingsController extends ResourceController
                 'entityAffected' => "Breeding",
             ];
 
-            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
-
             $maleLivestockTagId = $data->maleLivestockTagId;
             $femaleLivestockTagId = $data->femaleLivestockTagId;
 
@@ -128,11 +126,17 @@ class LivestockBreedingsController extends ResourceController
             $auditLog->livestockId = $maleLivestock;
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
             $data->auditLog = $femaleLivestock;
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             $data->livestockId = $femaleLivestock;
             $livestockType = $this->livestockType->getLivestockTypeName($data->livestockId);
@@ -219,10 +223,16 @@ class LivestockBreedingsController extends ResourceController
             $auditLog->livestockId = $maleLivestock;
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
             $auditLog->livestockId = $femaleLivestock;
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['success' => true, 'message' => 'Livestock Breeding Successfully Updated','data' => $auditLog], 200);
         } catch (\Throwable $th) {
@@ -250,6 +260,9 @@ class LivestockBreedingsController extends ResourceController
             $data->description = $data->recordStatus == 'Archived' ? "Archived Livestock Breeding of Livestock $maleLivestockTagId and $femaleLivestockTagId" : "Updated Livestock Breeding of Livestock $maleLivestockTagId and $femaleLivestockTagId";
             $data->livestockId = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response, 'message' => 'Livestock Breeding Record Status Successfully Updated'], 200);
 
@@ -284,6 +297,9 @@ class LivestockBreedingsController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
             return $this->respond(['result' => $auditLog], 200, 'Livestock Breeding Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;

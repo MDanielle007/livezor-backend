@@ -122,13 +122,16 @@ class EggProcessingBatchController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200, 'Processed egg production successfully');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->fail('Failed to process egg production', ResponseInterface::HTTP_BAD_REQUEST);
+            return $this->fail('Failed to process egg production', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -167,13 +170,16 @@ class EggProcessingBatchController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200,'Updated processed egg production successfully');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->fail('Failed to update egg production', ResponseInterface::HTTP_BAD_REQUEST);
+            return $this->fail('Failed to update egg production', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -201,13 +207,16 @@ class EggProcessingBatchController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200,'Updated processed egg production successfully');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->fail('Failed to delete egg production', ResponseInterface::HTTP_BAD_REQUEST);
+            return $this->fail('Failed to delete egg production', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

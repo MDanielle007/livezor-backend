@@ -48,27 +48,33 @@ class EggDistributionController extends ResourceController
             $data = $this->request->getJSON();
 
             $eggDistribution = $this->eggDistributions->insertEggDistribution($data);
+            if(!$eggDistribution){
+                return $this->fail('Failed to add egg distribution', ResponseInterface::HTTP_BAD_REQUEST);
+            }
 
             $header = $this->request->getHeader("Authorization");
             $userId = getTokenUserId($header);
-            $fullName = $data->firstName.' ' .$data->lastName;
+            $fullName = $data->recipientFirstName.' ' .$data->recipientLastName;
             $auditLog = (object)[
-                'livestockId' => $data->livestockId,
                 'farmerId' => $userId,
                 'action' => "Add",
                 'title' => "Add New Egg Distribution",
                 'description' => "Add New Egg Distribution to $fullName",
                 'entityAffected' => "Egg Distribution",
             ];
+            
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $eggDistribution], 200, 'Egg Distribution Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->fail('Failed to add egg distribution', ResponseInterface::HTTP_BAD_REQUEST);
+            return $this->fail('Failed to add egg distribution', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -91,13 +97,16 @@ class EggDistributionController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200, 'Egg Distribution Successfully Updated');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->fail('Failed to update egg distribution', ResponseInterface::HTTP_BAD_REQUEST);
+            return $this->fail('Failed to update egg distribution', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -134,12 +143,15 @@ class EggDistributionController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
             return $this->respond(['result' => $response], 200, 'Egg Distribution Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->fail('Failed to delete record', ResponseInterface::HTTP_BAD_REQUEST);
+            return $this->fail('Failed to delete record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

@@ -98,12 +98,16 @@ class LivestockBloodSampleController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['message' => 'Livestock Blood Sample Successfully Added', 'success' => $result], 200);
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to add blood sample', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -134,6 +138,9 @@ class LivestockBloodSampleController extends ResourceController
                 $result = $this->livestockBloodSample->insertLivestockBloodSample($data);
                 
                 $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if(!$resultAudit){
+                    return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+                }
             }
 
             return $this->respond(['success' => $result, 'message' => 'Livestock Blood Sample Successfully Added']);
@@ -165,6 +172,9 @@ class LivestockBloodSampleController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['message' => 'Livestock Blood Sample Successfully Updated', 'success' => $result], 200);
         } catch (\Throwable $th) {
@@ -195,6 +205,9 @@ class LivestockBloodSampleController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond([ 'result' => $response], 200, 'Livestock Blood Sample Successfully Deleted');
         } catch (\Throwable $th) {

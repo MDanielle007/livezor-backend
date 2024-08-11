@@ -124,6 +124,9 @@ class PoultryController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
             return $this->respond(['result' => $livestockId], 200, 'Poultry Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
@@ -172,6 +175,9 @@ class PoultryController extends ResourceController
 
                     $auditLog->description = "Add New Poultry $livestockType";
                     $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                    if(!$resultAudit){
+                        return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+                    }
                 }
             }
 
@@ -190,6 +196,9 @@ class PoultryController extends ResourceController
 
                     $auditLog->description = "Add New Poultry $livestockType";
                     $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                    if(!$resultAudit){
+                        return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+                    }
                 }
             }
 
@@ -232,6 +241,9 @@ class PoultryController extends ResourceController
                 'entityAffected' => "Poultry",
             ];
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200, 'Poultry Successfully Updated');
         } catch (\Throwable $th) {
@@ -258,6 +270,9 @@ class PoultryController extends ResourceController
             $response = $this->poultry->updateLivestockHealthStatus($id, $data);
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response, 'message' => 'Livestock Health Status Successfully Updated'], 200);
         } catch (\Throwable $th) {
@@ -281,6 +296,9 @@ class PoultryController extends ResourceController
             $data->entityAffected = "Livestock";
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response, 'message' => 'Poultry Record Status Successfully Updated'], 200);
         } catch (\Throwable $th) {
@@ -308,6 +326,9 @@ class PoultryController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
             return $this->respond(['result' => $response], 200, 'Poultry Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;

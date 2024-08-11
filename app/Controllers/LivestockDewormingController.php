@@ -123,6 +123,9 @@ class LivestockDewormingController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200, 'Livestock Deworming Successfully Added');
         } catch (\Throwable $th) {
@@ -174,6 +177,9 @@ class LivestockDewormingController extends ResourceController
                 $auditLog->description = "Deworm $administrationMethod $dosage to Livestock $livestockTagId";
 
                 $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if(!$resultAudit){
+                    return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+                }
                 $res = $response;
             }
 
@@ -216,6 +222,9 @@ class LivestockDewormingController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200, 'Livestock Deworming Successfully Updated');
         } catch (\Throwable $th) {
@@ -244,6 +253,9 @@ class LivestockDewormingController extends ResourceController
             $data->entityAffected = "Deworming";
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['success' => $response, 'message' => 'Livestock Deworming Record Status Successfully Updated'], 200);
         } catch (\Throwable $th) {
@@ -272,6 +284,9 @@ class LivestockDewormingController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if(!$resultAudit){
+                return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
 
             return $this->respond(['result' => $response], 200, 'Livestock Deworming Successfully Deleted');
         } catch (\Throwable $th) {
