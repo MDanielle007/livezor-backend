@@ -33,6 +33,10 @@ class CreateLivestockMortalityTable extends Migration
             'date_of_death' => [
                 'type' => 'DATE',
             ],
+            'images' => [
+                'type' => 'JSON',
+                'null' => true,
+            ],
             'record_status' => [
                 'type' => 'ENUM',
                 'constraint' => ['Accessible', 'Archived'],

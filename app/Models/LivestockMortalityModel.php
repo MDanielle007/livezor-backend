@@ -12,7 +12,7 @@ class LivestockMortalityModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['livestock_id', 'farmer_id', 'cause_of_death', 'mortality_remarks', 'date_of_death', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['livestock_id', 'farmer_id', 'cause_of_death', 'mortality_remarks', 'date_of_death', 'images','record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -57,7 +57,8 @@ class LivestockMortalityModel extends Model
                 user_accounts.user_id as farmerUserId,
                 livestock_mortalities.cause_of_death as causeOfDeath,
                 livestock_mortalities.mortality_remarks as remarks,
-                livestock_mortalities.date_of_death as dateOfDeath'
+                livestock_mortalities.date_of_death as dateOfDeath,
+                livestock_mortalities.images'
             )->join('livestocks', 'livestocks.id = livestock_mortalities.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_mortalities.farmer_id')
@@ -112,7 +113,8 @@ class LivestockMortalityModel extends Model
             livestock_types.livestock_type_name as livestockType,
             livestock_mortalities.cause_of_death as causeOfDeath,
             livestock_mortalities.mortality_remarks as remarks,
-            livestock_mortalities.date_of_death as dateOfDeath'
+            livestock_mortalities.date_of_death as dateOfDeath,
+            livestock_mortalities.images'
         )
             ->join('livestocks', 'livestocks.id = livestock_mortalities.livestock_id')
             ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
@@ -158,6 +160,10 @@ class LivestockMortalityModel extends Model
             'mortality_remarks' => $data->remarks,
             'date_of_death' => $data->dateOfDeath,
         ];
+
+        if(isset($data->images)){
+            $bind['images'] = json_encode($data->images);
+        }
 
         $result = $this->insert($bind);
 

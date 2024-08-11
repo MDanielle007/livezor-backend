@@ -107,12 +107,15 @@ class UserController extends ResourceController
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0755, true); // Create directory if it doesn't exist
             }
-            if ($file && $file->isValid() && !$file->hasMoved()) {
-                $newName = $file->getRandomName();
-                $file->move($uploadPath, $newName);
-                // You can also save the file path to your database
-            } else {
-                return $this->fail('Invalid file upload');
+
+            if(isset($file)){
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $file->move($uploadPath, $newName);
+                    // You can also save the file path to your database
+                } else {
+                    return $this->fail('Invalid file upload');
+                }
             }
 
             $firstName = $this->request->getPost('firstName');
@@ -192,6 +195,31 @@ class UserController extends ResourceController
     {
         try {
             $filePath = WRITEPATH . 'uploads/userImage/' . $filename;
+
+            if (file_exists($filePath)) {
+                // Determine the file MIME type
+                $mimeType = mime_content_type($filePath);
+        
+                // Set the headers for file download
+                return $this->response
+                    ->setHeader('Content-Type', $mimeType)
+                    ->setHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
+                    ->setBody(file_get_contents($filePath));
+            } else {
+                return $this->failNotFound('Image not found.');
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failNotFound('Image not found.');
+        }
+    }
+
+    public function getMortalityImage($filename)
+    {
+        try {
+            $filePath = WRITEPATH . 'uploads/mortalities/' . $filename;
 
             if (file_exists($filePath)) {
                 // Determine the file MIME type

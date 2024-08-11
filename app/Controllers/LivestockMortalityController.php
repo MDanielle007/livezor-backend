@@ -43,10 +43,32 @@ class LivestockMortalityController extends ResourceController
         try {
             $livestockMortalities = $this->livestockMortality->getAllLivestockMortalities();
 
-            return $this->respond($livestockMortalities);
+            $data = [];
 
+            foreach ($livestockMortalities as $record) {
+                $fileNamesArray = json_decode($record['images'], true);
+    
+                $data[] = [
+                    'id' => $record['id'],
+                    'livestockId' => $record['livestockId'],
+                    'livestockTagId' => $record['livestockTagId'],
+                    'livestockType' => $record['livestockType'],
+                    'farmerId' => $record['farmerId'],
+                    'farmerName' => $record['farmerName'],
+                    'farmerUserId' => $record['farmerUserId'],
+                    'causeOfDeath' => $record['causeOfDeath'],
+                    'remarks' => $record['remarks'],
+                    'dateOfDeath' => $record['dateOfDeath'],
+                    'images' => $fileNamesArray
+                ];
+            }
+
+            return $this->respond($data);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failServerError($th->getMessage());
         }
     }
 
@@ -70,10 +92,29 @@ class LivestockMortalityController extends ResourceController
 
             $livestockMortalities = $this->livestockMortality->getAllFarmerLivestockMortalities($userId);
 
-            return $this->respond($livestockMortalities);
+            $data = [];
+
+            foreach ($livestockMortalities as $record) {
+                $fileNamesArray = json_decode($record['images'], true);
+    
+                $data[] = [
+                    'id' => $record['id'],
+                    'livestockId' => $record['livestockId'],
+                    'livestockTagId' => $record['livestockTagId'],
+                    'livestockType' => $record['livestockType'],
+                    'causeOfDeath' => $record['causeOfDeath'],
+                    'remarks' => $record['remarks'],
+                    'dateOfDeath' => $record['dateOfDeath'],
+                    'images' => $fileNamesArray
+                ];
+            }
+
+            return $this->respond($data);
         } catch (\Throwable $th) {
             //throw $th;
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failServerError($th->getMessage());
         }
     }
 
@@ -89,25 +130,104 @@ class LivestockMortalityController extends ResourceController
         }
     }
 
+    // public function insertLivestockMortality()
+    // {
+    //     try {
+    //         $data = $this->request->getJSON();
+
+    //         $header = $this->request->getHeader("Authorization");
+    //         $userId = getTokenUserId($header);
+    //         $decoded = decodeToken($header);
+    //         $userType = $decoded->aud;
+    //         if ($userType == 'Farmer') {
+    //             $data->farmerId = $userId;
+    //         }
+
+    //         $response = $this->livestockMortality->insertLivestockMortality($data);
+
+    //         $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+
+    //         $auditLog = (object) [
+    //             'livestockId' => $data->livestockId,
+    //             'farmerId' => $userId,
+    //             'action' => "Add",
+    //             'title' => "Report Livestock Mortality",
+    //             'description' => "Report Livestock Mortality of Livestock $livestockTagId",
+    //             'entityAffected' => "Mortality",
+    //         ];
+
+    //         $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+
+    //         $data->livestockHealthStatus = 'Dead';
+    //         $result = $this->livestock->updateLivestockHealthStatus($data->livestockId, $data);
+
+    //         return $this->respond(['success' => $result, 'message' => 'Livestock Mortality Successfully Added'], 200);
+
+    //     } catch (\Throwable $th) {
+    //         //throw $th;
+    //         log_message('error', $th->getMessage() . ": " . $th->getLine());
+    //         log_message('error', json_encode($th->getTrace()));
+    //         return $this->respond(['error' => $th->getMessage()], 200);
+    //     }
+    // }
+
     public function insertLivestockMortality()
     {
         try {
-            $data = $this->request->getJSON();
-
+            //code...
             $header = $this->request->getHeader("Authorization");
             $userId = getTokenUserId($header);
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
-            if($userType == 'Farmer'){
-                $data->farmerId = $userId;
+
+            $farmer = null;
+            if ($userType == 'Farmer') {
+                $farmerId = $userId;
+            }else{
+                $farmerId = $this->request->getPost('farmerId');   
             }
 
-            $response = $this->livestockMortality->insertLivestockMortality($data);
+            $livestockId = $this->request->getPost('livestockId');
+            $causeOfDeath = $this->request->getPost('causeOfDeath');
+            $remarks = $this->request->getPost('remarks');
+            $dateOfDeath = $this->request->getPost('dateOfDeath');
 
-            $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
+            $files = $this->request->getFiles();
 
-            $auditLog = (object)[
-                'livestockId' => $data->livestockId,
+            $uploadedData = [];
+
+            $uploadPath = WRITEPATH . 'uploads/mortalities/';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true); // Create directory if it doesn't exist
+            }
+
+            if (isset($files['files'])) {
+                foreach ($files['files'] as $file) {
+                    if ($file->isValid() && !$file->hasMoved()) {
+                        $newName = $file->getRandomName();
+                        $file->move($uploadPath, $newName);
+    
+                        // Collect all uploaded data
+                        $uploadedData[] = $newName;
+                    } else {
+                        return $this->fail($file->getErrorString(), 400);
+                    }
+                }
+            }
+
+            $response = $this->livestockMortality->insertLivestockMortality((object) [
+                'farmerId' => $farmerId,
+                'livestockId' => $livestockId,
+                'causeOfDeath' => $causeOfDeath,
+                'remarks' => $remarks,
+                'dateOfDeath' => $dateOfDeath,
+                'images' => $uploadedData
+            ]);
+
+            $livestockTagId = $this->livestock->getLivestockTagIdById($livestockId);
+
+            $auditLog = (object) [
+                'livestockId' => $livestockId,
                 'farmerId' => $userId,
                 'action' => "Add",
                 'title' => "Report Livestock Mortality",
@@ -117,16 +237,14 @@ class LivestockMortalityController extends ResourceController
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
 
-            $data->livestockHealthStatus = 'Dead';
-            $result = $this->livestock->updateLivestockHealthStatus($data->livestockId, $data);
+            $result = $this->livestock->updateLivestockHealthStatus($livestockId,(object)[ 'livestockHealthStatus' => 'Dead']);
 
-            return $this->respond(['success' => $result, 'message' => 'Livestock Mortality Successfully Added'], 200);
-
+            return $this->respond(['result' => $response], 200, 'Livestock Mortality Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => $th->getMessage()], 200);
+            return $this->failServerError('Failed to process your request');
         }
     }
 
@@ -139,7 +257,7 @@ class LivestockMortalityController extends ResourceController
             $userId = getTokenUserId($header);
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
-            if($userType == 'Farmer'){
+            if ($userType == 'Farmer') {
                 $data->farmerId = $userId;
             }
 
@@ -147,7 +265,7 @@ class LivestockMortalityController extends ResourceController
 
             $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
 
-            $auditLog = (object)[
+            $auditLog = (object) [
                 'livestockId' => $data->livestockId,
                 'farmerId' => $userId,
                 'action' => "Edit",
@@ -321,7 +439,8 @@ class LivestockMortalityController extends ResourceController
         }
     }
 
-    public function getMortalityReportData(){
+    public function getMortalityReportData()
+    {
         try {
             $selectClause = $this->request->getGet('selectClause');
             $minDate = $this->request->getGet('minDate');

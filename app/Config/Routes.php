@@ -55,6 +55,7 @@ $routes->group('api', function ($routes) {
     // Admin endpoint routes
     $routes->group('admin', ['filter' => 'authAdminFilter'], function ($routes) {
         $routes->get('get-user-image/(:any)', 'UserController::getUserImage/$1');
+        $routes->get('get-mortality-image/(:any)', 'UserController::getMortalityImage/$1');
 
         // Admin Dashboard routes
         $routes->get('livestock-type-count', 'LivestocksController::getAllLivestockTypeCount');
@@ -290,7 +291,7 @@ $routes->group('api', function ($routes) {
         $routes->get('all-livestock-mortalities', 'LivestockMortalityController::getAllLivestockMortalities');
         $routes->get('all-farmer-livestock-mortalities/(:any)', 'LivestockMortalityController::getAllFarmerLivestockMortalities/$1'); // not used
         $routes->get('livestock-mortality/(:any)', 'LivestockMortalityController::getLivestockMortality/$1');
-        $routes->post('add-livestock-mortality', 'LivestockMortalityController::insertLivestockMortality');
+        $routes->post('add-livestock-mortality', 'LivestockMortalityController::insertLivestockMortality'); 
         $routes->put('update-livestock-mortality', 'LivestockMortalityController::updateLivestockMortality');
         $routes->put('update-livestock-mortality-record-stat/(:any)', 'LivestockMortalityController::updateLivestockMortalityRecordStatus/$1');
         $routes->delete('delete-livestock-mortality', 'LivestockMortalityController::deleteLivestockMortality');
@@ -357,7 +358,6 @@ $routes->group('api', function ($routes) {
         $routes->put('update-livestock-advisory-record-stat/(:any)', 'LivestockAdvisoriesController::updateLivestockAdvisoryRecordStatus/$1');
         $routes->delete('delete-livestock-advisory/(:any)', 'LivestockAdvisoriesController::deleteLivestockAdvisory/$1');
 
-
         // Farmer Audit Trail endpoint routes
         $routes->get('all-farmer-audit-trails', 'AuditTrailController::getAllFarmerAuditTrailLogs');
         $routes->get('all-audit-trails', 'AuditTrailController::getAllAuditTrailLogs');
@@ -407,6 +407,7 @@ $routes->group('api', function ($routes) {
     // Farmers endpoint routes
     $routes->group('farmer', ['filter' => 'authFarmerFilter'], function ($routes) {
         $routes->get('get-user-image/(:any)', 'UserController::getUserImage/$1');
+        $routes->get('get-mortality-image/(:any)', 'UserController::getMortalityImage/$1');
 
         $routes->get('distinct-livestock-types', 'LivestocksController::getFarmerDistinctLivestockType');
         $routes->get('livestock-types-sex', 'LivestocksController::getAllFarmerLivestocksBySexAndType');
