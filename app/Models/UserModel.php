@@ -47,14 +47,21 @@ class UserModel extends Model
 
     public function setUserLogin($userId, $token, $loginDate)
     {
-        $bind = [
-            'firebase_token' => $token,
-            'last_login_date' => $loginDate,
-            'user_status' => 'Active'
-        ];
-
-        $result = $this->where('id', $userId)->set($bind)->update();
-        return $result;
+        try {
+            $bind = [
+                'firebase_token' => $token,
+                'last_login_date' => $loginDate,
+                'user_status' => 'Active'
+            ];
+    
+            $result = $this->where('id', $userId)->set($bind)->update();
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
+        }
     }
 
     public function setUserLogout($userId)

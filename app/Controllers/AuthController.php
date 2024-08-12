@@ -24,17 +24,28 @@ class AuthController extends ResourceController
             $password = $this->request->getJsonVar('password');
             $notiftoken = $this->request->getJsonVar('token');
             $loginDate = $this->request->getJsonVar('loginDate');
+            $rememberMe = $this->request->getJsonVar('rememberMe');
 
             $user = $this->userModel->getUserByUsername($username);
 
             if ($user && password_verify($password, $user['password'])) {
 
                 $loginres = $this->userModel->setUserLogin($user['id'], $notiftoken, $loginDate);
+                if (!$loginres){
+                    return $this->respond([
+                        'login' => false,
+                        'error' => 'Invalid username or password.'
+                    ]);
+                }
 
                 $key = getenv('JWT_SECRET');
                 $iat = time(); // current timestamp value
-                $exp = $iat + (60 * 60 * 24);
+                $exp = $iat + (60 * 60 * 24 * 7); // 7 days from now
 
+                if ($rememberMe) {
+                    // if remember me, make the expiration 
+                    $exp = $iat + (60 * 60 * 24 * 30); // Example: 30 days from now
+                }
                 $iss = getenv('JWT_ISS');
 
                 $payload = array(
@@ -48,9 +59,9 @@ class AuthController extends ResourceController
                 $token = JWT::encode($payload, $key, 'HS256');
 
                 $response = [
-                    'login' => true,
+                    'login' => $loginres,
                     'message' => 'Login Succesful',
-                    'token' => $token
+                    'token' => $token,
                 ];
                 return $this->respond($response, 200);
             } else {
@@ -61,7 +72,10 @@ class AuthController extends ResourceController
             }
         } catch (\Throwable $th) {
             log_message('error', $th->getMessage());
-            return $this->respond(['message' => 'Invalid username or password.', 'error' => $th->getMessage()]);
+            return $this->respond([
+                'login' => false,
+                'error' => 'Invalid username or password.'
+            ]);
         }
     }
 
@@ -183,7 +197,8 @@ class AuthController extends ResourceController
         }
     }
 
-    public function requestPasswordReset(){
+    public function requestPasswordReset()
+    {
         try {
             //code...
             $data = $this->request->getJSON();
