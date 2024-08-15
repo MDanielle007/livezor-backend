@@ -54,14 +54,16 @@ class PoultryTypeController extends ResourceController
         try {
             $data = $this->request->getJSON();
             $data->category = "Poultry";
-            $result = $this->poultryType->insertLivestockType($data);
-            if (!$result) {
-                return $this->respond(['message' => 'New Poultry Type Failed', 'error' => $this->poultryType->errors()], 200);
+            $response = $this->poultryType->insertLivestockType($data);
+            if (!$response) {
+                return $this->fail($this->poultryType->errors(), ResponseInterface::HTTP_BAD_REQUEST);
             }
-            return $this->respond(['message' => 'New Poultry Type Successfully Added', 'success' => true], 200);
+            return $this->respond(['result' => $response], 200, 'New Poultry Type Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to insert record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -69,28 +71,33 @@ class PoultryTypeController extends ResourceController
         try {
             $data = $this->request->getJSON();
             $data->category = "Poultry";
-            $result = $this->poultryType->updateLivestockType($id, $data);
-            if (!$result) {
-                return $this->fail($this->poultryType->errors());
+            $response = $this->poultryType->updateLivestockType($id, $data);
+            if (!$response) {
+                return $this->fail($this->poultryType->errors(), ResponseInterface::HTTP_BAD_REQUEST);
             }
-            return $this->respond(['message' => 'Livestock Type Successfully Updated', 'success' => $result], 200);
+            return $this->respond(['result' => $response], 200, 'Poultry Type Successfully Updated');
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to update record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    public function deletePoultryType($id)
+    public function deletePoultryType()
     {
         try {
+            $id = $this->request->getGet('type');
             $result = $this->poultryType->deleteLivestockType($id);
             if (!$result) {
-                return $this->fail($this->poultryType->errors());
+                return $this->fail($this->poultryType->errors(), ResponseInterface::HTTP_BAD_REQUEST);
             }
-            return $this->respond(['message' => 'Livestock Type Successfully Deleted', 'success' => $result], 200);
+            return $this->respond(['result' => $result], 200, 'Livestock Type Successfully Deleted');
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -45,9 +45,14 @@ class LivestockAgeClassController extends ResourceController
             }
 
             $response = $this->livestockAgeClass->insertLivestockAgeClass($data);
-            return $this->respond(['message' => 'New Livestock Age Classification Successfully Added', 'success' => $response], 200);
+            if (!$response) {
+                return $this->fail('Failed to insert record', ResponseInterface::HTTP_BAD_REQUEST);
+            }
+            return $this->respond(['result' => $response], 200, 'New Livestock Age Classification Successfully Added');
         } catch (\Throwable $th) {
-            return $this->respond(['message' => $th->getMessage(), 'result' => 'Error'], 200);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to insert record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -73,7 +78,7 @@ class LivestockAgeClassController extends ResourceController
 
         return $this->respond($livestockAgeClasses, 200);
     }
-    
+
     public function getPoultryAgeClasses()
     {
         $poultryAgeClasses = $this->livestockAgeClass->getPoultryAgeClasses();
@@ -93,16 +98,33 @@ class LivestockAgeClassController extends ResourceController
         try {
             $data = $this->request->getJSON();
             $response = $this->livestockAgeClass->updateLivestockAgeClass($id, $data);
-            return $this->respond(['message' => 'Livestock Age Classification Successfully Updated', 'result' => $response], 200);
+            if (!$response) {
+                return $this->fail('Failed to update record', ResponseInterface::HTTP_BAD_REQUEST);
+            }
+            return $this->respond(['result' => $response], 200, 'Livestock Age Classification Successfully Updated');
         } catch (\Throwable $th) {
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to update record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    public function deleteLivestockAgeClass($id)
+    public function deleteLivestockAgeClass()
     {
-        $response = $this->livestockAgeClass->deleteLivestockAgeClass($id);
-        return $this->respond(['message' => 'Livestock Age Classification Successfully Deleted', 'result' => $response], 200);
+        try {
+            $id = $this->request->getGet('ageclass');
+
+            $response = $this->livestockAgeClass->deleteLivestockAgeClass($id);
+            if (!$response) {
+                return $this->fail('Failed to delete record', ResponseInterface::HTTP_BAD_REQUEST);
+            }
+            return $this->respond(['result' => $response], 200,'Livestock Age Classification Successfully Deleted');
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
     public function getLivestockAgeClassIdAndName()
     {

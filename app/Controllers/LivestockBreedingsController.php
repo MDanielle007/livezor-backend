@@ -234,7 +234,7 @@ class LivestockBreedingsController extends ResourceController
                 return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
             }
 
-            return $this->respond(['success' => true, 'message' => 'Livestock Breeding Successfully Updated','data' => $auditLog], 200);
+            return $this->respond(['success' => true, 'message' => 'Livestock Breeding Successfully Updated'], 200);
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());

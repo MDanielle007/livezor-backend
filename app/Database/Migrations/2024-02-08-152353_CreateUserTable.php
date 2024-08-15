@@ -81,7 +81,7 @@ class CreateUserTable extends Migration
             ],
             'user_image' => [
                 'type' => 'TEXT',
-                'null' => false,
+                'null' => true,
             ],
             'user_role' => [
                 'type' => 'ENUM',

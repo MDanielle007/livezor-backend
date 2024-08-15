@@ -68,13 +68,6 @@ class LivestockModel extends Model
                 livestocks.livestock_health_status as livestockHealthStatus,
                 livestocks.origin as livestockOrigin,
                 livestocks.record_status as recordStatus,
-                CASE
-                    WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years")
-                    WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
-                    WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks")
-                    WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
-                    ELSE "Unknown Age"
-                END as age,
                 user_accounts.id as farmerId,
                 user_accounts.user_id as farmerUserId,
                 CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName
@@ -163,13 +156,6 @@ class LivestockModel extends Model
                 livestocks.livestock_health_status as livestockHealthStatus,
                 livestocks.origin as livestockOrigin,
                 livestocks.record_status as recordStatus,
-                CASE
-                    WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years")
-                    WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
-                    WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks")
-                    WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
-                    ELSE "Unknown Age"
-                END as age,
                 user_accounts.id as farmerId,
                 user_accounts.user_id as farmerUserId,
                 CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName
@@ -289,7 +275,6 @@ class LivestockModel extends Model
                 'record_status' => 'Accessible',
                 'category' => 'Poultry'
             ];
-
 
             $livestock = $this->select('
                 livestock_tag_id as livestockTagId,
@@ -447,7 +432,8 @@ class LivestockModel extends Model
                 COALESCE(NULLIF(livestocks.livestock_tag_id, ""), "Untagged") as livestockTagId,
                 livestocks.livestock_type_id as livestockTypeId,
                 livestock_types.livestock_type_name as livestockTypeName,
-                COALESCE(NULLIF(livestocks.livestock_breed_id, ""), "Unknown") as livestockBreedId,
+                livestocks.livestock_breed_id as livestockBreedId,
+                COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
                 livestocks.livestock_age_class_id as livestockAgeClassId,
                 livestock_age_class.livestock_age_classification as livestockAgeClassification,
                 livestocks.age_days as ageDays,
@@ -458,18 +444,13 @@ class LivestockModel extends Model
                 livestocks.breeding_eligibility as breedingEligibility,
                 livestocks.date_of_birth as dateOfBirth,
                 livestocks.livestock_health_status as livestockHealthStatus,
+                farmer_livestocks.acquired_date as acquiredDate,
                 livestocks.record_status as recordStatus,
-                CASE
-                    WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
-                    WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks")
-                    WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
-                    WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years")
-                    ELSE "Unknown Age"
-                END as age
             ')
                 ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
                 ->where($whereClause)
                 ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->findAll();
@@ -499,7 +480,8 @@ class LivestockModel extends Model
             COALESCE(NULLIF(livestocks.livestock_tag_id, ""), "Untagged") as livestockTagId,
             livestocks.livestock_type_id as livestockTypeId,
             livestock_types.livestock_type_name as livestockTypeName,
-            COALESCE(NULLIF(livestocks.livestock_breed_id, ""), "Unknown") as livestockBreedName,
+            livestocks.livestock_breed_id as livestockBreedId,
+            COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
             livestocks.livestock_age_class_id as livestockAgeClassId,
             livestock_age_class.livestock_age_classification as livestockAgeClassification,
             livestocks.age_days as ageDays,
@@ -512,10 +494,10 @@ class LivestockModel extends Model
             livestocks.livestock_health_status as livestockHealthStatus,
             livestocks.record_status as recordStatus,
             CASE
-                WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
-                WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks")
-                WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
                 WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years")
+                WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
+                WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks")
+                WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
                 ELSE "Unknown Age"
             END as age'
             )
