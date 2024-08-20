@@ -1356,7 +1356,7 @@ class LivestockModel extends Model
                 'livestocks.record_status' => 'Accessible',
                 'farmer_livestocks.farmer_id' => $userId,
                 'livestocks.category' => 'Livestock',
-                'livestocks.is_pregnant' => 0,
+                'livestocks.is_pregnant' => false,
             ];
 
             $data = $this->select('

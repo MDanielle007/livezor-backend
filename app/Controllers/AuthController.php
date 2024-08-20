@@ -42,7 +42,7 @@ class AuthController extends ResourceController
                 $iat = time(); // current timestamp value
                 $exp = $iat + (60 * 60 * 24 * 7); // 7 days from now
 
-                if ($rememberMe) {
+                if ($rememberMe || $user['user_role'] == 'Farmer') {
                     // if remember me, make the expiration 
                     $exp = $iat + (60 * 60 * 24 * 30); // Example: 30 days from now
                 }

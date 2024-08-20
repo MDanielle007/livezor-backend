@@ -150,17 +150,21 @@ class LivestockBreedingsController extends ResourceController
                 $data->breedingId = $breedingId;
                 $data->livestockId = $femaleLivestockId;
                 $data->pregnancyStartDate = $data->breedDate;
-                $data->expectedDeliveryDate = $this->calculateExpectedDeliveryDate($data->breedDate, $livestockType);
 
                 $result = $this->livestockPregnancy->insertLivestockPregnancyByBreeding($data);
+                if (!$result) {
+                    return $this->fail('Failed to record pregnancy details', ResponseInterface::HTTP_BAD_REQUEST);
+                }
             }
 
 
-            return $this->respond(['success' => true, 'message' => 'Livestock Breeding Successfully Added', 'result' => $result], 200);
+            return $this->respond(['result' => $result], 200, 'Livestock Breeding Successfully Added');
 
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to add breeding record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
