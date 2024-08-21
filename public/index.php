@@ -62,9 +62,19 @@ if (!defined('ENVIRONMENT')) {
  * the application run, and does all the dirty work to get
  * the pieces all working together.
  */
-$frontend = getenv('FRONTEND_URL');
 
-header("Access-Control-Allow-Origin: $frontend");
+// $frontend = getenv('FRONTEND_URL');
+
+$allowed_origins = explode(',', getenv('FRONTEND_URL'));
+// Get the origin of the request
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// Check if the origin is in the list of allowed origins
+if (in_array($origin, $allowed_origins)) {
+    header("Access-Control-Allow-Origin: $origin");
+} else {
+    header("Access-Control-Allow-Origin: *"); // Default to * or handle accordingly
+}
 header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method, Authorization");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
 header("Access-Control-Allow-Credentials: true");
