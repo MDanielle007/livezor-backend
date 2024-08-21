@@ -65,19 +65,14 @@ if (!defined('ENVIRONMENT')) {
 
 // $frontend = getenv('FRONTEND_URL');
 
-$allowed_origins = explode(',', getenv('FRONTEND_URL'));
-// Get the origin of the request
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowed_origins = [getenv('OMLF_FE_URL'), getenv('WEB_FE_URL')];
 
-// Check if the origin is in the list of allowed origins
-if (in_array($origin, $allowed_origins)) {
-    header("Access-Control-Allow-Origin: $origin");
-} else {
-    header("Access-Control-Allow-Origin: *"); // Default to * or handle accordingly
+if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowed_origins)) {
+    header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+    header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method, Authorization");
+    header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+    header("Access-Control-Allow-Credentials: true");
 }
-header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method, Authorization");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
-header("Access-Control-Allow-Credentials: true");
 
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method == "OPTIONS") {
