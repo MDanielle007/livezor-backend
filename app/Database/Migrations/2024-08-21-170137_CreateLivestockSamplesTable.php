@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateLivestockAgeClassTable extends Migration
+class CreateLivestockSamplesTable extends Migration
 {
     public function up()
     {
@@ -14,38 +14,37 @@ class CreateLivestockAgeClassTable extends Migration
                 'constraint' => 11,
                 'auto_increment' => true,
             ],
-            'livestock_age_classification' => [
+            'user_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+            ],
+            'animal_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+            ],
+            'sample_type' => [
                 'type' => 'VARCHAR',
                 'constraint' => 50,
             ],
-            'age_class_range' => [
+            'sample_description' => [
+                'type' => 'TEXT',
+                'null' => true, // Allow NULL values
+            ],
+            'animal_observation' => [
                 'type' => 'VARCHAR',
-                'constraint' => 25,
+                'constraint' => 70,
             ],
-            'age_min_days' => [
-                'type' => 'INT',
-                'constraint' => 11,
+            'findings' => [
+                'type' => 'TEXT',
+                'null' => true, // Allow NULL values
             ],
-            'age_max_days' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'null' => true,
+            'sample_date' => [
+                'type' => 'DATE',
             ],
-            'is_offspring' => [
-                'type' => 'BOOL',
-                'default' => false,
-            ],
-            'sex' => [
+            'record_status' => [
                 'type' => 'ENUM',
-                'constraint' => ['Male', 'Female'],
-            ],
-            'breeding_eligibility' => [
-                'type' => 'BOOL',
-                'default' => false,
-            ],
-            'livestock_type_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
+                'constraint' => ['Accessible', 'Archived'],
+                'default' => 'Accessible',
             ],
             'created_at' => [
                 'type' => 'DATETIME',
@@ -62,11 +61,11 @@ class CreateLivestockAgeClassTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('livestock_age_class');
+        $this->forge->createTable('animal_samples');
     }
 
     public function down()
     {
-        $this->forge->dropTable('livestock_age_class');
+        $this->forge->dropTable('animal_samples');
     }
 }

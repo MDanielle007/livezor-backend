@@ -76,7 +76,7 @@ class LivestockModel extends Model
                 ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
                 ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id', 'left')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->where($whereClause)
                 ->orderBy('user_accounts.first_name', 'ASC')
@@ -143,7 +143,7 @@ class LivestockModel extends Model
                 livestocks.livestock_type_id as livestockTypeId,
                 livestock_types.livestock_type_name as livestockTypeName,
                 livestocks.livestock_breed_id as livestockBreedId,
-                COALESCE(NULLIF(livestocks.livestock_breed_id, ""), "Unknown") as livestockBreedName,
+                COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
                 livestocks.livestock_age_class_id as livestockAgeClassId,
                 livestock_age_class.livestock_age_classification as livestockAgeClassification,
                 livestocks.age_days as ageDays,
@@ -164,6 +164,7 @@ class LivestockModel extends Model
                 ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
                 ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id', 'left')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->where($whereClause)
                 ->orderBy('user_accounts.first_name', 'ASC')
@@ -755,6 +756,30 @@ class LivestockModel extends Model
         }
     }
 
+    public function getLivestockByParasiteControl($id)
+    {
+        try {
+            $whereClause = [
+                'animal_parasite_controls.id' => $id,
+                'livestocks.category' => 'Livestock'
+            ];
+
+            $livestock = $this->select('livestocks.id, livestocks.livestock_tag_id')
+                ->join('animal_parasite_controls', 'livestocks.id = animal_parasite_controls.livestock_id')
+                ->where($whereClause) // Use the parameter $id here
+                ->first();
+
+            // Check if any result is found
+            if (!empty($livestock)) {
+                return $livestock; // Access the id property of the first object
+            } else {
+                return null; // Or you can return an appropriate value if no result is found
+            }
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
     public function getPoultryByDeworming($id)
     {
         try {
@@ -834,6 +859,24 @@ class LivestockModel extends Model
 
             $livestock = $this->select('livestocks.id, livestocks.livestock_tag_id')
                 ->join('livestock_pregnancies', 'livestocks.id = livestock_pregnancies.livestock_id')
+                ->where($whereClause) // Use the parameter $id here
+                ->first();
+
+            return $livestock; // Access the id property of the first object
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public function getAnimalByAnimalSample($id)
+    {
+        try {
+            $whereClause = [
+                'animal_samples.id' => $id,
+            ];
+
+            $livestock = $this->select('livestocks.id, livestocks.livestock_tag_id')
+                ->join('animal_samples', 'livestocks.id = animal_samples.animal_id')
                 ->where($whereClause) // Use the parameter $id here
                 ->first();
 
@@ -1255,9 +1298,11 @@ class LivestockModel extends Model
 
             $data = $this->select('
                 livestocks.id,
-                livestocks.livestock_tag_id as livestockTagId
+                livestocks.livestock_tag_id as livestockTagId,
+                livestock_types.livestock_type_name as type
             ')
                 ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->where($whereClause)
                 ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->findAll();
@@ -1282,9 +1327,11 @@ class LivestockModel extends Model
 
             $data = $this->select('
                 livestocks.id,
-                livestocks.livestock_tag_id as livestockTagId
+                livestocks.livestock_tag_id as livestockTagId,
+                livestock_types.livestock_type_name as type,
             ')
                 ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->where($whereClause)
                 ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->findAll();
@@ -1533,16 +1580,27 @@ class LivestockModel extends Model
 
             $data = $this->select('
                 SUM(CASE WHEN livestocks.livestock_health_status = "Alive" THEN 1 ELSE 0 END) as Alive,
-                SUM(CASE WHEN livestocks.livestock_health_status = "Sick" THEN 1 ELSE 0 END) as Sick,
+                SUM(CASE WHEN livestocks.livestock_health_status = "Culled" THEN 1 ELSE 0 END) as Culled,
+                SUM(CASE WHEN livestocks.livestock_health_status = "Disposed" THEN 1 ELSE 0 END) as Disposed,
                 SUM(CASE WHEN livestocks.livestock_health_status = "Dead" THEN 1 ELSE 0 END) as Dead
             ')
                 ->where($whereClause)
                 ->get()
                 ->getRowArray();
 
+            if (empty($data) || !array_filter($data)) {
+                // Return zero counts if no records exist
+                $data = [
+                    'Alive' => 0,
+                    'Culled' => 0,
+                    'Disposed' => 0,
+                    'Dead' => 0
+                ];
+            }
+
             return $data;
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            return [];
         }
     }
 

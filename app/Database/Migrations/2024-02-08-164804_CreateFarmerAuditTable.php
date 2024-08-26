@@ -40,7 +40,7 @@ class CreateFarmerAuditTable extends Migration
             ],
             'entity_affected' => [
                 'type' => 'ENUM',
-                'constraint' => ['Livestock', 'Poultry', 'Vaccination', 'Deworming', 'Egg Production','Breeding', 'Mortality', 'Pregnancy', 'Fecal Sample', 'Blood Sample', 'Audit', 'Advisories','Egg Distribution'],
+                'constraint' => ['Livestock', 'Poultry', 'Vaccination', 'Parasite Control', 'Egg Production','Breeding', 'Mortality', 'Pregnancy', 'Animal Sample', 'Audit', 'Advisories','Egg Distribution'],
                 'null' => false,
             ],
             'timestamp' => [

@@ -42,13 +42,15 @@ class LivestockVaccinationsController extends ResourceController
     public function getAllLivestockVaccinations()
     {
         try {
-            $livestockVaccinations = $this->livestockVaccination->getAllLivestockVaccinations();
+            $category = $this->request->getGet('category');
+
+            $livestockVaccinations = $this->livestockVaccination->getAllVaccinations($category);
 
             return $this->respond($livestockVaccinations);
-
         } catch (\Throwable $th) {
-            //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch vaccination', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -166,7 +168,7 @@ class LivestockVaccinationsController extends ResourceController
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
             if ($userType == 'Farmer') {
-                $data->vaccineAdministratorId = $userId;
+                $data->userId = $userId;
             }
 
             $response = $this->livestockVaccination->insertLivestockVaccination($data);
@@ -216,7 +218,7 @@ class LivestockVaccinationsController extends ResourceController
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
             if ($userType == 'Farmer') {
-                $data->vaccineAdministratorId = $userId;
+                $data->userId = $userId;
             }
 
             $auditLog = (object) [
@@ -270,7 +272,7 @@ class LivestockVaccinationsController extends ResourceController
             $decoded = decodeToken($header);
             $userType = $decoded->aud;
             if ($userType == 'Farmer') {
-                $data->vaccineAdministratorId = $userId;
+                $data->userId = $userId;
             }
 
             $response = $this->livestockVaccination->updateLivestockVaccination($data->id, $data);
@@ -316,7 +318,7 @@ class LivestockVaccinationsController extends ResourceController
             $livestock = $this->livestock->getLivestockByVaccination($id);
             $livestockTagId = $livestock['livestock_tag_id'];
 
-            $data->farmerId = $data->vaccineAdministratorId;
+            $data->farmerId = $data->userId;
             $data->livestockId = $livestock['id'];
             $data->action = $data->recordStatus == 'Archived' ? "Archived" : "Edit";
             $data->title = $data->recordStatus == 'Archived' ? "Archived Vaccination Record" : "Unarchived Vaccination Record";
@@ -378,7 +380,9 @@ class LivestockVaccinationsController extends ResourceController
             return $this->respond(['vaccinationCount' => "$livestockVaccinationCount"]);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -406,7 +410,7 @@ class LivestockVaccinationsController extends ResourceController
         }
     }
 
-    public function getLivestockVaccinationPercetageInCurrentMonth()
+    public function getVaccinationPercetageInCurrentMonth()
     {
         try {
             $livestockVaccinationCount = $this->livestockVaccination->getLivestockVaccinationCountInCurrentMonth();
@@ -433,8 +437,9 @@ class LivestockVaccinationsController extends ResourceController
 
             return $this->respond($data);
         } catch (\Throwable $th) {
-            //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -446,6 +451,9 @@ class LivestockVaccinationsController extends ResourceController
             return $this->respond($topVaccines);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -457,7 +465,9 @@ class LivestockVaccinationsController extends ResourceController
             return $this->respond($vaccinationCountByMonth);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -494,8 +504,9 @@ class LivestockVaccinationsController extends ResourceController
 
             if ($response['status'] !== 200) {
                 // return $this->fail($response['message'], $response['status']);
+                $livestockVaccinations = $this->livestockVaccination->getVaccinationCountByMonth();
                 return $this->respond([
-                    'original' => array_values($filteredData),
+                    'original' => array_values($livestockVaccinations),
                     'combined' => []
                 ], 200);
             }
@@ -527,7 +538,7 @@ class LivestockVaccinationsController extends ResourceController
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['error' => $th->getMessage(), 'trace' => $th->getTrace()]);
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -550,9 +561,9 @@ class LivestockVaccinationsController extends ResourceController
 
             return $this->respond($vaccinationCountLast4Months);
         } catch (\Throwable $th) {
-            //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

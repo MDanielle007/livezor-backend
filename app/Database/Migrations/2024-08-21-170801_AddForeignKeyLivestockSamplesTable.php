@@ -4,13 +4,13 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class AddForeignKeyLivestockVaccinationTable extends Migration
+class AddForeignKeyLivestockSamplesTable extends Migration
 {
     public function up()
     {
         $this->forge->addForeignKey('user_id', 'user_accounts', 'id');
-        $this->forge->addForeignKey('livestock_id', 'livestocks', 'id');
-        $this->forge->processIndexes('livestock_vaccinations');
+        $this->forge->addForeignKey('animal_id', 'livestocks', 'id');
+        $this->forge->processIndexes('animal_samples');
     }
 
     public function down()

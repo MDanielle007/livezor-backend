@@ -16,6 +16,45 @@ class LivestockAgeClassController extends ResourceController
         $this->livestockAgeClass = new LivestockAgeClassModel();
     }
 
+    public function getAnimalAgeClasses(){
+        try {
+            $category = $this->request->getGet('category');
+            $data = $this->livestockAgeClass->getAnimalAgeClasses($category);
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to insert record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function getLivestockAgeClasses()
+    {
+        $livestockAgeClasses = $this->livestockAgeClass->getLivestockAgeClasses();
+
+        return $this->respond($livestockAgeClasses, 200);
+    }
+
+    public function getPoultryAgeClasses()
+    {
+        $poultryAgeClasses = $this->livestockAgeClass->getPoultryAgeClasses();
+
+        return $this->respond($poultryAgeClasses, 200);
+    }
+
+    public function getLivestockAgeClass($id)
+    {
+        $livestockAgeClass = $this->livestockAgeClass->getLivestockAgeClass($id);
+
+        return $this->respond($livestockAgeClass, 200);
+    }
+
+    public function getLivestockAgeClassBase(){
+        $data = $this->livestockAgeClass->getLivestockAgeClassBase();
+        return $this->respond($data, 200);
+    }
+
     public function insertLivestockAgeClass()
     {
         try {
@@ -72,31 +111,32 @@ class LivestockAgeClassController extends ResourceController
         return $ageDays;
     }
 
-    public function getLivestockAgeClasses()
-    {
-        $livestockAgeClasses = $this->livestockAgeClass->getLivestockAgeClasses();
-
-        return $this->respond($livestockAgeClasses, 200);
-    }
-
-    public function getPoultryAgeClasses()
-    {
-        $poultryAgeClasses = $this->livestockAgeClass->getPoultryAgeClasses();
-
-        return $this->respond($poultryAgeClasses, 200);
-    }
-
-    public function getLivestockAgeClass($id)
-    {
-        $livestockAgeClass = $this->livestockAgeClass->getLivestockAgeClass($id);
-
-        return $this->respond($livestockAgeClass, 200);
-    }
-
     public function updateLivestockAgeClass($id)
     {
         try {
             $data = $this->request->getJSON();
+
+            $minAge = $data->minAge;
+            $maxAge = $data->maxAge;
+            $minAgeUnit = $data->minAgeUnit;
+            $maxAgeUnit = $data->maxAgeUnit;
+            $data->ageClassRange = "";
+
+            if ($data->stage == 'Youngest') {
+                $data->isOffspring = 1;
+                $data->ageMinDays = 0;
+                $data->ageClassRange = "0 days - $maxAge $maxAgeUnit";
+                $data->ageMaxDays = $this->calculateAgeDays($data->maxAge, $data->maxAgeUnit);
+            } else if ($data->stage == 'Oldest') {
+                $data->ageMinDays = $this->calculateAgeDays($data->minAge, $data->minAgeUnit);
+                $data->ageMaxDays = null;
+                $data->ageClassRange = "$minAge $minAgeUnit and above";
+            } else if ($data->stage == 'InBetween') {
+                $data->ageMinDays = $this->calculateAgeDays($data->minAge, $data->minAgeUnit);
+                $data->ageMaxDays = $this->calculateAgeDays($data->maxAge, $data->maxAgeUnit);
+                $data->ageClassRange = "$minAge $minAgeUnit - $maxAge $maxAgeUnit";
+            }
+
             $response = $this->livestockAgeClass->updateLivestockAgeClass($id, $data);
             if (!$response) {
                 return $this->fail('Failed to update record', ResponseInterface::HTTP_BAD_REQUEST);

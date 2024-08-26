@@ -146,6 +146,22 @@ class LivestockBreedModel extends Model
         }
     }
 
+    public function getBreedIdAndName()
+    {
+        try {
+            $livestockBreeds = $this->select(
+                'id,
+                livestock_breed_name as livestockBreedName,
+                livestock_type_id as livestockTypeId'
+            )
+                ->findAll();
+
+            return $livestockBreeds;
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
     public function getLivestockBreedIdAndName()
     {
         try {

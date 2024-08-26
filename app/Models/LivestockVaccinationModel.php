@@ -12,7 +12,7 @@ class LivestockVaccinationModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['vaccine_administrator_id', 'livestock_id', 'vaccination_name', 'vaccination_description', 'vaccination_remarks', 'vaccination_date', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['user_id', 'livestock_id', 'administrator_name', 'vaccination_name', 'vaccination_description', 'vaccination_remarks', 'vaccination_date', 'vaccination_location', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -40,6 +40,46 @@ class LivestockVaccinationModel extends Model
     protected $beforeDelete = [];
     protected $afterDelete = [];
 
+    public function getAllVaccinations($category)
+    {
+        try {
+            $whereClause = [
+                'livestock_vaccinations.record_status' => 'Accessible'
+            ];
+    
+            if($category !== 'All'){
+                $whereClause['livestocks.category'] = $category;
+            }
+    
+            $livestockVaccinations = $this->select(
+                'livestock_vaccinations.id,
+                livestock_vaccinations.user_id as userId,
+                user_accounts.user_id as userUID,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as userName,
+                livestock_vaccinations.administrator_name as administratorName,
+                livestock_vaccinations.livestock_id as livestockId,
+                livestocks.livestock_tag_id as livestockTagId,
+                livestock_types.livestock_type_name as livestockType,
+                livestock_vaccinations.vaccination_name as vaccinationName,
+                livestock_vaccinations.vaccination_description as vaccinationDescription,
+                livestock_vaccinations.vaccination_location as vaccinationLocation,
+                livestock_vaccinations.vaccination_remarks as remarks,
+                livestock_vaccinations.vaccination_date as vaccinationDate'
+            )->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id')
+                ->where($whereClause)
+                ->orderBy('livestock_vaccinations.vaccination_date', 'DESC')
+                ->orderBy('livestocks.livestock_tag_id', 'ASC')
+                ->findAll();
+            return $livestockVaccinations;
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
+        }
+    }
+
     public function getAllLivestockVaccinations()
     {
         $whereClause = [
@@ -49,18 +89,21 @@ class LivestockVaccinationModel extends Model
 
         $livestockVaccinations = $this->select(
             'livestock_vaccinations.id,
-            livestock_vaccinations.vaccine_administrator_id as vaccineAdministratorId,
-            CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as vaccineAdministratorName,
+            livestock_vaccinations.user_id as userId,
+            user_accounts.user_id as userUID,
+            CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as userName,
+            livestock_vaccinations.administrator_name as administratorName,
             livestock_vaccinations.livestock_id as livestockId,
             livestocks.livestock_tag_id as livestockTagId,
             livestock_types.livestock_type_name as livestockType,
             livestock_vaccinations.vaccination_name as vaccinationName,
             livestock_vaccinations.vaccination_description as vaccinationDescription,
+            livestock_vaccinations.vaccination_location as vaccinationLocation,
             livestock_vaccinations.vaccination_remarks as remarks,
             livestock_vaccinations.vaccination_date as vaccinationDate'
         )->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
             ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-            ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+            ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id')
             ->where($whereClause)
             ->orderBy('livestock_vaccinations.vaccination_date', 'DESC')
             ->orderBy('livestocks.livestock_tag_id', 'ASC')
@@ -77,7 +120,7 @@ class LivestockVaccinationModel extends Model
 
         $livestockVaccinations = $this->select(
             'livestock_vaccinations.id,
-            livestock_vaccinations.vaccine_administrator_id as vaccineAdministratorId,
+            livestock_vaccinations.user_id as userId,
             CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as vaccineAdministratorName,
             livestock_vaccinations.livestock_id as livestockId,
             livestocks.livestock_tag_id as livestockTagId,
@@ -88,7 +131,7 @@ class LivestockVaccinationModel extends Model
             livestock_vaccinations.vaccination_date as vaccinationDate'
         )->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
             ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-            ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+            ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id')
             ->where($whereClause)
             ->orderBy('livestock_vaccinations.vaccination_date', 'DESC')
             ->orderBy('livestocks.livestock_tag_id', 'ASC')
@@ -112,7 +155,7 @@ class LivestockVaccinationModel extends Model
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
-                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id')
                 ->where($whereClause)
                 ->orderBy('livestock_vaccinations.vaccination_date', 'DESC')
                 ->orderBy('livestocks.livestock_tag_id', 'ASC')
@@ -132,7 +175,7 @@ class LivestockVaccinationModel extends Model
 
         $livestockVaccination = $this->select(
             'livestock_vaccinations.id,
-            livestock_vaccinations.vaccine_administrator_id as vaccineAdministratorId,
+            livestock_vaccinations.user_id as userId,
             CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as vaccineAdministratorName,
             livestock_vaccinations.livestock_id as livestockId,
             livestocks.livestock_tag_id as livestockTagId,
@@ -143,7 +186,7 @@ class LivestockVaccinationModel extends Model
             livestock_vaccinations.vaccination_date as vaccinationDate'
         )->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
             ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-            ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+            ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id')
             ->where($whereClause)
             ->orderBy('livestocks.livestock_tag_id', 'ASC')
             ->orderBy('livestock_vaccinations.created_at', 'DESC')
@@ -161,7 +204,7 @@ class LivestockVaccinationModel extends Model
 
             $livestockVaccination = $this->select(
                 'livestock_vaccinations.id,
-                livestock_vaccinations.vaccine_administrator_id as vaccineAdministratorId,
+                livestock_vaccinations.user_id as userId,
                 CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as vaccineAdministratorName,
                 livestocks.livestock_tag_id as livestockTagId,
                 livestock_types.livestock_type_name as livestockType,
@@ -171,7 +214,7 @@ class LivestockVaccinationModel extends Model
                 livestock_vaccinations.vaccination_date as vaccinationDate'
             )->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id')
                 ->where($whereClause)
                 ->orderBy('livestock_vaccinations.created_at', 'DESC')
                 ->findAll();
@@ -187,13 +230,13 @@ class LivestockVaccinationModel extends Model
     public function getAllFarmerLivestockVaccinations($userId)
     {
         $whereClause = [
-            'vaccine_administrator_id' => $userId,
+            'user_id' => $userId,
             'record_status' => 'Accessible'
         ];
 
         $livestockVaccinations = $this->select(
             'id,
-            vaccine_administrator_id as vaccineAdministratorId,
+            user_id as userId,
             livestock_id as livestockId,
             vaccination_name as vaccinationName,
             vaccination_description as vaccinationDescription,
@@ -206,13 +249,13 @@ class LivestockVaccinationModel extends Model
     public function getAllFarmerCompleteLivestockVaccinations($userId)
     {
         $whereClause = [
-            'livestock_vaccinations.vaccine_administrator_id' => $userId,
+            'livestock_vaccinations.user_id' => $userId,
             'livestock_vaccinations.record_status' => 'Accessible'
         ];
 
         $livestockVaccinations = $this->select(
             'livestock_vaccinations.id,
-            livestock_vaccinations.vaccine_administrator_id as vaccineAdministratorId,
+            livestock_vaccinations.user_id as userId,
             livestock_vaccinations.livestock_id as livestockId,
             livestocks.livestock_tag_id as livestockTagId,
             livestock_types.livestock_type_name as livestockType,
@@ -235,11 +278,13 @@ class LivestockVaccinationModel extends Model
     {
         try {
             $bind = [
-                'vaccine_administrator_id' => $data->vaccineAdministratorId,
+                'user_id' => $data->userId,
                 'livestock_id' => $data->livestockId,
+                'administrator_name' => $data->administratorName,
                 'vaccination_name' => $data->vaccinationName,
                 'vaccination_description' => $data->vaccinationDescription,
                 'vaccination_remarks' => $data->remarks,
+                'vaccination_location' => $data->vaccinationLocation,
                 'vaccination_date' => $data->vaccinationDate
             ];
 
@@ -256,11 +301,13 @@ class LivestockVaccinationModel extends Model
     public function updateLivestockVaccination($id, $data)
     {
         $bind = [
-            'vaccine_administrator_id' => $data->vaccineAdministratorId,
+            'user_id' => $data->userId,
             'livestock_id' => $data->livestockId,
+            'administrator_name' => $data->administratorName,
             'vaccination_name' => $data->vaccinationName,
             'vaccination_description' => $data->vaccinationDescription,
             'vaccination_remarks' => $data->remarks,
+            'vaccination_location' => $data->vaccinationLocation,
             'vaccination_date' => $data->vaccinationDate
         ];
 
@@ -294,13 +341,16 @@ class LivestockVaccinationModel extends Model
             return $livestockVaccinationCount;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
     public function getFarmerOverallLivestockVaccinationCount($userId)
     {
         try {
-            $livestockVaccinationCount = $this->where(['vaccine_administrator_id' => $userId, 'record_status' => 'Accessible'])->countAllResults();
+            $livestockVaccinationCount = $this->where(['user_id' => $userId, 'record_status' => 'Accessible'])->countAllResults();
 
             return $livestockVaccinationCount;
         } catch (\Throwable $th) {
@@ -323,7 +373,7 @@ class LivestockVaccinationModel extends Model
             return $livestockVaccinationCountInCurrentMonth;
         } catch (\Throwable $th) {
             //throw $th;
-            return $th->getMessage();
+            return null;
         }
     }
 
@@ -345,6 +395,9 @@ class LivestockVaccinationModel extends Model
             return $this->get()->getResult();
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 
@@ -356,7 +409,7 @@ class LivestockVaccinationModel extends Model
             $currentMonth = date('m');
 
             // Build the query
-            $vaccinationCounts = [];
+            $data = [];
             for ($month = 1; $month <= $currentMonth; $month++) {
                 $count = $this->select('COUNT(*) AS count')
                     ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
@@ -364,15 +417,17 @@ class LivestockVaccinationModel extends Model
                     ->where('MONTH(livestock_vaccinations.vaccination_date)', $month)
                     ->where('livestocks.category', 'Livestock')
                     ->countAllResults();
-                $vaccinationCounts[] = [
+                $data[] = [
                     'month' => $month,
                     'count' => $count
                 ];
             }
 
-            return $vaccinationCounts;
+            return $data;
         } catch (\Throwable $th) {
-            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 
@@ -567,9 +622,9 @@ class LivestockVaccinationModel extends Model
                 $year = $currentDate->format('Y'); // Year
 
                 $count = $this->selectCount('id')
-                ->where('MONTH(vaccination_date)', $month)
-                ->where('YEAR(vaccination_date)', $year)
-                ->countAllResults();
+                    ->where('MONTH(vaccination_date)', $month)
+                    ->where('YEAR(vaccination_date)', $year)
+                    ->countAllResults();
 
                 $data[] = [
                     'month' => $currentDate->format('F'),
@@ -668,7 +723,7 @@ class LivestockVaccinationModel extends Model
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
-                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.vaccine_administrator_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id')
                 ->where($whereClause)
                 ->orderBy('livestock_vaccinations.vaccination_date', 'ASC')
                 ->orderBy('vaccineAdminUserId', 'ASC')

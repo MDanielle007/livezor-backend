@@ -106,10 +106,10 @@ class LivestockBreedsController extends ResourceController
         }
     }
 
-    public function getLivestockBreedIdAndName()
+    public function getBreedIdAndName()
     {
         try {
-            $livestockBreeds = $this->livestockBreed->getLivestockBreedIdAndName();
+            $livestockBreeds = $this->livestockBreed->getBreedIdAndName();
 
             return $this->respond($livestockBreeds, 200);
         } catch (\Throwable $th) {

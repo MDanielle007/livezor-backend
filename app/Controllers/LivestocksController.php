@@ -130,6 +130,20 @@ class LivestocksController extends ResourceController
                 $data->farmerId = $userId;
             }
 
+            $breedName = $data->breedName;
+
+            if($breedName != ''){
+                if(is_string($breedName)){
+                    $data->livestockBreedId = $this->livestockBreed->insertLivestockBreed((object)[
+                        'livestockBreedName' => $breedName,
+                        'livestockBreedDescription' => '',
+                        'livestockTypeId' => $data->livestockTypeId
+                    ]);
+                }else{
+                    $data->livestockBreedId = $breedName->code;
+                }
+            }
+
             $livestockId = $this->livestock->insertLivestock($data);
             
             if(!$livestockId){
@@ -171,7 +185,6 @@ class LivestocksController extends ResourceController
         try {
             $data = $this->request->getJSON();
             $data->category = "Livestock";
-            $data->breedingEligibility = "Not Age-Suited";
 
             $header = $this->request->getHeader("Authorization");
             $userId = getTokenUserId($header);
@@ -189,16 +202,28 @@ class LivestocksController extends ResourceController
                 'entityAffected' => "Livestock",
             ];
 
+            $breedName = $data->breedName;
+
+            if($breedName != ''){
+                if(is_string($breedName)){
+                    $data->livestockBreedId = $this->livestockBreed->insertLivestockBreed((object)[
+                        'livestockBreedName' => $breedName,
+                        'livestockBreedDescription' => '',
+                        'livestockTypeId' => $data->livestockTypeId
+                    ]);
+                }else{
+                    $data->livestockBreedId = $breedName->code;
+                }
+            }
+
             if ($data->maleLivestockCount > 0) {
                 $data->sex = 'Male';
+                $data->livestockAgeClassId = $data->maleLivestockAgeClassId;
                 for ($i = 1; $i <= $data->maleLivestockCount; $i++) {
-
                     $livestockId = $this->livestock->insertLivestock($data);
-
                     if(!$livestockId){
                         return $this->fail('Failed to add livestock');
                     }
-        
                     $auditLog->livestockId = $livestockId;
                     $data->livestockId = $livestockId;
                     $result = $this->farmerLivestock->associateFarmerLivestock($data);
@@ -214,8 +239,8 @@ class LivestocksController extends ResourceController
 
             if ($data->femaleLivestockCount > 0) {
                 $data->sex = 'Female';
+                $data->livestockAgeClassId = $data->femaleLivestockAgeClassId;
                 for ($i = 1; $i <= $data->femaleLivestockCount; $i++) {
-
                     $livestockId = $this->livestock->insertLivestock($data);
                     if(!$livestockId){
                         return $this->fail('Failed to add livestock');
@@ -255,6 +280,20 @@ class LivestocksController extends ResourceController
             $userType = $decoded->aud;
             if ($userType == 'Farmer') {
                 $data->farmerId = $userId;
+            }
+
+            $breedName = $data->breedName;
+
+            if($breedName != ''){
+                if(is_string($breedName)){
+                    $data->livestockBreedId = $this->livestockBreed->insertLivestockBreed((object)[
+                        'livestockBreedName' => $breedName,
+                        'livestockBreedDescription' => '',
+                        'livestockTypeId' => $data->livestockTypeId
+                    ]);
+                }else{
+                    $data->livestockBreedId = $breedName->code;
+                }
             }
 
             $response = $this->livestock->updateLivestock($data->id, $data);
@@ -659,30 +698,30 @@ class LivestocksController extends ResourceController
         }
     }
 
-    public function getAllLivestockTypeCountByCity($city)
-    {
-        try {
+    // public function getAllLivestockTypeCountByCity($city)
+    // {
+    //     try {
 
-            $cities = $this->request->getGet('cities');
+    //         $cities = $this->request->getGet('cities');
 
-            $data = [];
-            $i = 1;
-            foreach ($cities as $city) {
-                $livestockTypeCount = $this->livestock->getAllLivestockTypeCountByCity($city);
+    //         $data = [];
+    //         $i = 1;
+    //         foreach ($cities as $city) {
+    //             $livestockTypeCount = $this->livestock->getAllLivestockTypeCountByCity($city);
 
-                $totalLivestockCount = $this->livestock->getLivestockCountBycity($city);
-                $data[] = [
+    //             $totalLivestockCount = $this->livestock->getLivestockCountBycity($city);
+    //             $data[] = [
 
-                    'livestockType' => $livestockTypeCount,
-                    'totalLivestockCount' => $totalLivestockCount
-                ];
-            }
+    //                 'livestockType' => $livestockTypeCount,
+    //                 'totalLivestockCount' => $totalLivestockCount
+    //             ];
+    //         }
 
-            return $this->respond($data);
-        } catch (\Throwable $th) {
-            return $this->respond($th->getMessage());
-        }
-    }
+    //         return $this->respond($data);
+    //     } catch (\Throwable $th) {
+    //         return $this->respond($th->getMessage());
+    //     }
+    // }
 
     public function getLivestockCountAllCity($origin)
     {

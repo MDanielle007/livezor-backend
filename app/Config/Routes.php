@@ -28,12 +28,15 @@ $routes->group('api', function ($routes) {
         // Livestock/Poultry Breeds endpoint routes
         $routes->get('all-livestock-breeds', 'LivestockBreedsController::getLivestockBreeds');
         $routes->get('all-poultry-breeds', 'LivestockBreedsController::getPoultryBreeds');
-        $routes->get('all-livestock-breeds-idnames', 'LivestockBreedsController::getLivestockBreedIdAndName');
+        $routes->get('all-breeds-idnames', 'LivestockBreedsController::getBreedIdAndName');
+        // $routes->get('all-livestock-breeds-idnames', 'LivestockBreedsController::getLivestockBreedIdAndName');
         $routes->get('all-livestock-breeds-idnames/(:any)', 'LivestockBreedsController::getLivestockBreedIdAndNameById/$1');
         $routes->get('livestock-breed/(:any)', 'LivestockBreedsController::getLivestockBreed/$1');
 
         // Livestock Age Classifications endpoint routes
+        $routes->get('all-age-classes', 'LivestockAgeClassController::getAnimalAgeClasses');
         $routes->get('all-livestock-age-classes', 'LivestockAgeClassController::getLivestockAgeClasses');
+        $routes->get('all-livestock-age-classes-base', 'LivestockAgeClassController::getLivestockAgeClassBase');
         $routes->get('all-poultry-age-classes', 'LivestockAgeClassController::getPoultryAgeClasses');
         $routes->get('all-livestock-ageclass-idnames', 'LivestockAgeClassController::getLivestockAgeClassIdAndName');
         $routes->get('all-livestock-ageclass-idnames/(:any)', 'LivestockAgeClassController::getLivestockAgeClassIdAndNameById/$1');
@@ -49,7 +52,7 @@ $routes->group('api', function ($routes) {
         $routes->get('livestock-type-count', 'LivestocksController::getAllLivestockTypeCount');
         $routes->get('livestock-type-ageclass-count', 'LivestocksController::getAllLivestockTypeAgeClassCount');
         $routes->get('livestock-healthstat-count', 'LivestocksController::getLivestockHealthStatusesCount');
-        $routes->get('livestock-vaccination-percent-current-month', 'LivestockVaccinationsController::getLivestockVaccinationPercetageInCurrentMonth');
+        $routes->get('vaccination-percent-current-month', 'LivestockVaccinationsController::getVaccinationPercetageInCurrentMonth');
         $routes->get('livestock-breeding-eligible-percent', 'LivestocksController::getAllBreedingEligibleLivestocks');
         $routes->get('livestock-count', 'LivestocksController::getAllLivestockCountMonitored');
         $routes->get('farmer-count', 'UserController::getFarmerCount');
@@ -185,7 +188,7 @@ $routes->group('api', function ($routes) {
         $routes->get('get-poultry-freport', 'LivestocksController::getLivestockRecordsForReport');
 
         // Livestock Vaccination endpoint routes
-        $routes->get('all-livestock-vaccinations', 'LivestockVaccinationsController::getAllLivestockVaccinations');
+        $routes->get('all-vaccinations', 'LivestockVaccinationsController::getAllLivestockVaccinations');
         $routes->get('all-poultry-vaccinations', 'LivestockVaccinationsController::getAllPoultryVaccinations');
         $routes->get('all-farmer-livestock-vaccinations/(:any)', 'LivestockVaccinationsController::getAllUserCompleteLivestockVaccinations/$1');
         $routes->get('all-livestock-livestock-vaccinations', 'LivestockVaccinationsController::getLivestockVaccinationByLivestock');
@@ -218,6 +221,24 @@ $routes->group('api', function ($routes) {
         $routes->get('deworming-administration-method-count', 'LivestockDewormingController::getAdministrationMethodsCount');
         $routes->get('get-livestock-dewormings-report-data', 'LivestockDewormingController::getLivestockDewormingReportData');
         $routes->get('get-livestock-dewormings-freport', 'LivestockDewormingController::getLivestockDewormingsForReport');
+
+        // Livestock Parasite Control endpoint routes
+        $routes->get('all-parasite-control', 'AnimalParasiteControlController::getAllAnimalParasiteControls');
+        $routes->get('all-user-parasite-control', 'AnimalParasiteControlController::getAllAnimalParasiteControlByUser'); // not used
+        $routes->get('all-animal-parasite-control', 'AnimalParasiteControlController::getAllAnimalParasiteControlByAnimal');
+        $routes->post('add-parasite-control', 'AnimalParasiteControlController::insertParasiteControl');
+        $routes->post('add-parasite-control-multiple', 'AnimalParasiteControlController::insertMultipleParasiteControl');
+        $routes->put('update-parasite-control', 'AnimalParasiteControlController::updateParasiteControl');
+        $routes->delete('delete-parasite-control', 'AnimalParasiteControlController::deleteParasiteControl');
+        $routes->get('parasite-control-count', 'AnimalParasiteControlController::getOverallAnimalParasiteControlCount');
+        $routes->get('parasite-control-count/(:any)', 'AnimalParasiteControlController::getOverallAnimalParasiteControlCountByUser/$1');
+        $routes->get('all-parasite-control-4months', 'AnimalParasiteControlController::getParasiteControlCountLast4Months');
+        $routes->get('animal-type-parasite-control-count', 'AnimalParasiteControlController::getTopAnimalTypeParasiteControlCount');
+        $routes->get('parasite-control-method-count', 'AnimalParasiteControlController::getAdministrationMethodsCount');
+        $routes->get('parasite-control-distribution-month', 'AnimalParasiteControlController::getParasiteControlCountByMonth');
+        $routes->get('parasite-control-distribution-month-forecast', 'AnimalParasiteControlController::getParasiteControlCountByMonthWithForecast');
+        // $routes->get('get-livestock-dewormings-report-data', 'AnimalParasiteControlController::getLivestockDewormingReportData');
+        // $routes->get('get-livestock-dewormings-freport', 'AnimalParasiteControlController::getLivestockDewormingsForReport');
 
         // Livestock Breedings endpoint routes
         $routes->get('all-livestock-breedings', 'LivestockBreedingsController::getAllLivestockBreedings'); 
@@ -306,6 +327,24 @@ $routes->group('api', function ($routes) {
         $routes->get('all-mortality-4months', 'LivestockMortalityController::getMortalitiesCountLast4Months');
         $routes->get('get-livestock-mortalities-report-data', 'LivestockMortalityController::getMortalityReportData');
         $routes->get('get-livestock-mortalities-freport', 'LivestockMortalityController::getLivestockMortalitiesForReport');
+
+        // Animal Sample endpoint routes
+        $routes->get('all-animalsamples', 'AnimalSamplesController::getAllAnimalSamples');
+        $routes->get('all-user-animalsamples', 'AnimalSamplesController::getAllAnimalSampleByUser');
+        $routes->get('all-animal-animalsamples', 'AnimalSamplesController::getAllAnimalSampleByAnimal');
+        $routes->post('add-animalsamples', 'AnimalSamplesController::insertAnimalSample');
+        $routes->post('add-animalsamples-multiple', 'AnimalSamplesController::insertMultipleAnimalSample');
+        $routes->put('update-animalsamples', 'AnimalSamplesController::updateAnimalSample');
+        $routes->delete('delete-animalsamples', 'AnimalSamplesController::deleteAnimalSample');
+        $routes->get('animalsamples-count', 'AnimalSamplesController::getOverallAnimalSampleCount');
+        $routes->get('animalsamples-count/(:any)', 'AnimalSamplesController::getUserOverallAnimalSampleCount/$1');
+        $routes->get('top-observation-samples', 'AnimalSamplesController::getTopAnimalObservations');
+        $routes->get('top-findings-samples', 'AnimalSamplesController::getTopAnimalSampleFindings');
+        $routes->get('top-samples-types', 'AnimalSamplesController::getTopAnimalSampleType');
+        $routes->get('all-animalsamples-4months', 'AnimalSamplesController::getSampleCountLast4Months');
+        $routes->get('animalsamples-distribution-month', 'AnimalSamplesController::getAnimalSampleCountByMonth');
+        // $routes->get('get-livestock-fecal-samples-report-data', 'AnimalSamplesController::getFecalSampleReportData');
+        // $routes->get('get-livestock-fecal-samples-freport', 'AnimalSamplesController::getLivestockFecalSamplesForReport');
 
         // Livestock Fecal Sample endpoint routes
         $routes->get('all-livestock-fecalsamples', 'LivestockFecalSampleController::getAllLivestockFecalSample');

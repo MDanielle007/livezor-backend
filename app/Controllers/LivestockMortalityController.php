@@ -533,8 +533,9 @@ class LivestockMortalityController extends ResourceController
             ], 200);
         } catch (\Throwable $th) {
             //throw $th;
-            log_message('error', $th->getMessage());
-            return $this->respond(['error' => $th->getMessage(), 'trace' => $th->getTrace()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

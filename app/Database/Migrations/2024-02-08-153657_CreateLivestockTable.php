@@ -70,7 +70,7 @@ class CreateLivestockTable extends Migration
             ],
             'livestock_health_status' => [
                 'type' => 'ENUM',
-                'constraint' => ['Alive', 'Sick' ,'Dead'],
+                'constraint' => ['Alive', 'Culled', 'Disposed' ,'Dead'],
                 'default' => 'Alive',
             ],
             'origin' => [

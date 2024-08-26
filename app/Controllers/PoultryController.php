@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\FarmerAuditModel;
 use App\Models\FarmerLivestockModel;
+use App\Models\LivestockBreedModel;
 use App\Models\LivestockModel;
 use App\Models\LivestockTypeModel;
 use App\Models\UserModel;
@@ -15,6 +16,7 @@ class PoultryController extends ResourceController
 {
     private $poultry;
     private $poultryTypes;
+    private $poultryBreed;
     private $farmerPoultry;
     private $userModel;
     private $farmerAudit;
@@ -23,6 +25,7 @@ class PoultryController extends ResourceController
     {
         $this->poultry = new LivestockModel();
         $this->poultryTypes = new LivestockTypeModel();
+        $this->poultryBreed = new LivestockBreedModel();
         $this->farmerPoultry = new FarmerLivestockModel();
         $this->userModel = new UserModel();
         $this->farmerAudit = new FarmerAuditModel();
@@ -101,6 +104,20 @@ class PoultryController extends ResourceController
                 $data->farmerId = $userId;
             }
 
+            $breedName = $data->breedName;
+
+            if($breedName != ''){
+                if(is_string($breedName)){
+                    $data->livestockBreedId = $this->poultryBreed->insertLivestockBreed((object)[
+                        'livestockBreedName' => $breedName,
+                        'livestockBreedDescription' => '',
+                        'livestockTypeId' => $data->livestockTypeId
+                    ]);
+                }else{
+                    $data->livestockBreedId = $breedName->code;
+                }
+            }
+
             $livestockId = $this->poultry->insertLivestock($data);
 
             if(!$livestockId){
@@ -142,8 +159,6 @@ class PoultryController extends ResourceController
             $data = $this->request->getJSON();
             $data->category = "Poultry";
 
-            $data->breedingEligibility = "Not Age-Suited";
-
             $header = $this->request->getHeader("Authorization");
             $userId = getTokenUserId($header);
 
@@ -160,10 +175,24 @@ class PoultryController extends ResourceController
                 'entityAffected' => "Poultry",
             ];
 
+            $breedName = $data->breedName;
+
+            if($breedName != ''){
+                if(is_string($breedName)){
+                    $data->livestockBreedId = $this->poultryBreed->insertLivestockBreed((object)[
+                        'livestockBreedName' => $breedName,
+                        'livestockBreedDescription' => '',
+                        'livestockTypeId' => $data->livestockTypeId
+                    ]);
+                }else{
+                    $data->livestockBreedId = $breedName->code;
+                }
+            }
+
             if ($data->malePoultryCount > 0) {
                 $data->sex = 'Male';
+                $data->livestockAgeClassId = $data->maleLivestockAgeClassId;
                 for ($i = 1; $i <= $data->malePoultryCount; $i++) {
-
                     $poultryId = $this->poultry->insertLivestock($data);
                     if(!$poultryId){
                         return $this->fail('Failed to add poultry');
@@ -183,8 +212,8 @@ class PoultryController extends ResourceController
 
             if ($data->femalePoultryCount > 0) {
                 $data->sex = 'Female';
+                $data->livestockAgeClassId = $data->femaleLivestockAgeClassId;
                 for ($i = 1; $i <= $data->femalePoultryCount; $i++) {
-
                     $poultryId = $this->poultry->insertLivestock($data);
                     if(!$poultryId){
                         return $this->fail('Failed to add poultry');
@@ -223,6 +252,20 @@ class PoultryController extends ResourceController
             $userType = $decoded->aud;
             if($userType == 'Farmer'){
                 $data->farmerId = $userId;
+            }
+
+            $breedName = $data->breedName;
+
+            if($breedName != ''){
+                if(is_string($breedName)){
+                    $data->livestockBreedId = $this->poultryBreed->insertLivestockBreed((object)[
+                        'livestockBreedName' => $breedName,
+                        'livestockBreedDescription' => '',
+                        'livestockTypeId' => $data->livestockTypeId
+                    ]);
+                }else{
+                    $data->livestockBreedId = $breedName->code;
+                }
             }
 
             $response = $this->poultry->updateLivestock($data->id, $data);
@@ -465,6 +508,8 @@ class PoultryController extends ResourceController
             return $this->respond($data);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
             return $this->respond(['error' => $th->getMessage()]);
         }
     }

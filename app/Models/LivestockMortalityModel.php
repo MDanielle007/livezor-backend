@@ -351,6 +351,7 @@ class LivestockMortalityModel extends Model
             return $mortalityCounts;
         } catch (\Throwable $th) {
             //throw $th;
+            return [];
         }
     }
 
