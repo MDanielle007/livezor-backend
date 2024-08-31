@@ -187,6 +187,10 @@ class LivestockPregnancyModel extends Model
                 'expected_delivery_date' => $data->expectedDeliveryDate,
             ];
 
+            if(isset($data->actualDeliveryDate)){
+                $bind['actual_delivery_date'] = $data->actualDeliveryDate;
+            }
+
             if (isset($data->pregnancyNotes)) {
                 $bind['pregnancy_notes'] = $data->pregnancyNotes;
             }
@@ -196,7 +200,9 @@ class LivestockPregnancyModel extends Model
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -221,6 +227,9 @@ class LivestockPregnancyModel extends Model
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -242,6 +251,9 @@ class LivestockPregnancyModel extends Model
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 

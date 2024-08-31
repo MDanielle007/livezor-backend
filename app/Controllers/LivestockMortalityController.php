@@ -130,47 +130,6 @@ class LivestockMortalityController extends ResourceController
         }
     }
 
-    // public function insertLivestockMortality()
-    // {
-    //     try {
-    //         $data = $this->request->getJSON();
-
-    //         $header = $this->request->getHeader("Authorization");
-    //         $userId = getTokenUserId($header);
-    //         $decoded = decodeToken($header);
-    //         $userType = $decoded->aud;
-    //         if ($userType == 'Farmer') {
-    //             $data->farmerId = $userId;
-    //         }
-
-    //         $response = $this->livestockMortality->insertLivestockMortality($data);
-
-    //         $livestockTagId = $this->livestock->getLivestockTagIdById($data->livestockId);
-
-    //         $auditLog = (object) [
-    //             'livestockId' => $data->livestockId,
-    //             'farmerId' => $userId,
-    //             'action' => "Add",
-    //             'title' => "Report Livestock Mortality",
-    //             'description' => "Report Livestock Mortality of Livestock $livestockTagId",
-    //             'entityAffected' => "Mortality",
-    //         ];
-
-    //         $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
-
-    //         $data->livestockHealthStatus = 'Dead';
-    //         $result = $this->livestock->updateLivestockHealthStatus($data->livestockId, $data);
-
-    //         return $this->respond(['success' => $result, 'message' => 'Livestock Mortality Successfully Added'], 200);
-
-    //     } catch (\Throwable $th) {
-    //         //throw $th;
-    //         log_message('error', $th->getMessage() . ": " . $th->getLine());
-    //         log_message('error', json_encode($th->getTrace()));
-    //         return $this->respond(['error' => $th->getMessage()], 200);
-    //     }
-    // }
-
     public function insertLivestockMortality()
     {
         try {

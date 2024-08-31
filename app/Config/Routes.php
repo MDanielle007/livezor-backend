@@ -533,5 +533,7 @@ $routes->group('api', function ($routes) {
         $routes->put('update-farmeruser-association/(:any)', 'FarmerUserAssociationController::updateFarmerUserAssociation/$1');
 
         $routes->get('get-audit-trails', 'AuditTrailController::getFarmerAuditTrailLogs');
+
+        $routes->post('sync', 'SyncController::sync');
     });
 });

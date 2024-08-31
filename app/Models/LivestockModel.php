@@ -342,8 +342,7 @@ class LivestockModel extends Model
                 'sex' => $data->sex,
                 'breeding_eligibility' => $data->breedingEligibility,
                 'date_of_birth' => $data->dateOfBirth,
-                'livestock_health_status' => $data->livestockHealthStatus,
-                'category' => $data->category
+                'livestock_health_status' => $data->livestockHealthStatus
             ];
 
             if (isset($data->livestockBreedId)) {

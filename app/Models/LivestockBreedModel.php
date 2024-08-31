@@ -97,11 +97,17 @@ class LivestockBreedModel extends Model
     public function insertLivestockBreed($data)
     {
         try {
+
+            $nameLower = strtolower($data->livestockBreedName);
+
+            // Capitalize the first character
+            $capitalizedname = ucfirst($nameLower);
             $bind = [
-                'livestock_breed_name' => $data->livestockBreedName,
+                'livestock_breed_name' => $capitalizedname,
                 'livestock_breed_description' => $data->livestockBreedDescription,
                 'livestock_type_id' => $data->livestockTypeId,
             ];
+            
             $result = $this->insert($bind);
             return $result;
         } catch (\Throwable $th) {
