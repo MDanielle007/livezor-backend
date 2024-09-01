@@ -14,7 +14,7 @@ $routes->group('api', function ($routes) {
     $routes->put('password-reset', 'AuthController::requestPasswordReset', ['filter' => 'resetPassFilter']);
 
     // Livestocks endpoint routes
-    $routes->group('livestock', ['filter' => 'authFilter'] ,function ($routes) {
+    $routes->group('livestock', ['filter' => 'authFilter'], function ($routes) {
         // Livestock Types endpoint routes
         $routes->get('all-livestock-types', 'LivestockTypesController::getLivestockTypes');
         $routes->get('all-livestock-types-idnames', 'LivestockTypesController::getLivestockTypesIdAndName');
@@ -83,7 +83,7 @@ $routes->group('api', function ($routes) {
         $routes->get('livestock-type-count-monitoring', 'LivestocksController::getLivestockTypeCountMonitoring');
         $routes->get('livestock-breed-count-monitoring', 'LivestocksController::getLivestockBreedCountMonitoring');
         $routes->get('livestock-ageclass-count-monitoring', 'LivestocksController::getLivestockAgeCountMonitoring');
-        
+
         // User Management endpoint routes
         $routes->post('upload', 'UserController::uploadUserImage');
         $routes->post('register-user', 'UserController::registerUser');
@@ -125,7 +125,7 @@ $routes->group('api', function ($routes) {
         $routes->post('add-department', 'PersonnelDepartmentsController::insertDepartment');
         $routes->put('update-department/(:any)', 'PersonnelDepartmentsController::updateDepartment/$1');
         $routes->delete('delete-department-record/(:any)', 'PersonnelDepartmentsController::deleteDepartment/$1');
-        
+
         // Livestock endpoint routes
         $routes->get('all-livestock', 'LivestocksController::getAllLivestocks');
         $routes->get('all-farmer-livestocks/(:any)', 'LivestocksController::getFarmerAllLivestocks/$1');
@@ -142,7 +142,7 @@ $routes->group('api', function ($routes) {
         $routes->get('livestock-type-production-year', 'LivestocksController::getLivestockProductionWholeYear');
         $routes->get('livestock-type-production-year/(:any)/(:any)', 'LivestocksController::getLivestockProductionSelectedYear/$1/$2');
         $routes->get('get-livestock-report-data', 'LivestocksController::getLivestockReportData');
-        $routes->post('import-livestock-data','LivestocksController::importLivestockData');
+        $routes->post('import-livestock-data', 'LivestocksController::importLivestockData');
         $routes->get('get-livestock-freport', 'LivestocksController::getLivestockRecordsForReport');
         $routes->get('get-livestock-disprod-freport', 'LivestocksController::getLivestockDisProdForReport');
 
@@ -241,7 +241,7 @@ $routes->group('api', function ($routes) {
         // $routes->get('get-livestock-dewormings-freport', 'AnimalParasiteControlController::getLivestockDewormingsForReport');
 
         // Livestock Breedings endpoint routes
-        $routes->get('all-livestock-breedings', 'LivestockBreedingsController::getAllLivestockBreedings'); 
+        $routes->get('all-livestock-breedings', 'LivestockBreedingsController::getAllLivestockBreedings');
         $routes->get('all-farmer-livestock-breedings/(:any)', 'LivestockBreedingsController::getAllFarmerLivestockBreedings/$1'); // not used
         $routes->get('all-livestock-livestock-breedings', 'LivestockBreedingsController::getAllLivestockBreedingsByLivestock');
         $routes->get('livestock-breeding/(:any)', 'LivestockBreedingsController::getLivestockBreeding/$1');
@@ -317,7 +317,7 @@ $routes->group('api', function ($routes) {
         $routes->get('all-livestock-mortalities', 'LivestockMortalityController::getAllLivestockMortalities');
         $routes->get('all-farmer-livestock-mortalities/(:any)', 'LivestockMortalityController::getAllFarmerLivestockMortalities/$1'); // not used
         $routes->get('livestock-mortality/(:any)', 'LivestockMortalityController::getLivestockMortality/$1');
-        $routes->post('add-livestock-mortality', 'LivestockMortalityController::insertLivestockMortality'); 
+        $routes->post('add-livestock-mortality', 'LivestockMortalityController::insertLivestockMortality');
         $routes->put('update-livestock-mortality', 'LivestockMortalityController::updateLivestockMortality');
         $routes->put('update-livestock-mortality-record-stat/(:any)', 'LivestockMortalityController::updateLivestockMortalityRecordStatus/$1');
         $routes->delete('delete-livestock-mortality', 'LivestockMortalityController::deleteLivestockMortality');
@@ -534,6 +534,11 @@ $routes->group('api', function ($routes) {
 
         $routes->get('get-audit-trails', 'AuditTrailController::getFarmerAuditTrailLogs');
 
-        $routes->post('sync', 'SyncController::sync');
+        $routes->group('sync', function ($routes) {
+            $routes->post('livestock', 'SyncController::syncL');
+            $routes->post('health', 'SyncController::syncH');
+            $routes->post('pregnancy', 'SyncController::syncP');
+            $routes->post('mortality', 'SyncController::syncM');
+        });
     });
 });

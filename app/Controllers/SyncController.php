@@ -9,6 +9,7 @@ use App\Models\FarmerLivestockModel;
 use App\Models\LivestockBreedingsModel;
 use App\Models\LivestockBreedModel;
 use App\Models\LivestockModel;
+use App\Models\LivestockMortalityModel;
 use App\Models\LivestockPregnancyModel;
 use App\Models\LivestockVaccinationModel;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -21,6 +22,7 @@ class SyncController extends ResourceController
     private $animalParasiteControl;
     private $livestockBreeding;
     private $livestockPregnancy;
+    private $livestockMortality;
     private $livestockBreed;
     private $farmerLivestock;
     private $farmerAudit;
@@ -33,6 +35,7 @@ class SyncController extends ResourceController
         $this->animalParasiteControl = new AnimalParasiteControlModel();
         $this->livestockBreeding = new LivestockBreedingsModel();
         $this->livestockPregnancy = new LivestockPregnancyModel();
+        $this->livestockMortality = new LivestockMortalityModel();
         $this->livestockBreed = new LivestockBreedModel();
         $this->farmerLivestock = new FarmerLivestockModel();
         $this->farmerAudit = new FarmerAuditModel();
@@ -40,7 +43,23 @@ class SyncController extends ResourceController
     protected $modelName = 'App\Models\LivestockModel';
     protected $format = 'json';
 
-    public function sync()
+    public function syncL()
+    {
+        try {
+            //code...
+            $data = $this->request->getJSON(true);
+            $response = $this->syncLivestock($data);
+
+            return $this->respond($response);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail($th->getMessage(), 500);
+        }
+    }
+
+    public function syncH()
     {
         $data = $this->request->getJSON(true);
 
@@ -49,20 +68,14 @@ class SyncController extends ResourceController
         }
 
         $response = [
-            'livestock' => [],
-            'vaccinations' => [],
+            'vaccination' => [],
             'parasiteControl' => [],
             'breeding' => [],
-            'pregnancy' => [],
-            'mortality' => []
         ];
 
         try {
-            if (isset($data['livestock'])) {
-                $response['livestock'] = $this->syncLivestock($data['livestock']);
-            }
-            if (isset($data['vaccinations'])) {
-                $response['vaccinations'] = $this->syncVaccinations($data['vaccinations']);
+            if (isset($data['vaccination'])) {
+                $response['vaccination'] = $this->syncVaccinations($data['vaccination']);
             }
             if (isset($data['parasiteControl'])) {
                 $response['parasiteControl'] = $this->syncParasiteControl($data['parasiteControl']);
@@ -70,15 +83,58 @@ class SyncController extends ResourceController
             if (isset($data['breeding'])) {
                 $response['breeding'] = $this->syncBreeding($data['breeding']);
             }
-            if (isset($data['pregnancy'])) {
-                $response['pregnancy'] = $this->syncPregnancy($data['pregnancy']);
-            }
 
             return $this->respond($response);
         } catch (\Exception $e) {
             log_message('error', $e->getMessage() . ": " . $e->getLine());
             log_message('error', json_encode($e->getTrace()));
             return $this->fail($e->getMessage(), 500);
+        }
+    }
+
+    public function syncP()
+    {
+        try {
+            //code...
+            $data = $this->request->getJSON(true);
+            $response = $this->syncPregnancy($data);
+
+            return $this->respond($response);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail($th->getMessage(), 500);
+        }
+    }
+
+
+    public function syncM()
+    {
+        try {
+            //code...
+            $mortalityRecordsJson = $this->request->getPost('mortality');
+            $data = json_decode($mortalityRecordsJson, true);
+            $images = $this->request->getFiles();
+            $result = null;
+            if ($data['syncAction'] === 'insert') {
+                $result = $this->insertMortality($data, $images);
+            } elseif ($data['syncAction'] === 'update') {
+                $result = $this->updateMortality($data);
+            } elseif ($data['syncAction'] === 'delete') {
+                $result = $this->deleteMortality($data['id'], $data['syncIdentifier']);
+            }
+
+            if (!$result) {
+                return $this->fail('Failed to sync mortality record', ResponseInterface::HTTP_BAD_REQUEST);
+            }
+
+            return $this->respond($result, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail($th->getMessage(), 500);
         }
     }
 
@@ -155,15 +211,15 @@ class SyncController extends ResourceController
     {
         try {
             $updateData = (object) [
-                'id' => $livestock['id'], 
+                'id' => $livestock['id'],
                 'breedName' => $livestock['breedName'],
-                'breedingEligibility' => $livestock['breedingEligibility'], 
-                'dateOfBirth' => $livestock['dateOfBirth'], 
-                'livestockAgeClassId' => $livestock['livestockAgeClassId'], 
+                'breedingEligibility' => $livestock['breedingEligibility'],
+                'dateOfBirth' => $livestock['dateOfBirth'],
+                'livestockAgeClassId' => $livestock['livestockAgeClassId'],
                 'livestockHealthStatus' => $livestock['livestockHealthStatus'],
-                'livestockTagId' => $livestock['livestockTagId'], 
-                'livestockTypeId' => $livestock['livestockTypeId'], 
-                'sex' => $livestock['sex'], 
+                'livestockTagId' => $livestock['livestockTagId'],
+                'livestockTypeId' => $livestock['livestockTypeId'],
+                'sex' => $livestock['sex'],
             ];
 
             $breedName = $livestock['breedName'];
@@ -265,7 +321,7 @@ class SyncController extends ResourceController
                 'vaccinationDate' => $vaccination['vaccinationDate']
             ];
 
-            if ($this->livestockVaccination->updateLivestock($vaccination['id'], $updateData)) {
+            if ($this->livestockVaccination->updateLivestockVaccination($vaccination['id'], $updateData)) {
                 return ['id' => $vaccination['id'], 'status' => 'success', 'syncIdentifier' => $vaccination['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->livestock->errors(), 'syncIdentifier' => $vaccination['syncIdentifier']];
@@ -300,11 +356,11 @@ class SyncController extends ResourceController
 
             foreach ($parasiteControlData as $parasiteControl) {
                 if ($parasiteControl['syncAction'] === 'insert') {
-                    $results[] = $this->insertLivestock($parasiteControl);
+                    $results[] = $this->insertParasiteControl($parasiteControl);
                 } elseif ($parasiteControl['syncAction'] === 'update') {
-                    $results[] = $this->updateLivestock($parasiteControl);
+                    $results[] = $this->updateParasiteControl($parasiteControl);
                 } elseif ($parasiteControl['syncAction'] === 'delete') {
-                    $results[] = $this->deleteLivestock($parasiteControl['id'], $parasiteControl['syncIdentifier']);
+                    $results[] = $this->deleteParasiteControl($parasiteControl['id'], $parasiteControl['syncIdentifier']);
                 }
             }
 
@@ -367,7 +423,7 @@ class SyncController extends ResourceController
                 'applicationLocation' => $parasiteControl['applicationLocation'],
             ];
 
-            
+
             if ($this->animalParasiteControl->updateAnimalParasiteControl($parasiteControl['id'], $updateData)) {
                 return ['id' => $parasiteControl['id'], 'status' => 'success', 'syncIdentifier' => $parasiteControl['syncIdentifier']];
             } else {
@@ -426,7 +482,7 @@ class SyncController extends ResourceController
     {
         try {
             //code...
-            $insertData = (object)[
+            $insertData = (object) [
                 'farmerId' => $breeding['userId'],
                 'livestockTypeId' => $breeding['livestockTypeId'],
                 'maleLivestockTagId' => $breeding['maleLivestockTagId'],
@@ -453,7 +509,7 @@ class SyncController extends ResourceController
     {
         try {
             //code...
-            $updateData = (object)[
+            $updateData = (object) [
                 'farmerId' => $breeding['userId'],
                 'livestockTypeId' => $breeding['livestockTypeId'],
                 'maleLivestockTagId' => $breeding['maleLivestockTagId'],
@@ -516,10 +572,11 @@ class SyncController extends ResourceController
         }
     }
 
-    private function insertPregnancy($pregnancy){
+    private function insertPregnancy($pregnancy)
+    {
         try {
             //code...
-            $insertData = (object)[
+            $insertData = (object) [
                 'breedingId' => $pregnancy['breedingId'],
                 'livestockId' => $pregnancy['livestockId'],
                 'pregnancyStartDate' => $pregnancy['pregnancyDate'],
@@ -544,9 +601,10 @@ class SyncController extends ResourceController
         }
     }
 
-    private function updatePregnancy($pregnancy){
+    private function updatePregnancy($pregnancy)
+    {
         try {
-            $updateData = (object)[
+            $updateData = (object) [
                 'breedingId' => $pregnancy['breedingId'],
                 'livestockId' => $pregnancy['livestockId'],
                 'pregnancyStartDate' => $pregnancy['pregnancyDate'],
@@ -569,7 +627,8 @@ class SyncController extends ResourceController
         }
     }
 
-    private function deletePregnancy($id, $syncIdentifier){
+    private function deletePregnancy($id, $syncIdentifier)
+    {
         try {
             //code...
             if ($this->livestockPregnancy->deleteLivestockPregnancy($id)) {
@@ -581,6 +640,88 @@ class SyncController extends ResourceController
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $syncIdentifier];
+        }
+    }
+
+    private function insertMortality($data, $files)
+    {
+        try {
+            //code...
+            $uploadedData = [];
+            $uploadPath = WRITEPATH . 'uploads/mortalities/';
+
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true); // Create directory if it doesn't exist
+            }
+
+            if (isset($files['files'])) {
+                foreach ($files['files'] as $file) {
+                    if ($file->isValid() && !$file->hasMoved()) {
+                        $newName = $file->getRandomName();
+                        $file->move($uploadPath, $newName);
+
+                        // Collect all uploaded data
+                        $uploadedData[] = $newName;
+                    } else {
+                        return $this->fail($file->getErrorString(), 400);
+                    }
+                }
+            }
+
+            $response = $this->livestockMortality->insertLivestockMortality((object) [
+                'farmerId' => $data['userId'],
+                'livestockId' => $data['livestockId'],
+                'causeOfDeath' => $data['causeOfDeath'],
+                'remarks' => $data['remarks'],
+                'dateOfDeath' => $data['dateOfDeath'],
+                'images' => $uploadedData
+            ]);
+
+            if ($response) {
+                return ['id' => $response, 'status' => 'success', 'syncIdentifier' => $data['syncIdentifier']];
+            } else {
+                return ['status' => 'failed', 'errors' => 'Failed to insert mortality record', 'syncIdentifier' => $data['syncIdentifier']];
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $data['syncIdentifier']];
+        }
+    }
+
+    private function updateMortality($data)
+    {
+        try {
+            //code...
+            $response = $this->livestockMortality->updateLivestockMortality($data['id'], (object) [
+                'farmerId' => $data['userId'],
+                'livestockId' => $data['livestockId'],
+                'causeOfDeath' => $data['causeOfDeath'],
+                'remarks' => $data['remarks'],
+                'dateOfDeath' => $data['dateOfDeath']
+            ]);
+
+            if ($response) {
+                return ['id' => $data['id'], 'status' => 'success', 'syncIdentifier' => $data['syncIdentifier']];
+            } else {
+                return ['status' => 'failed', 'errors' => 'Failed to update mortality record', 'syncIdentifier' => $data['syncIdentifier']];
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $data['syncIdentifier']];
+        }
+    }
+
+    private function deleteMortality($id, $syncIdentifier)
+    {
+        try {
+            if ($this->livestockMortality->deleteLivestockMortality($id)) {
+                return ['id' => $id, 'status' => 'success', 'syncIdentifier' => $syncIdentifier];
+            } else {
+                return ['status' => 'failed', 'errors' => $this->livestockMortality->errors(), 'syncIdentifier' => $syncIdentifier];
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
             return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $syncIdentifier];
         }
     }

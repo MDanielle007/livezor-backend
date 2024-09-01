@@ -153,21 +153,28 @@ class LivestockMortalityModel extends Model
 
     public function insertLivestockMortality($data)
     {
-        $bind = [
-            'farmer_id' => $data->farmerId,
-            'livestock_id' => $data->livestockId,
-            'cause_of_death' => $data->causeOfDeath,
-            'mortality_remarks' => $data->remarks,
-            'date_of_death' => $data->dateOfDeath,
-        ];
-
-        if(isset($data->images)){
-            $bind['images'] = json_encode($data->images);
+        try {
+            $bind = [
+                'farmer_id' => $data->farmerId,
+                'livestock_id' => $data->livestockId,
+                'cause_of_death' => $data->causeOfDeath,
+                'mortality_remarks' => $data->remarks,
+                'date_of_death' => $data->dateOfDeath,
+            ];
+    
+            if(isset($data->images)){
+                $bind['images'] = json_encode($data->images);
+            }
+    
+            $result = $this->insert($bind);
+    
+            return $result;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
-
-        $result = $this->insert($bind);
-
-        return $result;
     }
 
     public function updateLivestockMortality($id, $data)
