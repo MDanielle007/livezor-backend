@@ -12,7 +12,7 @@ class LivestockModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'category', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'is_pregnant', 'date_of_birth', 'livestock_health_status', 'origin', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['livestock_tag_id', 'livestock_type_id', 'livestock_breed_id', 'livestock_age_class_id', 'category', 'age_days', 'age_weeks', 'age_months', 'age_years', 'sex', 'breeding_eligibility', 'is_pregnant', 'date_of_birth', 'livestock_health_status', 'origin', 'height', 'height_unit', 'weight', 'weight_unit', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -67,6 +67,10 @@ class LivestockModel extends Model
                 livestocks.date_of_birth as dateOfBirth,
                 livestocks.livestock_health_status as livestockHealthStatus,
                 livestocks.origin as livestockOrigin,
+                livestocks.height as height,
+                livestocks.height_unit as heightUnit,
+                livestocks.weight as weight,
+                livestocks.weight_unit as weightUnit,
                 livestocks.record_status as recordStatus,
                 user_accounts.id as farmerId,
                 user_accounts.user_id as farmerUserId,
@@ -155,6 +159,11 @@ class LivestockModel extends Model
                 livestocks.date_of_birth as dateOfBirth,
                 livestocks.livestock_health_status as livestockHealthStatus,
                 livestocks.origin as livestockOrigin,
+                livestocks.origin as livestockOrigin,
+                livestocks.height as height,
+                livestocks.height_unit as heightUnit,
+                livestocks.weight as weight,
+                livestocks.weight_unit as weightUnit,
                 livestocks.record_status as recordStatus,
                 user_accounts.id as farmerId,
                 user_accounts.user_id as farmerUserId,
@@ -205,6 +214,11 @@ class LivestockModel extends Model
                 sex as sex,
                 breeding_eligibility as breedingEligibility,
                 date_of_birth as dateOfBirth,
+                origin as livestockOrigin,
+                height as height,
+                height_unit as heightUnit,
+                weight as weight,
+                weight_unit as weightUnit,
                 livestock_health_status as livestockHealthStatus,
                 record_status as recordStatus'
             )->where($whereClause)->find($id);
@@ -236,6 +250,11 @@ class LivestockModel extends Model
                 sex as sex,
                 breeding_eligibility as breedingEligibility,
                 date_of_birth as dateOfBirth,
+                origin as livestockOrigin,
+                height as height,
+                height_unit as heightUnit,
+                weight as weight,
+                weight_unit as weightUnit,
                 livestock_health_status as livestockHealthStatus,
                 record_status as recordStatus'
             )->where($whereClause)->find($id);
@@ -321,6 +340,16 @@ class LivestockModel extends Model
                 $bind['is_pregnant'] = $data->isPregnant;
             }
 
+            if (isset($data->height)) {
+                $bind['height'] = $data->height->value;
+                $bind['height_unit'] = $data->height->unit;
+            }
+
+            if (isset($data->weight)) {
+                $bind['weight'] = $data->weight->value;
+                $bind['weight_unit'] = $data->weight->unit;
+            }
+
             $result = $this->insert($bind);
 
             return $result;
@@ -351,6 +380,16 @@ class LivestockModel extends Model
 
             if (isset($data->isPregnant)) {
                 $bind['is_pregnant'] = $data->isPregnant;
+            }
+
+            if (isset($data->height)) {
+                $bind['height'] = $data->height->value;
+                $bind['height_unit'] = $data->height->unit;
+            }
+
+            if (isset($data->weight)) {
+                $bind['weight'] = $data->weight->value;
+                $bind['weight_unit'] = $data->weight->unit;
             }
 
             $result = $this->update($id, $bind);
@@ -443,6 +482,11 @@ class LivestockModel extends Model
                 livestocks.sex as sex,
                 livestocks.breeding_eligibility as breedingEligibility,
                 livestocks.date_of_birth as dateOfBirth,
+                livestocks.origin as livestockOrigin,
+                livestocks.height as height,
+                livestocks.height_unit as heightUnit,
+                livestocks.weight as weight,
+                livestocks.weight_unit as weightUnit,
                 livestocks.livestock_health_status as livestockHealthStatus,
                 farmer_livestocks.acquired_date as acquiredDate,
                 livestocks.record_status as recordStatus,
@@ -475,32 +519,37 @@ class LivestockModel extends Model
                 'livestocks.category' => 'Poultry'
             ];
 
-            $livestocks = $this->select(
-                'livestocks.id,
-            COALESCE(NULLIF(livestocks.livestock_tag_id, ""), "Untagged") as livestockTagId,
-            livestocks.livestock_type_id as livestockTypeId,
-            livestock_types.livestock_type_name as livestockTypeName,
-            livestocks.livestock_breed_id as livestockBreedId,
-            COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
-            livestocks.livestock_age_class_id as livestockAgeClassId,
-            livestock_age_class.livestock_age_classification as livestockAgeClassification,
-            livestocks.age_days as ageDays,
-            livestocks.age_weeks as ageWeeks,
-            livestocks.age_months as ageMonths,
-            livestocks.age_years as ageYears,
-            livestocks.sex as sex,
-            livestocks.breeding_eligibility as breedingEligibility,
-            livestocks.date_of_birth as dateOfBirth,
-            livestocks.livestock_health_status as livestockHealthStatus,
-            livestocks.record_status as recordStatus,
-            CASE
-                WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years")
-                WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
-                WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks")
-                WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
-                ELSE "Unknown Age"
-            END as age'
-            )
+            $livestocks = $this->select('
+                livestocks.id,
+                COALESCE(NULLIF(livestocks.livestock_tag_id, ""), "Untagged") as livestockTagId,
+                livestocks.livestock_type_id as livestockTypeId,
+                livestock_types.livestock_type_name as livestockTypeName,
+                livestocks.livestock_breed_id as livestockBreedId,
+                COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                livestocks.livestock_age_class_id as livestockAgeClassId,
+                livestock_age_class.livestock_age_classification as livestockAgeClassification,
+                livestocks.age_days as ageDays,
+                livestocks.age_weeks as ageWeeks,
+                livestocks.age_months as ageMonths,
+                livestocks.age_years as ageYears,
+                livestocks.sex as sex,
+                livestocks.breeding_eligibility as breedingEligibility,
+                livestocks.date_of_birth as dateOfBirth,
+                livestocks.origin as livestockOrigin,
+                livestocks.height as height,
+                livestocks.height_unit as heightUnit,
+                livestocks.weight as weight,
+                livestocks.weight_unit as weightUnit,
+                livestocks.livestock_health_status as livestockHealthStatus,
+                livestocks.record_status as recordStatus,
+                CASE
+                    WHEN livestocks.age_years > 0 THEN CONCAT(livestocks.age_years, " years")
+                    WHEN livestocks.age_months > 0 THEN CONCAT(livestocks.age_months, " months")
+                    WHEN livestocks.age_weeks > 0 THEN CONCAT(livestocks.age_weeks, " weeks")
+                    WHEN livestocks.age_days > 0 THEN CONCAT(livestocks.age_days, " days")
+                    ELSE "Unknown Age"
+                END as age
+            ')
                 ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')

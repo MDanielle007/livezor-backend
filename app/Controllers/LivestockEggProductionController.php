@@ -247,6 +247,18 @@ class LivestockEggProductionController extends ResourceController
         }
     }
 
+    public function getEggProductionCount(){
+        try {
+            $type = $this->request->getGet('type');
+            $count = $this->livestockEggProduction->getEggProductionCount($type);
+
+            return $this->respond(['count' => "$count"],200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->fail('Failed to fetch data', 500);
+        }
+    }
+
     public function getTopPoultryTypeEggProducedCount(){
         try {
             $poultryEggProduction = $this->livestockEggProduction->getTopPoultryTypeEggProducedCount();

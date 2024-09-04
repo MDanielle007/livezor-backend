@@ -323,6 +323,53 @@ class LivestockEggProductionModel extends Model
         }
     }
 
+    public function getEggProductionCount($type = 'yearly')
+    {
+        try {
+            $whereClause = [];
+
+            switch ($type) {
+                case 'yearly':
+                    $whereClause['YEAR(date_of_production)'] = date('Y');
+                    break;
+                case 'monthly':
+                    $whereClause['YEAR(date_of_production)'] = date('Y');
+                    $whereClause['MONTH(date_of_production)'] = date('m'); // 'm' returns numeric month format (01-12)
+                    break;
+                case 'weekly':
+                    $whereClause['YEAR(date_of_production)'] = date('Y');
+                    $whereClause['WEEK(date_of_production, 1)'] = date('W'); // 'W' returns ISO-8601 week number of year
+                    break;
+                case 'daily':
+                    $whereClause['YEAR(date_of_production)'] = date('Y');
+                    $whereClause['MONTH(date_of_production)'] = date('m');
+                    $whereClause['DAY(date_of_production)'] = date('d');
+                    break;
+                default:
+                    throw new \InvalidArgumentException("Invalid type specified.");
+            }
+
+            $eggProductionCount = $this->select('SUM(eggs_produced) as count')
+                ->where($whereClause)
+                ->get()
+                ->getResult();
+
+            // Check if any result is returned
+            if (!empty($eggProductionCount)) {
+                // Access the first element of the result array and retrieve the 'count' property
+                return $eggProductionCount[0]->count ?? 0;
+            } else {
+                // If no result is found, return 0 or handle accordingly
+                return 0;
+            }
+        } catch (\Throwable $th) {
+            // Log error details
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return 0;
+        }
+    }
+
     public function getTopPoultryTypeEggProducedCount()
     {
         try {

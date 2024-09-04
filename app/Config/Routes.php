@@ -298,6 +298,7 @@ $routes->group('api', function ($routes) {
 
         $routes->get('active-eggprods-batch', 'EggProductionBatchGroupController::getAllActiveEggProductionBatchGroups');
         $routes->get('eggprods-distribution-month', 'LivestockEggProductionController::getEggProductionCountByMonth');
+        $routes->get('eggprods-count', 'LivestockEggProductionController::getEggProductionCount');
         $routes->get('eggprod-current-year-count', 'LivestockEggProductionController::getCurrentYearEggProductionCount');
         $routes->get('poultry-type-eggprod-count', 'LivestockEggProductionController::getTopPoultryTypeEggProducedCount');
         $routes->get('active-eggprod-batch-count', 'EggProductionBatchGroupController::getAllActiveBatchWithEggsProduced');
