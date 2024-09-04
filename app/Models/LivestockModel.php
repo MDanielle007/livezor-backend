@@ -341,13 +341,23 @@ class LivestockModel extends Model
             }
 
             if (isset($data->height)) {
-                $bind['height'] = $data->height->value;
-                $bind['height_unit'] = $data->height->unit;
+                if (isset($data->height->value)){
+                    $bind['height'] = $data->height->value;
+                    $bind['height_unit'] = $data->height->unit;
+                }else{
+                    $bind['height'] = $data->height;
+                    $bind['height_unit'] = $data->heightUnit;
+                }
             }
 
             if (isset($data->weight)) {
-                $bind['weight'] = $data->weight->value;
-                $bind['weight_unit'] = $data->weight->unit;
+                if(isset($data->weight->value)){
+                    $bind['weight'] = $data->weight->value;
+                    $bind['weight_unit'] = $data->weight->unit;
+                }else{
+                    $bind['weight'] = $data->weight;
+                    $bind['weight_unit'] = $data->weightUnit;
+                }
             }
 
             $result = $this->insert($bind);
@@ -383,13 +393,23 @@ class LivestockModel extends Model
             }
 
             if (isset($data->height)) {
-                $bind['height'] = $data->height->value;
-                $bind['height_unit'] = $data->height->unit;
+                if (isset($data->height->value)){
+                    $bind['height'] = $data->height->value;
+                    $bind['height_unit'] = $data->height->unit;
+                }else{
+                    $bind['height'] = $data->height;
+                    $bind['height_unit'] = $data->heightUnit;
+                }
             }
 
             if (isset($data->weight)) {
-                $bind['weight'] = $data->weight->value;
-                $bind['weight_unit'] = $data->weight->unit;
+                if(isset($data->weight->value)){
+                    $bind['weight'] = $data->weight->value;
+                    $bind['weight_unit'] = $data->weight->unit;
+                }else{
+                    $bind['weight'] = $data->weight;
+                    $bind['weight_unit'] = $data->weightUnit;
+                }
             }
 
             $result = $this->update($id, $bind);

@@ -174,7 +174,11 @@ class SyncController extends ResourceController
                 'livestockType' => $livestock['livestockType'],
                 'livestockTypeId' => $livestock['livestockTypeId'], //
                 'sex' => $livestock['sex'], //
-                'category' => 'Livestock' //,
+                'category' => 'Livestock',
+                'height' => $livestock['height'],
+                'heightUnit' => $livestock['heightUnit'],
+                'weight' => $livestock['weight'],
+                'weightUnit' => $livestock['weightUnit'],
             ];
 
             $breedName = $livestock['breedName'];
@@ -220,6 +224,10 @@ class SyncController extends ResourceController
                 'livestockTagId' => $livestock['livestockTagId'],
                 'livestockTypeId' => $livestock['livestockTypeId'],
                 'sex' => $livestock['sex'],
+                'height' => $livestock['height'],
+                'heightUnit' => $livestock['heightUnit'],
+                'weight' => $livestock['weight'],
+                'weightUnit' => $livestock['weightUnit'],
             ];
 
             $breedName = $livestock['breedName'];
