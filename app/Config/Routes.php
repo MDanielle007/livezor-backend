@@ -13,6 +13,14 @@ $routes->group('api', function ($routes) {
     $routes->post('password-reset', 'AuthController::requestPasswordLink');
     $routes->put('password-reset', 'AuthController::requestPasswordReset', ['filter' => 'resetPassFilter']);
 
+    $routes->get('landingpage-display-text', 'LandingPageSettingController::getLandingPageMainDisplayTexts');
+    $routes->get('landingpage-display-images', 'LandingPageSettingController::getLandingPageMainDisplayImages');
+    $routes->get('landingpage-agri-animals', 'LandingPageSettingController::getLandingPageAgriAnimals');
+    $routes->get('landingpage-carousel-images', 'LandingPageSettingController::getLandingPageCarouselImages');
+    $routes->get('get-carousel-image/(:any)', 'LandingPageSettingController::getImage/$1');
+    $routes->get('landingpage-orgchart', 'LandingPageSettingController::getLandingPageOrganizationCharts');
+    $routes->get('landingpage-contact', 'LandingPageSettingController::getContactInformation');
+
     // Livestocks endpoint routes
     $routes->group('livestock', ['filter' => 'authFilter'], function ($routes) {
         // Livestock Types endpoint routes
@@ -80,16 +88,17 @@ $routes->group('api', function ($routes) {
         $routes->get('livestock-type-count-city/(:any)', 'LivestocksController::getLivestockTypeCountAllCity/$1');
         $routes->get('livestock-breed-count-city/(:any)', 'LivestocksController::getLivestockBreedCountAllCity/$1');
         $routes->get('livestock-ageclass-count-city/(:any)', 'LivestocksController::getLivestockAgeClassCountAllCity/$1');
+        $routes->get('animal-type-count-monitoring', 'LivestocksController::getAnimalTypeCountMonitoring');
         $routes->get('livestock-type-count-monitoring', 'LivestocksController::getLivestockTypeCountMonitoring');
         $routes->get('livestock-breed-count-monitoring', 'LivestocksController::getLivestockBreedCountMonitoring');
         $routes->get('livestock-ageclass-count-monitoring', 'LivestocksController::getLivestockAgeCountMonitoring');
 
         // User Management endpoint routes
-        $routes->post('upload', 'UserController::uploadUserImage');
+        $routes->post('update-user-image', 'UserController::uploadUserImage');
         $routes->post('register-user', 'UserController::registerUser');
         $routes->get('all-users', 'UserController::getAllUsers');
         $routes->get('get-user-info/(:any)', 'UserController::getUser/$1');
-        $routes->put('update-user-profile/(:any)', 'UserController::updateUser/$1');
+        $routes->put('update-user-profile', 'UserController::updateUser');
         $routes->put('update-user-personal-info/(:any)', 'UserController::updateUserPersonalInfo/$1'); // not used
         $routes->put('update-user-account-info/(:any)', 'UserController::updateUserAccountInfo/$1');
         $routes->put('update-user-password/(:any)', 'UserController::updateUserPassword/$1');
@@ -97,6 +106,7 @@ $routes->group('api', function ($routes) {
         $routes->delete('delete-user/(:any)', 'UserController::deleteUser/$1');
         $routes->get('get-farmers-basic', 'UserController::getAllFarmersBasicInfo');
         $routes->get('get-all-farmers-type-count', 'UserController::getAllFarmerLivestockTypeCount');
+        $routes->get('get-all-admin-users', 'UserController::getAllAdminUsers');
         $routes->get('get-all-farmers-type-count-by-address', 'UserController::getAllFarmerLivestockTypeCountByAddress');
 
         $routes->get('get-admin-tokens', 'UserController::getAllAdminFirebaseToken');
@@ -438,6 +448,34 @@ $routes->group('api', function ($routes) {
         $routes->get('poultry-farmer-count-city', 'PoultryController::getFarmerPoultryTypeCountDataByCity');
 
         $routes->get('get-admin-profile', 'UserController::getAdminUserInfo');
+
+        // Settings endpoint routes
+        $routes->group('settings', function ($routes) {
+            $routes->get('all-data', 'LandingPageSettingController::getSettingsData');
+
+            $routes->get('display-text', 'LandingPageSettingController::getSettingsDisplayTexts');
+            $routes->put('display-text', 'LandingPageSettingController::updateSettingsDisplayText');
+
+            $routes->get('display-images', 'LandingPageSettingController::getSettingDisplayImages');
+            $routes->post('display-images', 'LandingPageSettingController::insertLandingPageMainDisplayImages');
+            $routes->put('display-images', 'LandingPageSettingController::updateLandingPageMainDisplayImages');
+            $routes->delete('display-images', 'LandingPageSettingController::deleteLandingPageMainDisplayImages');
+
+            $routes->get('agri-animals', 'LandingPageSettingController::getSettingsAgriAnimals');
+            $routes->post('agri-animals', 'LandingPageSettingController::insertLandingPageAgriAnimals');
+            $routes->put('agri-animals', 'LandingPageSettingController::updateLandingPageAgriAnimals');
+            $routes->delete('agri-animals', 'LandingPageSettingController::deleteLandingPageAgriAnimals');
+
+            $routes->get('carousel-images', 'LandingPageSettingController::getSettingCarouselImages');
+            $routes->post('carousel-images', 'LandingPageSettingController::insertLandingPageCarouselImages');
+            $routes->put('carousel-images', 'LandingPageSettingController::updateLandingPageCarouselImages');
+            $routes->delete('carousel-images', 'LandingPageSettingController::deleteLandingPageCarouselImages');
+
+            $routes->get('org-chart', 'LandingPageSettingController::getSettingOrganizationCharts');
+            $routes->post('org-chart', 'LandingPageSettingController::updateLandingPageOrgChart');
+            
+            $routes->put('contact-info', 'LandingPageSettingController::updateContactInformation');
+        });
 
         // testings routes
         $routes->get('livestock-primary-data/(:any)', 'LivestocksController::getLivestockPrimaryData/$1');

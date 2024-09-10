@@ -7,6 +7,8 @@ use App\Models\FarmerAssociationModel;
 use App\Models\FarmerUserAssociationModel;
 use App\Models\LivestockModel;
 use App\Models\PersonnelDetailsModel;
+use CodeIgniter\HTTP\ResponsableInterface;
+use CodeIgniter\HTTP\ResponseInterface;
 use \Firebase\JWT\JWT;
 use CodeIgniter\RESTful\ResourceController;
 use App\Models\UserModel;
@@ -33,69 +35,6 @@ class UserController extends ResourceController
         return $this->respond(['message' => 'Hello, World']);
     }
 
-    public function loginAuth()
-    {
-        try {
-            $username = $this->request->getJsonVar('username');
-            $password = $this->request->getJsonVar('password');
-            $notiftoken = $this->request->getJsonVar('token');
-            $loginDate = $this->request->getJsonVar('loginDate');
-
-            $user = $this->userModel->getUserByUsername($username);
-
-            if ($user && password_verify($password, $user['password'])) {
-
-                $loginres = $this->userModel->setUserLogin($user['id'], $notiftoken, $loginDate);
-
-                $key = getenv('JWT_SECRET');
-                $iat = time(); // current timestamp value
-                $exp = $iat + (60 * 60 * 24);
-
-                $payload = array(
-                    "iss" => "OrMin Livestock Management System",
-                    "aud" => $user['user_role'],
-                    "sub" => ['id' => $user['id'], 'userId' => $user['user_id']],
-                    "iat" => $iat, //Time the JWT issued at
-                    "exp" => $exp, // Expiration time of token
-                );
-
-                $token = JWT::encode($payload, $key, 'HS256');
-
-                $response = [
-                    'login' => true,
-                    'message' => 'Login Succesful',
-                    'token' => $token
-                ];
-                return $this->respond($response, 200);
-            } else {
-                return $this->respond([
-                    'login' => false,
-                    'error' => 'Invalid username or password.'
-                ]);
-            }
-        } catch (\Throwable $th) {
-            log_message('error', $th->getMessage());
-            return $this->respond(['message' => 'Invalid username or password.', 'error' => $th->getMessage()]);
-        }
-    }
-
-    public function userLogOut()
-    {
-        try {
-            $header = $this->request->getHeader("Authorization");
-            $userId = getTokenUserId($header);
-
-            $result = $this->userModel->setUserLogout($userId);
-
-            return $this->respond(['message' => 'Logged Out Successfully', 'success' => $result], 200);
-        } catch (\Throwable $th) {
-            //throw $th;
-            log_message('error', $th->getMessage() . ": " . $th->getLine());
-            log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['message' => 'Failed to logout', 'error' => $th->getMessage()], 200);
-        }
-    }
-
     public function registerUser()
     {
         try {
@@ -108,7 +47,7 @@ class UserController extends ResourceController
                 mkdir($uploadPath, 0755, true); // Create directory if it doesn't exist
             }
 
-            if(isset($file)){
+            if (isset($file)) {
                 if ($file && $file->isValid() && !$file->hasMoved()) {
                     $newName = $file->getRandomName();
                     $file->move($uploadPath, $newName);
@@ -179,15 +118,33 @@ class UserController extends ResourceController
     public function uploadUserImage()
     {
         try {
-            $file = $this->request->getFile('file');
-            // $newName = $file->getRandomName();
-            // if ($file->isValid() && !$file->hasMoved()) {
-            //     $file->move('./uploads', $newName);
-            //     return $this->respond(['path' => $newName], 200);
-            // }
-            return $this->respond($file, 200);
+            $file = $this->request->getFile('newImage');
+            $newName = "";
+
+            $uploadPath = WRITEPATH . 'uploads/userImage/';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true); // Create directory if it doesn't exist
+            }
+
+            if (isset($file)) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $file->move($uploadPath, $newName);
+                    // You can also save the file path to your database
+                } else {
+                    return $this->fail('Invalid file upload');
+                }
+            }
+
+            $id = $this->request->getPost('id');
+
+            $result = $this->userModel->updateUserImage($id, $newName);
+
+            return $this->respond(['result' => $result], 200 ,'Profile picture updated successfully');
         } catch (\Throwable $th) {
-            return $this->respond(['error' => $th->getMessage()], 401);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to update data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -199,7 +156,7 @@ class UserController extends ResourceController
             if (file_exists($filePath)) {
                 // Determine the file MIME type
                 $mimeType = mime_content_type($filePath);
-        
+
                 // Set the headers for file download
                 return $this->response
                     ->setHeader('Content-Type', $mimeType)
@@ -224,7 +181,7 @@ class UserController extends ResourceController
             if (file_exists($filePath)) {
                 // Determine the file MIME type
                 $mimeType = mime_content_type($filePath);
-        
+
                 // Set the headers for file download
                 return $this->response
                     ->setHeader('Content-Type', $mimeType)
@@ -303,12 +260,12 @@ class UserController extends ResourceController
         }
     }
 
-    public function updateUser($id)
+    public function updateUser()
     {
         try {
             $data = $this->request->getJSON();
-            $response = $this->userModel->updateUser($id, $data);
-            return $this->respond(['message' => 'Profile updated successfully', 'result' => $response], 200);
+            $response = $this->userModel->updateUser($data->id, $data);
+            return $this->respond(['result' => $response], 200, 'Profile updated successfully)');
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(['error' => $th->getMessage()]);
@@ -327,7 +284,7 @@ class UserController extends ResourceController
             }
 
             $response = $this->userModel->updateUserPersonalInfo($data->id, $data);
-            return $this->respond($response, 200, 'Profile updated successfully');
+            return $this->respond(['result' => $response], 200, 'Profile updated successfully');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
@@ -510,7 +467,23 @@ class UserController extends ResourceController
             return $this->respond($admin, 200);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function getAllAdminUsers()
+    {
+        try {
+            //code...
+            $users = $this->userModel->getAllAdminUsers();
+            return $this->respond($users, 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

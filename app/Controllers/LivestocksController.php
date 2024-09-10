@@ -1632,6 +1632,20 @@ class LivestocksController extends ResourceController
         }
     }
 
+    public function getAnimalTypeCountMonitoring()
+    {
+        try {
+            $data = $this->livestock->getLivestockTypeCountMonitoring();
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failServerError($th->getMessage());
+        }
+    }
+
     public function getLivestockTypeCountMonitoring()
     {
         try {

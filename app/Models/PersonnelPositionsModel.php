@@ -47,6 +47,7 @@ class PersonnelPositionsModel extends Model
                 personnel_positions.id,
                 personnel_positions.position_name as positionName,
                 personnel_departments.department_name as departmentName,
+                personnel_positions.department_id as departmentId
             ')
                 ->join('personnel_departments', 'personnel_positions.department_id = personnel_departments.id')
                 ->where('personnel_positions.record_status', 'Accessible')
@@ -108,6 +109,7 @@ class PersonnelPositionsModel extends Model
             return $position;
         } catch (\Throwable $th) {
             //throw $th;
+            return null;
         }
     }
 

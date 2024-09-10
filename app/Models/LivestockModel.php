@@ -311,7 +311,7 @@ class LivestockModel extends Model
     public function insertLivestock($data)
     {
         try {
-            $bind = [
+            $bind = (object)[
                 'livestock_type_id' => $data->livestockTypeId,
                 'livestock_age_class_id' => $data->livestockAgeClassId,
                 'sex' => $data->sex,
@@ -374,7 +374,7 @@ class LivestockModel extends Model
     public function updateLivestock($id, $data)
     {
         try {
-            $bind = [
+            $bind = (object)[
                 'livestock_tag_id' => $data->livestockTagId,
                 'livestock_type_id' => $data->livestockTypeId,
                 'livestock_age_class_id' => $data->livestockAgeClassId,
@@ -430,7 +430,7 @@ class LivestockModel extends Model
     public function updateLivestockHealthStatus($id, $data)
     {
         try {
-            $bind = [
+            $bind = (object)[
                 'livestock_health_status' => $data->livestockHealthStatus,
             ];
 
@@ -446,7 +446,7 @@ class LivestockModel extends Model
     public function updateLivestockRecordStatus($id, $status)
     {
         try {
-            $bind = [
+            $bind = (object)[
                 'record_status' => $status,
             ];
 
@@ -462,7 +462,7 @@ class LivestockModel extends Model
     public function updateLivestockPregnantStatus($id, $status)
     {
         try {
-            $bind = [
+            $bind = (object)[
                 'is_pregnant' => $status,
             ];
 
@@ -1672,13 +1672,16 @@ class LivestockModel extends Model
         }
     }
 
-    public function getLivestockTypeCountMonitoring($category)
+    public function getLivestockTypeCountMonitoring($category = null)
     {
         try {
             $whereClause = [
                 'livestocks.record_status' => 'Accessible',
-                'livestocks.category' => $category
             ];
+
+            if(isset($category)){
+                $whereClause['livestocks.category'] = $category;
+            }
 
 
             $stats = $this->select('

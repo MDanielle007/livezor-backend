@@ -53,7 +53,7 @@ class UserModel extends Model
                 'last_login_date' => $loginDate,
                 'user_status' => 'Active'
             ];
-    
+
             $result = $this->where('id', $userId)->set($bind)->update();
             return $result;
         } catch (\Throwable $th) {
@@ -262,14 +262,13 @@ class UserModel extends Model
     public function updateUser($id, $data)
     {
         try {
-            $bind = [
+            $bind = (object)[
                 'first_name' => $data->firstName,
                 'middle_name' => $data->middleName,
                 'last_name' => $data->lastName,
                 'date_of_birth' => $data->dateOfBirth,
                 'gender' => $data->gender,
                 'civil_status' => $data->civilStatus,
-                'user_role' => $data->userType,
                 'sitio' => $data->sitio,
                 'barangay' => $data->barangay,
                 'city' => $data->city,
@@ -282,7 +281,9 @@ class UserModel extends Model
             $result = $this->update($id, $bind);
             return $result;
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -588,6 +589,51 @@ class UserModel extends Model
             return $id;
         } catch (\Throwable $th) {
             //throw $th;
+        }
+    }
+
+    public function getAllAdminUsers()
+    {
+        try {
+            //code...
+            $data = $this->select('
+                user_accounts.id,
+                user_accounts.user_id as userId,
+                user_accounts.user_image as userImage,
+                CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as fullName,
+                user_accounts.user_role as userRole,
+                COALESCE(personnel_positions.position_name, "unspecified") as positionName,
+                COALESCE(personnel_departments.department_name, "unspecified") as departmentName,
+                personnel_details.employee_status as employeeStatus
+            ')
+                ->join('personnel_details', 'personnel_details.user_id = user_accounts.id','left')
+                ->join('personnel_positions', 'personnel_positions.id = personnel_details.position_id','left')
+                ->join('personnel_departments', 'personnel_positions.department_id = personnel_departments.id','left')
+                ->where('user_accounts.user_role', 'DA Personnel')
+                ->find();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
+        }
+    }
+
+    public function updateUserImage($id, $image){
+        try {
+            $data = [
+                'user_image' => $image
+            ];
+
+            $res = $this->update($id, $data);
+            return $res;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return false;
         }
     }
 }
