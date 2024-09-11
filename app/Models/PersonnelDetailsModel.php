@@ -45,7 +45,7 @@ class PersonnelDetailsModel extends Model
         try {
             $personnelDetails = $this->select('
                 personnel_details.id,
-                personnel_details.user_id,
+                .user_id,
                 CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as userName
                 personnel_positions.position_name as positionName,
                 personnel_departments.department_name as departmentName,
@@ -59,6 +59,9 @@ class PersonnelDetailsModel extends Model
             return $personnelDetails;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 
@@ -81,6 +84,9 @@ class PersonnelDetailsModel extends Model
             return $personnelDetails;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 
@@ -106,15 +112,16 @@ class PersonnelDetailsModel extends Model
 
             return $personnelDetails[0];
         } catch (\Throwable $th) {
-            // You can throw the error or handle it here
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 
     public function insertPersonnelDetails($data)
     {
         try {
-            $bind = [
+            $bind = (object)[
                 'user_id' => $data->userId,
                 'position_id' => $data->positionId,
                 'department_id' => $data->departmentId,
@@ -125,13 +132,16 @@ class PersonnelDetailsModel extends Model
             return $personnelDetail;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
     public function updatePersonnelDetails($id, $data)
     {
         try {
-            $bind = [
+            $bind = (object)[
                 'user_id' => $data->userId,
                 'position_id' => $data->positionId,
                 'department_id' => $data->departmentId,
@@ -145,7 +155,9 @@ class PersonnelDetailsModel extends Model
 
             return $personnelDetails;
         } catch (\Throwable $th) {
-            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -157,6 +169,9 @@ class PersonnelDetailsModel extends Model
             return $personnelDetails;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 }
