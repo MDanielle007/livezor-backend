@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\AnimalParasiteControlModel;
 use App\Models\FarmerAuditModel;
 use App\Models\FarmerLivestockModel;
+use App\Models\FarmInformationModel;
 use App\Models\LivestockBreedingsModel;
 use App\Models\LivestockBreedModel;
 use App\Models\LivestockModel;
@@ -26,6 +27,7 @@ class SyncController extends ResourceController
     private $livestockBreed;
     private $farmerLivestock;
     private $farmerAudit;
+    private $farms;
 
 
     public function __construct()
@@ -39,6 +41,8 @@ class SyncController extends ResourceController
         $this->livestockBreed = new LivestockBreedModel();
         $this->farmerLivestock = new FarmerLivestockModel();
         $this->farmerAudit = new FarmerAuditModel();
+        $this->farms = new FarmInformationModel();
+        helper('jwt');
     }
     protected $modelName = 'App\Models\LivestockModel';
     protected $format = 'json';
@@ -49,6 +53,30 @@ class SyncController extends ResourceController
             //code...
             $data = $this->request->getJSON(true);
             $response = $this->syncLivestock($data);
+
+            return $this->respond($response);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail($th->getMessage(), 500);
+        }
+    }
+
+    public function syncF()
+    {
+        try {
+            $data = $this->request->getJSON(true);
+            $header = $this->request->getHeader("Authorization");
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if ($userType == 'Farmer') {
+                $data['userId'] = getTokenUserId($header);
+            } else {
+                $data['userId'] = $this->request->getGet('fui');
+            }
+            //code...
+            $response = $this->syncFarm($data);
 
             return $this->respond($response);
         } catch (\Throwable $th) {
@@ -727,6 +755,107 @@ class SyncController extends ResourceController
                 return ['id' => $id, 'status' => 'success', 'syncIdentifier' => $syncIdentifier];
             } else {
                 return ['status' => 'failed', 'errors' => $this->livestockMortality->errors(), 'syncIdentifier' => $syncIdentifier];
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $syncIdentifier];
+        }
+    }
+
+    private function syncFarm($farm)
+    {
+        try {
+            $results = null;
+
+            if ($farm['syncAction'] === 'insert') {
+                $results = $this->insertFarm($farm);
+            } elseif ($farm['syncAction'] === 'update') {
+                $results = $this->updateFarm($farm);
+            } elseif ($farm['syncAction'] === 'delete') {
+                $results = $this->deleteFarm($farm['id'], $farm['syncIdentifier']);
+            }
+
+            return $results;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
+        }
+    }
+
+    private function insertFarm($farm){
+        try {
+            //code...
+            $insertData = (object) [
+                'farmerId' => $farm['userId'],
+                'farmName' => $farm['farmName'],
+                'farmUID' => $farm['farmUID'],
+                'sitio' => $farm['sitio'],
+                'barangay' => $farm['barangay'],
+                'city' => $farm['city'],
+                'province' => $farm['province'],
+                'totalArea' => $farm['totalArea'],
+                'totalAreaUnit' => $farm['totalAreaUnit'],
+                'farmType' => $farm['farmType'],
+                'latitude' => $farm['latitude'],
+                'longitude' => $farm['longitude'],
+                'dateEstablished' => $farm['dateEstablished'],
+                'contactNumber' => $farm['contactNumber'],
+                'ownerType' => $farm['ownerType'],
+            ];
+
+            $farmId = $this->farms->insertFarm($insertData);
+
+            if ($farmId) {
+                return ['id' => $farmId, 'status' => 'success', 'syncIdentifier' => $farm['syncIdentifier']];
+            } else {
+                return ['status' => 'failed', 'errors' => $this->farms->errors(), 'syncIdentifier' => $farm['syncIdentifier']];
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $farm['syncIdentifier']];
+        }
+    }
+
+    private function updateFarm($farm){
+        try {
+            //code...
+            $updateData = (object) [
+                'farmerId' => $farm['userId'],
+                'farmName' => $farm['farmName'],
+                'sitio' => $farm['sitio'],
+                'barangay' => $farm['barangay'],
+                'city' => $farm['city'],
+                'province' => $farm['province'],
+                'totalArea' => $farm['totalArea'],
+                'totalAreaUnit' => $farm['totalAreaUnit'],
+                'farmType' => $farm['farmType'],
+                'latitude' => $farm['latitude'],
+                'longitude' => $farm['longitude'],
+                'dateEstablished' => $farm['dateEstablished'],
+                'contactNumber' => $farm['contactNumber'],
+                'ownerType' => $farm['ownerType'],
+            ];
+
+            if ($this->farms->updateFarm($farm['id'], $updateData)) {
+                return ['id' => $farm['id'], 'status' => 'success', 'syncIdentifier' => $farm['syncIdentifier']];
+            } else {
+                return ['status' => 'failed', 'errors' => $this->farms->errors(), 'syncIdentifier' => $farm['syncIdentifier']];
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $farm['syncIdentifier']];
+        }
+    }
+
+    private function deleteFarm($id, $syncIdentifier){
+        try {
+            //code...
+            if ($this->farms->deleteFarm($id)) {
+                return ['id' => $id, 'status' => 'success', 'syncIdentifier' => $syncIdentifier];
+            } else {
+                return ['status' => 'failed', 'errors' => $this->farms->errors(), 'syncIdentifier' => $syncIdentifier];
             }
         } catch (\Throwable $th) {
             //throw $th;

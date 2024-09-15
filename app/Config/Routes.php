@@ -473,9 +473,16 @@ $routes->group('api', function ($routes) {
 
             $routes->get('org-chart', 'LandingPageSettingController::getSettingOrganizationCharts');
             $routes->post('org-chart', 'LandingPageSettingController::updateLandingPageOrgChart');
-            
+
             $routes->put('contact-info', 'LandingPageSettingController::updateContactInformation');
         });
+
+        $routes->get('farms', 'FarmInformationController::getAllFarmData');
+        $routes->get('farm', 'FarmInformationController::getAllFarmDataById');
+        $routes->get('farm-farmer', 'FarmInformationController::getAllFarmDataByFarmer');
+        $routes->post('farm', 'FarmInformationController::insertFarm');
+        $routes->put('farm', 'FarmInformationController::updateFarm');
+        $routes->delete('farm', 'FarmInformationController::deleteFarm');
 
         // testings routes
         $routes->get('livestock-primary-data/(:any)', 'LivestocksController::getLivestockPrimaryData/$1');
@@ -573,11 +580,14 @@ $routes->group('api', function ($routes) {
 
         $routes->get('get-audit-trails', 'AuditTrailController::getFarmerAuditTrailLogs');
 
+        $routes->get('farm', 'FarmInformationController::getAllFarmDataByFarmer');
+
         $routes->group('sync', function ($routes) {
             $routes->post('livestock', 'SyncController::syncL');
             $routes->post('health', 'SyncController::syncH');
             $routes->post('pregnancy', 'SyncController::syncP');
             $routes->post('mortality', 'SyncController::syncM');
+            $routes->post('farm', 'SyncController::syncF');
         });
     });
 });
