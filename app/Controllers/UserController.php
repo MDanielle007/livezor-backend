@@ -140,7 +140,7 @@ class UserController extends ResourceController
 
             $result = $this->userModel->updateUserImage($id, $newName);
 
-            return $this->respond(['result' => $result], 200 ,'Profile picture updated successfully');
+            return $this->respond(['result' => $result], 200, 'Profile picture updated successfully');
         } catch (\Throwable $th) {
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
@@ -253,10 +253,18 @@ class UserController extends ResourceController
     public function getUser($id)
     {
         try {
+            $user = $this->userModel->checkUserRole($id);
+            if ($user['userRole'] == "DA Personnel") {
+                return $this->fail('Fetching user data denied', ResponseInterface::HTTP_FORBIDDEN);
+            }
+
             $user = $this->userModel->getUser($id);
             return $this->respond($user);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -283,6 +291,11 @@ class UserController extends ResourceController
                 $data->id = $decoded->sub->id;
             }
 
+            $user = $this->userModel->checkUserRole($data->id);
+            if ($user['userRole'] == "DA Personnel") {
+                return $this->fail('Fetching user data denied', ResponseInterface::HTTP_FORBIDDEN);
+            }
+
             $response = $this->userModel->updateUserPersonalInfo($data->id, $data);
             return $this->respond(['result' => $response], 200, 'Profile updated successfully');
         } catch (\Throwable $th) {
@@ -293,17 +306,58 @@ class UserController extends ResourceController
         }
     }
 
-    public function updateUserAccountInfo($id)
+    public function updateUserAccountInfo()
     {
         try {
-            $data = $this->request->getJSON();
-            $result = $this->userModel->updateUserAccountInfo($id, $data);
+            $data = (object) [
+                'id' => $this->request->getPost('id'),
+                'email' => $this->request->getPost('email'),
+                'phoneNumber' => $this->request->getPost('phoneNumber'),
+                'username' => $this->request->getPost('username'),
+            ];
+            $header = $this->request->getHeader("Authorization");
+            $decoded = decodeToken($header);
+            $userType = $decoded->aud;
+            if ($userType == 'Farmer') {
+                $data->id = $decoded->sub->id;
+            }
+
+            $user = $this->userModel->checkUserRole($data->id);
+            if ($user['userRole'] == "DA Personnel") {
+                return $this->fail('Fetching user data denied', ResponseInterface::HTTP_FORBIDDEN);
+            }
+
+            $file = $this->request->getFile('newImage');
+            $newName = "";
+
+            $uploadPath = WRITEPATH . 'uploads/userImage/';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true); // Create directory if it doesn't exist
+            }
+
+            if (isset($file)) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $file->move($uploadPath, $newName);
+                    $data->userImage = $newName;
+                    // You can also save the file path to your database
+                } else {
+                    return $this->fail('Invalid file upload');
+                }
+            }
+
+            $result = $this->userModel->updateUserAccountInfo($data->id, $data);
             if (!$result) {
                 return $this->fail($this->userModel->errors());
             }
-            return $this->respond($result, 200);
+            return $this->respond(['result' => $result], 200);
+            // return $this->respond(['result' => $data], 200);
+
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to update data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

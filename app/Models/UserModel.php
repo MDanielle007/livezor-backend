@@ -159,13 +159,18 @@ class UserModel extends Model
                 user_role as userRole,
                 user_status as userStatus
             ')
-                ->where('user_id', $id)
+                ->where([
+                    'user_id' => $id,
+                    'user_role' => 'Farmer',
+                ])
                 ->first();
 
             return $user;
         } catch (\Throwable $th) {
             //throw $th;
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 
@@ -262,7 +267,7 @@ class UserModel extends Model
     public function updateUser($id, $data)
     {
         try {
-            $bind = (object)[
+            $bind = (object) [
                 'first_name' => $data->firstName,
                 'middle_name' => $data->middleName,
                 'last_name' => $data->lastName,
@@ -290,7 +295,7 @@ class UserModel extends Model
     public function updateUserPersonalInfo($id, $data)
     {
         try {
-            $bind = [
+            $bind = (object)[
                 'first_name' => $data->firstName,
                 'middle_name' => $data->middleName,
                 'last_name' => $data->lastName,
@@ -301,7 +306,6 @@ class UserModel extends Model
                 'barangay' => $data->barangay,
                 'city' => $data->city,
                 'province' => $data->province,
-                'phone_number' => $data->phoneNumber,
             ];
 
             $result = $this->update($id, $bind);
@@ -315,12 +319,15 @@ class UserModel extends Model
     public function updateUserAccountInfo($id, $data)
     {
         try {
-            $bind = [
-                'user_image' => $data->userImage,
+            $bind = (object)[
                 'email' => $data->email,
                 'username' => $data->username,
-                'password' => password_hash($data->password, PASSWORD_DEFAULT),
+                'phone_number' => $data->phoneNumber,
             ];
+
+            if(isset($data->userImage)){
+                $bind->user_image = $data->userImage;
+            }
 
             $result = $this->update($id, $bind);
             return $result;
@@ -606,9 +613,9 @@ class UserModel extends Model
                 COALESCE(personnel_departments.department_name, "unspecified") as departmentName,
                 personnel_details.employee_status as employeeStatus
             ')
-                ->join('personnel_details', 'personnel_details.user_id = user_accounts.id','left')
-                ->join('personnel_positions', 'personnel_positions.id = personnel_details.position_id','left')
-                ->join('personnel_departments', 'personnel_positions.department_id = personnel_departments.id','left')
+                ->join('personnel_details', 'personnel_details.user_id = user_accounts.id', 'left')
+                ->join('personnel_positions', 'personnel_positions.id = personnel_details.position_id', 'left')
+                ->join('personnel_departments', 'personnel_positions.department_id = personnel_departments.id', 'left')
                 ->where('user_accounts.user_role', 'DA Personnel')
                 ->find();
 
@@ -621,7 +628,8 @@ class UserModel extends Model
         }
     }
 
-    public function updateUserImage($id, $image){
+    public function updateUserImage($id, $image)
+    {
         try {
             $data = [
                 'user_image' => $image
@@ -634,6 +642,26 @@ class UserModel extends Model
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
             return false;
+        }
+    }
+
+    public function checkUserRole($id)
+    {
+        try {
+            //code...
+            $data = $this->select('
+                user_role as userRole,
+            ')
+                ->where('user_id', $id)
+                ->orWhere('id', $id)
+                ->first();
+
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return null;
         }
     }
 }

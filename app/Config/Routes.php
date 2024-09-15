@@ -99,8 +99,8 @@ $routes->group('api', function ($routes) {
         $routes->get('all-users', 'UserController::getAllUsers');
         $routes->get('get-user-info/(:any)', 'UserController::getUser/$1');
         $routes->put('update-user-profile', 'UserController::updateUser');
-        $routes->put('update-user-personal-info/(:any)', 'UserController::updateUserPersonalInfo/$1'); // not used
-        $routes->put('update-user-account-info/(:any)', 'UserController::updateUserAccountInfo/$1');
+        $routes->put('update-user-personal-info', 'UserController::updateUserPersonalInfo');
+        $routes->post('update-user-account-info', 'UserController::updateUserAccountInfo');
         $routes->put('update-user-password/(:any)', 'UserController::updateUserPassword/$1');
         $routes->put('update-user-record-stat/(:any)', 'UserController::updateUserRecordStatus/$1');
         $routes->delete('delete-user/(:any)', 'UserController::deleteUser/$1');
@@ -434,11 +434,11 @@ $routes->group('api', function ($routes) {
         $routes->get('get-farmeruser-association', 'FarmerUserAssociationController::getAllFarmerUserAssociations');
         $routes->get('get-farmeruser-association/(:any)', 'FarmerUserAssociationController::getFarmerUserAssociationsById/$1');
         $routes->get('get-farmeruser-association-user', 'FarmerUserAssociationController::getFarmerUserAssociationsByUserId');
-        $routes->post('add-farmeruser-association', 'FarmerUserAssociationController::insertFarmerUserAssociation');
-        $routes->post('add-farmeruser-association-multiple-farmer', 'FarmerUserAssociationController::insertMultipleFarmerUserAssociations');
-        $routes->post('add-farmeruser-association-multiple', 'FarmerUserAssociationController::insertMultipleFarmerUserAssociationsInAFarmer');
-        $routes->put('update-farmeruser-association/(:any)', 'FarmerUserAssociationController::updateFarmerUserAssociation/$1');
-        $routes->delete('delete-farmeruser-association/(:any)', 'FarmerUserAssociationController::deleteFarmerUserAssociation/$1');
+        $routes->post('farmeruser-association', 'FarmerUserAssociationController::insertFarmerUserAssociation');
+        $routes->post('farmeruser-association-multiple-farmer', 'FarmerUserAssociationController::insertMultipleFarmerUserAssociations');
+        $routes->post('farmeruser-association-multiple', 'FarmerUserAssociationController::insertMultipleFarmerUserAssociationsInAFarmer');
+        $routes->put('farmeruser-association', 'FarmerUserAssociationController::updateFarmerUserAssociation');
+        $routes->delete('farmeruser-association', 'FarmerUserAssociationController::deleteFarmerUserAssociation');
 
         // Charts endpoint routes
         $routes->get('livestock-mapping-data', 'LivestocksController::getLivestockMappingData');

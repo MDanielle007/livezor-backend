@@ -75,35 +75,48 @@ class FarmerUserAssociationController extends ResourceController
             $data = $this->request->getJSON();
             $header = $this->request->getHeader("Authorization");
             $decoded = decodeToken($header);
+            $userType = $decoded->aud;
 
-            $farmerAssociationId = $this->checkFarmerAssociation($data->farmerAssociationId);
+            $farmerAssociationId = $this->checkFarmerAssociation($data->farmerAssociation);
             $data->farmerAssociationId = $farmerAssociationId;
-
-            $data->userId = $decoded->sub->id;
-            $res = $this->farmerUserAssociations->insertFarmerUserAssociation($data);
-            if ($res) {
-                return $this->respond(['message' => 'Farmer Association Successfully Added', 'result' => $res], 200);
-            } else {
-                return $this->respond(['message' => 'Farmer Association Added Unuccessfully', 'result' => false], 200);
+            if ($userType == 'Farmer') {
+                $data->userId = $decoded->sub->id;
             }
+            $result = $this->farmerUserAssociations->insertFarmerUserAssociation($data);
+            if (!$result) {
+                return $this->fail('Failed to insert farmer user association', ResponseInterface::HTTP_BAD_REQUEST);
+            }
+            return $this->respond(['result' => $result], 200, 'Farmer Association Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return $this->respond(['message' => 'Farmer Association Added Unuccessfully', 'result' => false, 'error' => $th->getMessage()], 200);
+            return $this->fail('Failed to insert data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     private function checkFarmerAssociation($id)
     {
-        $farmerAssociation = $this->farmerAssociations->getFarmerAssociationById($id);
-        $farmerAssociationId = null;
-        if (!$farmerAssociation) {
-            $farmerAssociationId = $this->farmerAssociations->insertFarmerAssociation((object) ['farmerAssociationName' => $id]);
-            return $farmerAssociationId;
-        }else{
-            return $id;
+        // $farmerAssociation = $this->farmerAssociations->getFarmerAssociationById($id);
+        // $farmerAssociationId = null;
+        // if (!$farmerAssociation) {
+        //     $farmerAssociationId = $this->farmerAssociations->insertFarmerAssociation((object) ['farmerAssociationName' => $id]);
+        //     return $farmerAssociationId;
+        // } else {
+        //     return $id;
+        // }
+
+        $association = $id;
+
+        if ($association != '') {
+            if (is_string($id)) {
+                $farmerAssociationId = $this->farmerAssociations->insertFarmerAssociation((object) ['farmerAssociationName' => $id]);
+                return $farmerAssociationId;
+            } else {
+                return $association->code;
+            }
         }
+        return null;
     }
 
     public function insertMultipleFarmerUserAssociations()
@@ -171,29 +184,40 @@ class FarmerUserAssociationController extends ResourceController
             return $this->respond(['success' => $result, 'message' => 'Farmer Associations Successfully Added']);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to insert data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
 
-    public function updateFarmerUserAssociation($id)
+    public function updateFarmerUserAssociation()
     {
         try {
             $data = $this->request->getJSON();
-
-            $res = $this->farmerUserAssociations->updateFarmerUserAssociation($id, $data);
-            return $this->respond($res);
+            $farmerAssociationId = $this->checkFarmerAssociation($data->farmerAssociation);
+            $data->farmerAssociationId = $farmerAssociationId;
+            $res = $this->farmerUserAssociations->updateFarmerUserAssociation($data->id, $data);
+            return $this->respond(['result' => $res], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to update data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    public function deleteFarmerUserAssociation($id)
+    public function deleteFarmerUserAssociation()
     {
         try {
+            $id = $this->request->getGet('association');
             $response = $this->farmerUserAssociations->deleteFarmerUserAssociation($id);
-            return $this->respond($response, 200);
+            return $this->respond(['result' => $response], 200);
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to delete data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
