@@ -12,6 +12,7 @@ use App\Models\LivestockBreedModel;
 use App\Models\LivestockModel;
 use App\Models\LivestockMortalityModel;
 use App\Models\LivestockPregnancyModel;
+use App\Models\LivestockTypeModel;
 use App\Models\LivestockVaccinationModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -28,11 +29,13 @@ class SyncController extends ResourceController
     private $farmerLivestock;
     private $farmerAudit;
     private $farms;
+    private $livestockTypes;
 
 
     public function __construct()
     {
         $this->livestock = new LivestockModel();
+        $this->livestockTypes = new LivestockTypeModel();
         $this->livestockVaccination = new LivestockVaccinationModel();
         $this->animalParasiteControl = new AnimalParasiteControlModel();
         $this->livestockBreeding = new LivestockBreedingsModel();
@@ -150,7 +153,7 @@ class SyncController extends ResourceController
             } elseif ($data['syncAction'] === 'update') {
                 $result = $this->updateMortality($data);
             } elseif ($data['syncAction'] === 'delete') {
-                $result = $this->deleteMortality($data['id'], $data['syncIdentifier']);
+                $result = $this->deleteMortality($data);
             }
 
             if (!$result) {
@@ -177,7 +180,7 @@ class SyncController extends ResourceController
                 } elseif ($livestock['syncAction'] === 'update') {
                     $results[] = $this->updateLivestock($livestock);
                 } elseif ($livestock['syncAction'] === 'delete') {
-                    $results[] = $this->deleteLivestock($livestock['id'], $livestock['syncIdentifier']);
+                    $results[] = $this->deleteLivestock($livestock);
                 }
             }
 
@@ -227,6 +230,23 @@ class SyncController extends ResourceController
                     'acquiredDate' => $livestock['acquiredDate']
                 ]);
 
+                $livestockType = $this->livestockTypes->getLivestockTypeName($livestock['livestockTypeId']);
+                $livestockTagId = $livestock['livestockTagId'];
+
+                $auditLog = (object) [
+                    'livestockId' => $livestockId,
+                    'farmerId' => $livestock['userId'],
+                    'action' => "Add",
+                    'title' => "Add New Livestock",
+                    'description' => "Add New Livestock $livestockType, $livestockTagId",
+                    'entityAffected' => "Livestock",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->farmerAudit->errors(), 'syncIdentifier' => $livestock['syncIdentifier']];
+                }
+
                 return ['id' => $livestockId, 'status' => 'success', 'syncIdentifier' => $livestock['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->livestock->errors(), 'syncIdentifier' => $livestock['syncIdentifier']];
@@ -268,6 +288,22 @@ class SyncController extends ResourceController
             }
 
             if ($this->livestock->updateLivestock($livestock['id'], $updateData)) {
+                $livestockTagId = $livestock['livestockTagId'];
+
+                $auditLog = (object) [
+                    'livestockId' => $livestock['id'],
+                    'farmerId' => $livestock['userId'],
+                    'action' => "Edit",
+                    'title' => "Edit Livestock Record",
+                    'description' => "Updated details for Livestock $livestockTagId",
+                    'entityAffected' => "Livestock",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->farmerAudit->errors(), 'syncIdentifier' => $livestock['syncIdentifier']];
+                }
+
                 return ['id' => $livestock['id'], 'status' => 'success', 'syncIdentifier' => $livestock['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->livestock->errors(), 'syncIdentifier' => $livestock['syncIdentifier']];
@@ -280,12 +316,30 @@ class SyncController extends ResourceController
         }
     }
 
-    private function deleteLivestock($id, $syncIdentifier)
+    private function deleteLivestock($livestock)
     {
-        if ($this->livestock->deleteLivestock($id)) {
-            return ['id' => $id, 'status' => 'success', 'syncIdentifier' => $syncIdentifier];
+        if ($this->livestock->deleteLivestock($livestock['id'])) {
+
+            $livestockTagId = $livestock['livestockTagId'];
+
+            log_message('info', json_encode($livestock));
+            $auditLog = (object) [
+                'livestockId' => $livestock['id'],
+                'farmerId' => $livestock['userId'],
+                'action' => "Delete",
+                'title' => "Delete Livestock Record",
+                'description' => "Delete Livestock $livestockTagId",
+                'entityAffected' => "Livestock",
+            ];
+
+            $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+            if (!$resultAudit) {
+                return ['status' => 'failed', 'errors' => $this->farmerAudit->errors(), 'syncIdentifier' => $livestock['syncIdentifier']];
+            }
+
+            return ['id' => $livestock['id'], 'status' => 'success', 'syncIdentifier' => $livestock['syncIdentifier']];
         } else {
-            return ['status' => 'failed', 'errors' => $this->livestock->errors(), 'syncIdentifier' => $syncIdentifier];
+            return ['status' => 'failed', 'errors' => $this->livestock->errors(), 'syncIdentifier' => $livestock['syncIdentifier']];
         }
     }
 
@@ -300,7 +354,7 @@ class SyncController extends ResourceController
                 } elseif ($vaccination['syncAction'] === 'update') {
                     $results[] = $this->updateVaccination($vaccination);
                 } elseif ($vaccination['syncAction'] === 'delete') {
-                    $results[] = $this->deleteVaccination($vaccination['id'], $vaccination['syncIdentifier']);
+                    $results[] = $this->deleteVaccination($vaccination);
                 }
             }
 
@@ -330,6 +384,25 @@ class SyncController extends ResourceController
             $vaccinationId = $this->livestockVaccination->insertLivestockVaccination($insertData);
 
             if ($vaccinationId) {
+                $livestockTagId = $this->livestock->getLivestockTagIdById($vaccination['livestockId']);
+                $category = $this->livestock->getLivestockCategoryById($vaccination['livestockId']);
+
+                $vaccine = $vaccination['administratorName'];
+
+                $auditLog = (object) [
+                    'livestockId' => $vaccination['livestockId'],
+                    'farmerId' => $vaccination['userId'],
+                    'action' => "Add",
+                    'title' => "Adminster Vaccination",
+                    'description' => "Administer $vaccine to $category $livestockTagId",
+                    'entityAffected' => "Vaccination",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->farmerAudit->errors(), 'syncIdentifier' => $vaccination['syncIdentifier']];
+                }
+
                 return ['id' => $vaccinationId, 'status' => 'success', 'syncIdentifier' => $vaccination['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->livestockVaccination->errors(), 'syncIdentifier' => $vaccination['syncIdentifier']];
@@ -358,6 +431,24 @@ class SyncController extends ResourceController
             ];
 
             if ($this->livestockVaccination->updateLivestockVaccination($vaccination['id'], $updateData)) {
+
+                $livestockTagId = $this->livestock->getLivestockTagIdById($vaccination['livestockId']);
+                $category = $this->livestock->getLivestockCategoryById($vaccination['livestockId']);
+
+                $auditLog = (object) [
+                    'livestockId' => $vaccination['livestockId'],
+                    'farmerId' => $vaccination['userId'],
+                    'action' => "Edit",
+                    'title' => "Update Vaccination Details",
+                    'description' => "Update Vaccination of $category $livestockTagId",
+                    'entityAffected' => "Vaccination",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->farmerAudit->errors(), 'syncIdentifier' => $vaccination['syncIdentifier']];
+                }
+
                 return ['id' => $vaccination['id'], 'status' => 'success', 'syncIdentifier' => $vaccination['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->livestock->errors(), 'syncIdentifier' => $vaccination['syncIdentifier']];
@@ -369,19 +460,34 @@ class SyncController extends ResourceController
             return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $vaccination['syncIdentifier']];
         }
     }
-    private function deleteVaccination($id, $syncIdentifier)
+    private function deleteVaccination($vaccination)
     {
         try {
-            if ($this->livestockVaccination->deleteLivestockVaccination($id)) {
-                return ['id' => $id, 'status' => 'success', 'syncIdentifier' => $syncIdentifier];
+            if ($this->livestockVaccination->deleteLivestockVaccination($vaccination['id'])) {
+                $livestockTagId = $this->livestock->getLivestockTagIdById($vaccination['livestockId']);
+                $auditLog = (object) [
+                    'livestockId' => $vaccination['livestockId'],
+                    'farmerId' => $vaccination['userId'],
+                    'action' => "Delete",
+                    'title' => "Delete Vaccination Record",
+                    'description' => "Delete Vaccination of Livestock $livestockTagId",
+                    'entityAffected' => "Vaccination",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->farmerAudit->errors(), 'syncIdentifier' => $vaccination['syncIdentifier']];
+                }
+
+                return ['id' => $vaccination['id'], 'status' => 'success', 'syncIdentifier' => $vaccination['syncIdentifier']];
             } else {
-                return ['status' => 'failed', 'errors' => $this->livestockVaccination->errors(), 'syncIdentifier' => $syncIdentifier];
+                return ['status' => 'failed', 'errors' => $this->livestockVaccination->errors(), 'syncIdentifier' => $vaccination['syncIdentifier']];
             }
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $syncIdentifier];
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $vaccination['syncIdentifier']];
         }
     }
 
@@ -396,7 +502,7 @@ class SyncController extends ResourceController
                 } elseif ($parasiteControl['syncAction'] === 'update') {
                     $results[] = $this->updateParasiteControl($parasiteControl);
                 } elseif ($parasiteControl['syncAction'] === 'delete') {
-                    $results[] = $this->deleteParasiteControl($parasiteControl['id'], $parasiteControl['syncIdentifier']);
+                    $results[] = $this->deleteParasiteControl($parasiteControl);
                 }
             }
 
@@ -429,6 +535,26 @@ class SyncController extends ResourceController
 
             $parasiteControlId = $this->animalParasiteControl->insertAnimalParasiteControl($insertData);
             if ($parasiteControlId) {
+                $livestockTagId = $this->livestock->getLivestockTagIdById($parasiteControl['livestockId']);
+
+                $drugName = $parasiteControl['drugName'];
+                $dosage = $parasiteControl['dosage'];
+                $administrationMethod = $parasiteControl['administrationMethod'];
+
+                $auditLog = (object) [
+                    'livestockId' => $parasiteControl['livestockId'],
+                    'farmerId' => $parasiteControl['userId'],
+                    'action' => "Add",
+                    'title' => "Add Parasite Control",
+                    'description' => "Add $drugName $administrationMethod $dosage to Livestock $livestockTagId",
+                    'entityAffected' => "Parasite Control",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->farmerAudit->errors(), 'syncIdentifier' => $parasiteControl['syncIdentifier']];
+                }
+
                 return ['id' => $parasiteControlId, 'status' => 'success', 'syncIdentifier' => $parasiteControl['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $parasiteControl['syncIdentifier']];
@@ -461,6 +587,22 @@ class SyncController extends ResourceController
 
 
             if ($this->animalParasiteControl->updateAnimalParasiteControl($parasiteControl['id'], $updateData)) {
+
+                $livestockTagId = $this->livestock->getLivestockTagIdById($parasiteControl['livestockId']);
+                $auditLog = (object) [
+                    'livestockId' => $parasiteControl['livestockId'],
+                    'farmerId' => $parasiteControl['userId'],
+                    'action' => "Edit",
+                    'title' => "Update Parasite Control Details",
+                    'description' => "Update Parasite Control of Livestock $livestockTagId",
+                    'entityAffected' => "Parasite Control",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->farmerAudit->errors(), 'syncIdentifier' => $parasiteControl['syncIdentifier']];
+                }
+
                 return ['id' => $parasiteControl['id'], 'status' => 'success', 'syncIdentifier' => $parasiteControl['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $parasiteControl['syncIdentifier']];
@@ -473,20 +615,36 @@ class SyncController extends ResourceController
         }
     }
 
-    private function deleteParasiteControl($id, $syncIdentifier)
+    private function deleteParasiteControl($parasiteControl)
     {
         try {
             //code...
-            if ($this->animalParasiteControl->deleteAnimalParasiteControl($id)) {
-                return ['id' => $id, 'status' => 'success', 'syncIdentifier' => $syncIdentifier];
+            if ($this->animalParasiteControl->deleteAnimalParasiteControl($parasiteControl['id'])) {
+
+                $livestockTagId = $this->livestock->getLivestockTagIdById($parasiteControl['livestockId']);
+                $auditLog = (object) [
+                    'livestockId' => $parasiteControl['livestockId'],
+                    'farmerId' => $parasiteControl['userId'],
+                    'action' => "Delete",
+                    'title' => "Deleted Parasite Control Record",
+                    'description' => "Deleted Parasite Control Record of Livestock $livestockTagId",
+                    'entityAffected' => "Parasite Control",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->farmerAudit->errors(), 'syncIdentifier' => $parasiteControl['syncIdentifier']];
+                }
+
+                return ['id' => $parasiteControl['id'], 'status' => 'success', 'syncIdentifier' => $parasiteControl['syncIdentifier']];
             } else {
-                return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $syncIdentifier];
+                return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $parasiteControl['syncIdentifier']];
             }
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $syncIdentifier];
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $parasiteControl['syncIdentifier']];
         }
     }
 
@@ -501,7 +659,7 @@ class SyncController extends ResourceController
                 } elseif ($breeding['syncAction'] === 'update') {
                     $results[] = $this->updateBreeding($breeding);
                 } elseif ($breeding['syncAction'] === 'delete') {
-                    $results[] = $this->deleteBreeding($breeding['id'], $breeding['syncIdentifier']);
+                    $results[] = $this->deleteBreeding($breeding);
                 }
             }
 
@@ -530,6 +688,34 @@ class SyncController extends ResourceController
 
             $breedingId = $this->livestockBreeding->insertLivestockBreeding($insertData);
             if ($breedingId) {
+                $auditLog = (object) [
+                    'farmerId' => $breeding['userId'],
+                    'action' => "Add",
+                    'title' => "Breed Livestock",
+                    'entityAffected' => "Breeding",
+                ];
+
+                $maleLivestockTagId = $breeding['maleLivestockTagId'];
+                $femaleLivestockTagId = $breeding['femaleLivestockTagId'];
+
+                $maleLivestock = $this->livestock->getFarmerLivestockIdByTag($maleLivestockTagId, $breeding['userId']);
+
+                $auditLog->description = "Breed Livestock $maleLivestockTagId and $femaleLivestockTagId";
+                $auditLog->livestockId = $maleLivestock;
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $breeding['syncIdentifier']];
+                }
+
+                $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($femaleLivestockTagId, $breeding['userId']);
+                $auditLog->livestockId = $femaleLivestock;
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $breeding['syncIdentifier']];
+                }
+
                 return ['id' => $breedingId, 'status' => 'success', 'syncIdentifier' => $breeding['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $breeding['syncIdentifier']];
@@ -556,6 +742,33 @@ class SyncController extends ResourceController
             ];
 
             if ($this->livestockBreeding->updateLivestockBreeding($breeding['id'], $updateData)) {
+                $auditLog = (object) [
+                    'farmerId' => $breeding['userId'],
+                    'action' => "Edit",
+                    'title' => "Updated Livestock Breeding",
+                    'entityAffected' => "Breeding",
+                ];
+
+                $maleLivestockTagId = $breeding['maleLivestockTagId'];
+                $femaleLivestockTagId = $breeding['femaleLivestockTagId'];
+
+                $maleLivestock = $this->livestock->getFarmerLivestockIdByTag($maleLivestockTagId, $breeding['userId']);
+
+                $auditLog->description = "Breed Livestock $maleLivestockTagId and $femaleLivestockTagId";
+                $auditLog->livestockId = $maleLivestock;
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $breeding['syncIdentifier']];
+                }
+
+                $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($femaleLivestockTagId, $breeding['userId']);
+                $auditLog->livestockId = $femaleLivestock;
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $breeding['syncIdentifier']];
+                }
                 return ['id' => $breeding['id'], 'status' => 'success', 'syncIdentifier' => $breeding['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->livestockBreeding->errors(), 'syncIdentifier' => $breeding['syncIdentifier']];
@@ -567,20 +780,49 @@ class SyncController extends ResourceController
             return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $breeding['syncIdentifier']];
         }
     }
-    private function deleteBreeding($id, $syncIdentifier)
+    private function deleteBreeding($breeding)
     {
         try {
             //code...
-            if ($this->livestockBreeding->deleteLivestockBreeding($id)) {
-                return ['id' => $id, 'status' => 'success', 'syncIdentifier' => $syncIdentifier];
+            if ($this->livestockBreeding->deleteLivestockBreeding($breeding['id'])) {
+                $auditLog = (object) [
+                    'farmerId' => $breeding['userId'],
+                    'action' => "Delete",
+                    'title' => "Delete Livestock Breeding",
+                    'entityAffected' => "Breeding",
+                ];
+
+                $maleLivestockTagId = $breeding['maleLivestockTagId'];
+                $femaleLivestockTagId = $breeding['femaleLivestockTagId'];
+
+                $maleLivestock = $this->livestock->getFarmerLivestockIdByTag($maleLivestockTagId, $breeding['userId']);
+
+                $auditLog->description = "Breed Livestock $maleLivestockTagId and $femaleLivestockTagId";
+                $auditLog->livestockId = $maleLivestock;
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $breeding['syncIdentifier']];
+                }
+
+                $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($femaleLivestockTagId, $breeding['userId']);
+                $auditLog->livestockId = $femaleLivestock;
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $breeding['syncIdentifier']];
+                }
+
+
+                return ['id' => $breeding['id'], 'status' => 'success', 'syncIdentifier' => $breeding['syncIdentifier']];
             } else {
-                return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $syncIdentifier];
+                return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $breeding['syncIdentifier']];
             }
         } catch (\Throwable $th) {
             //throw $th;\
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $syncIdentifier];
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $breeding['syncIdentifier']];
         }
     }
 
@@ -595,7 +837,7 @@ class SyncController extends ResourceController
                 } elseif ($pregnancy['syncAction'] === 'update') {
                     $results[] = $this->updatePregnancy($pregnancy);
                 } elseif ($pregnancy['syncAction'] === 'delete') {
-                    $results[] = $this->deletePregnancy($pregnancy['id'], $pregnancy['syncIdentifier']);
+                    $results[] = $this->deletePregnancy($pregnancy);
                 }
             }
 
@@ -625,6 +867,20 @@ class SyncController extends ResourceController
             $pregnancyId = $this->livestockPregnancy->insertLivestockPregnancy($insertData);
 
             if ($pregnancyId) {
+                $auditLog = (object) [
+                    'livestockId' => $pregnancy['livestockId'],
+                    'farmerId' => $pregnancy['userId'],
+                    'action' => "Add",
+                    'title' => "Pregnancy Livestock",
+                    'description' => 'Add New Livestock Pregnancy Record',
+                    'entityAffected' => "Pregnancy",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->livestockPregnancy->errors(), 'syncIdentifier' => $pregnancy['syncIdentifier']];
+                }
+
                 return ['id' => $pregnancyId, 'status' => 'success', 'syncIdentifier' => $pregnancy['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->livestockPregnancy->errors(), 'syncIdentifier' => $pregnancy['syncIdentifier']];
@@ -650,6 +906,22 @@ class SyncController extends ResourceController
                 'pregnancyNotes' => $pregnancy['remarks']
             ];
             if ($this->livestockPregnancy->updateLivestockPregnancy($pregnancy['id'], $updateData)) {
+                $outcome = $pregnancy['outcome'];
+                $livestockTagId = $pregnancy['livestockTagId'];
+                $auditLog = (object) [
+                    'livestockId' => $pregnancy['livestockId'],
+                    'farmerId' => $pregnancy['userId'],
+                    'action' => "Edit",
+                    'title' => "Updated Pregnancy Outcome",
+                    'description' => "Updated Livestock Pregnancy Outcome $livestockTagId to $outcome",
+                    'entityAffected' => "Pregnancy",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->livestockPregnancy->errors(), 'syncIdentifier' => $pregnancy['syncIdentifier']];
+                }
+
                 return ['id' => $pregnancy['id'], 'status' => 'success', 'syncIdentifier' => $pregnancy['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => $this->animalParasiteControl->errors(), 'syncIdentifier' => $pregnancy['syncIdentifier']];
@@ -663,20 +935,34 @@ class SyncController extends ResourceController
         }
     }
 
-    private function deletePregnancy($id, $syncIdentifier)
+    private function deletePregnancy($pregnancy)
     {
         try {
             //code...
-            if ($this->livestockPregnancy->deleteLivestockPregnancy($id)) {
-                return ['id' => $id, 'status' => 'success', 'syncIdentifier' => $syncIdentifier];
+            if ($this->livestockPregnancy->deleteLivestockPregnancy($pregnancy['id'])) {
+                $livestockTagId = $pregnancy['livestockTagId'];
+                $auditLog = (object) [
+                    'livestockId' => $pregnancy['livestockId'],
+                    'farmerId' => $pregnancy['userId'],
+                    'action' => "Delete",
+                    'title' => "Delete Livestock Pregnancy",
+                    'entityAffected' => "Pregnancy",
+                    'description' => "Deleted Pregnancy Livestock $livestockTagId"
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => $this->livestockPregnancy->errors(), 'syncIdentifier' => $pregnancy['syncIdentifier']];
+                }
+                return ['id' => $pregnancy['id'], 'status' => 'success', 'syncIdentifier' => $pregnancy['syncIdentifier']];
             } else {
-                return ['status' => 'failed', 'errors' => $this->livestockPregnancy->errors(), 'syncIdentifier' => $syncIdentifier];
+                return ['status' => 'failed', 'errors' => $this->livestockPregnancy->errors(), 'syncIdentifier' => $pregnancy['syncIdentifier']];
             }
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $syncIdentifier];
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $pregnancy['syncIdentifier']];
         }
     }
 
@@ -715,6 +1001,21 @@ class SyncController extends ResourceController
             ]);
 
             if ($response) {
+                $livestockTagId = $this->livestock->getLivestockTagIdById($data['livestockId']);
+
+                $auditLog = (object) [
+                    'livestockId' => $data['livestockId'],
+                    'farmerId' => $data['userId'],
+                    'action' => "Add",
+                    'title' => "Report Livestock Mortality",
+                    'description' => "Report Livestock Mortality of Livestock $livestockTagId",
+                    'entityAffected' => "Mortality",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => 'Failed to insert mortality record', 'syncIdentifier' => $data['syncIdentifier']];
+                }
                 return ['id' => $response, 'status' => 'success', 'syncIdentifier' => $data['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => 'Failed to insert mortality record', 'syncIdentifier' => $data['syncIdentifier']];
@@ -738,6 +1039,21 @@ class SyncController extends ResourceController
             ]);
 
             if ($response) {
+                $livestockTagId = $this->livestock->getLivestockTagIdById($data['livestockId']);
+
+                $auditLog = (object) [
+                    'livestockId' => $data['livestockId'],
+                    'farmerId' => $data['userId'],
+                    'action' => "Edit",
+                    'title' => "Updated Livestock Mortality",
+                    'description' => "Updated Livestock Mortality of Livestock $livestockTagId",
+                    'entityAffected' => "Mortality",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => 'Failed to insert mortality record', 'syncIdentifier' => $data['syncIdentifier']];
+                }
                 return ['id' => $data['id'], 'status' => 'success', 'syncIdentifier' => $data['syncIdentifier']];
             } else {
                 return ['status' => 'failed', 'errors' => 'Failed to update mortality record', 'syncIdentifier' => $data['syncIdentifier']];
@@ -748,17 +1064,32 @@ class SyncController extends ResourceController
         }
     }
 
-    private function deleteMortality($id, $syncIdentifier)
+    private function deleteMortality($data)
     {
         try {
-            if ($this->livestockMortality->deleteLivestockMortality($id)) {
-                return ['id' => $id, 'status' => 'success', 'syncIdentifier' => $syncIdentifier];
+            if ($this->livestockMortality->deleteLivestockMortality($data['id'])) {
+                $livestockTagId = $this->livestock->getLivestockTagIdById($data['livestockId']);
+
+                $auditLog = (object) [
+                    'livestockId' => $data['livestockId'],
+                    'farmerId' => $data['userId'],
+                    'action' => "Delete",
+                    'title' => "Deleted Livestock Mortality",
+                    'description' => "Deleted Livestock Mortality of Livestock $livestockTagId",
+                    'entityAffected' => "Mortality",
+                ];
+
+                $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
+                if (!$resultAudit) {
+                    return ['status' => 'failed', 'errors' => 'Failed to insert mortality record', 'syncIdentifier' => $data['syncIdentifier']];
+                }
+                return ['id' => $data['id'], 'status' => 'success', 'syncIdentifier' => $data['syncIdentifier']];
             } else {
-                return ['status' => 'failed', 'errors' => $this->livestockMortality->errors(), 'syncIdentifier' => $syncIdentifier];
+                return ['status' => 'failed', 'errors' => $this->livestockMortality->errors(), 'syncIdentifier' => $data['syncIdentifier']];
             }
         } catch (\Throwable $th) {
             //throw $th;
-            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $syncIdentifier];
+            return ['status' => 'failed', 'errors' => $th->getMessage(), 'syncIdentifier' => $data['syncIdentifier']];
         }
     }
 
@@ -784,7 +1115,8 @@ class SyncController extends ResourceController
         }
     }
 
-    private function insertFarm($farm){
+    private function insertFarm($farm)
+    {
         try {
             //code...
             $insertData = (object) [
@@ -818,7 +1150,8 @@ class SyncController extends ResourceController
         }
     }
 
-    private function updateFarm($farm){
+    private function updateFarm($farm)
+    {
         try {
             //code...
             $updateData = (object) [
@@ -849,7 +1182,8 @@ class SyncController extends ResourceController
         }
     }
 
-    private function deleteFarm($id, $syncIdentifier){
+    private function deleteFarm($id, $syncIdentifier)
+    {
         try {
             //code...
             if ($this->farms->deleteFarm($id)) {

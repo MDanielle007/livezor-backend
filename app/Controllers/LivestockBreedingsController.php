@@ -131,7 +131,7 @@ class LivestockBreedingsController extends ResourceController
             }
 
             $femaleLivestock = $this->livestock->getFarmerLivestockIdByTag($data->femaleLivestockTagId, $data->farmerId);
-            $data->auditLog = $femaleLivestock;
+            $auditLog->livestockId = $femaleLivestock;
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
             if(!$resultAudit){

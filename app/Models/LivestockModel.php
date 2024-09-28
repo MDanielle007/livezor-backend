@@ -321,45 +321,44 @@ class LivestockModel extends Model
             ];
 
             if (isset($data->livestockTagId) && !empty($data->livestockTagId)) {
-                $bind['livestock_tag_id'] = $data->livestockTagId;
+                $bind->livestock_tag_id = $data->livestockTagId;
             }
 
             if (isset($data->livestockBreedId)) {
-                $bind['livestock_breed_id'] = $data->livestockBreedId;
+                $bind->livestock_breed_id = $data->livestockBreedId;
             }
 
             if (isset($data->livestockHealthStatus)) {
-                $bind['livestock_health_status'] = $data->livestockHealthStatus;
+                $bind->livestock_health_status = $data->livestockHealthStatus;
             }
 
             if (isset($data->origin)) {
-                $bind['origin'] = $data->origin;
+                $bind->origin = $data->origin;
             }
 
             if (isset($data->isPregnant)) {
-                $bind['is_pregnant'] = $data->isPregnant;
+                $bind->is_pregnant = $data->isPregnant;
             }
 
             if (isset($data->height)) {
                 if (isset($data->height->value)){
-                    $bind['height'] = $data->height->value;
-                    $bind['height_unit'] = $data->height->unit;
+                    $bind->height = $data->height->value;
+                    $bind->height_unit = $data->height->unit;
                 }else{
-                    $bind['height'] = $data->height;
-                    $bind['height_unit'] = $data->heightUnit;
+                    $bind->height = $data->height;
+                    $bind->height_unit = $data->heightUnit;
                 }
             }
 
             if (isset($data->weight)) {
                 if(isset($data->weight->value)){
-                    $bind['weight'] = $data->weight->value;
-                    $bind['weight_unit'] = $data->weight->unit;
+                    $bind->weight = $data->weight->value;
+                    $bind->weight_unit = $data->weight->unit;
                 }else{
-                    $bind['weight'] = $data->weight;
-                    $bind['weight_unit'] = $data->weightUnit;
+                    $bind->weight = $data->weight;
+                    $bind->weight_unit = $data->weightUnit;
                 }
             }
-
             $result = $this->insert($bind);
 
             return $result;
@@ -385,30 +384,30 @@ class LivestockModel extends Model
             ];
 
             if (isset($data->livestockBreedId)) {
-                $bind['livestock_breed_id'] = $data->livestockBreedId;
+                $bind->livestock_breed_id = $data->livestockBreedId;
             }
 
             if (isset($data->isPregnant)) {
-                $bind['is_pregnant'] = $data->isPregnant;
+                $bind->is_pregnant = $data->isPregnant;
             }
 
             if (isset($data->height)) {
                 if (isset($data->height->value)){
-                    $bind['height'] = $data->height->value;
-                    $bind['height_unit'] = $data->height->unit;
+                    $bind->height = $data->height->value;
+                    $bind->height_unit = $data->height->unit;
                 }else{
-                    $bind['height'] = $data->height;
-                    $bind['height_unit'] = $data->heightUnit;
+                    $bind->height = $data->height;
+                    $bind->height_unit = $data->heightUnit;
                 }
             }
 
             if (isset($data->weight)) {
                 if(isset($data->weight->value)){
-                    $bind['weight'] = $data->weight->value;
-                    $bind['weight_unit'] = $data->weight->unit;
+                    $bind->weight = $data->weight->value;
+                    $bind->weight_unit = $data->weight->unit;
                 }else{
-                    $bind['weight'] = $data->weight;
-                    $bind['weight_unit'] = $data->weightUnit;
+                    $bind->weight = $data->weight;
+                    $bind->weight_unit = $data->weightUnit;
                 }
             }
 
