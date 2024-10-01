@@ -23,9 +23,9 @@ class CreateEggDistributionTable extends Migration
                 'constraint' => 11,
                 'null' => false,
             ],
-            'poultry_breed_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
+            'poultry_breed' => [
+                'type' => 'VARCHAR',
+                'constraint' => 40,
                 'null' => true,
             ],
             'recipient_user_id' => [

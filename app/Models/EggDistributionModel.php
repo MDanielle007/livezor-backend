@@ -12,7 +12,7 @@ class EggDistributionModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['number_of_eggs', 'poultry_type_id', 'poultry_breed_id', 'recipient_user_id', 'recipient_first_name', 'recipient_middle_name', 'recipient_last_name', 'recipient_barangay', 'recipient_city_municipality', 'recipient_province', 'recipient_contact_number', 'date_of_distribution', 'remarks', 'farmer_association', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['number_of_eggs', 'poultry_type_id', 'poultry_breed', 'recipient_user_id', 'recipient_first_name', 'recipient_middle_name', 'recipient_last_name', 'recipient_barangay', 'recipient_city_municipality', 'recipient_province', 'recipient_contact_number', 'date_of_distribution', 'remarks', 'farmer_association', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -52,8 +52,7 @@ class EggDistributionModel extends Model
                 egg_distribution.number_of_eggs as numberOfEggs,
                 egg_distribution.poultry_type_id as poultryTypeId,
                 livestock_types.livestock_type_name as livestockTypeName,
-                egg_distribution.poultry_breed_id as poultryBreedId,
-                COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                egg_distribution.poultry_breed as poultryBreed,
                 COALESCE(egg_distribution.recipient_user_id, "") as recipientUserId,
                 egg_distribution.recipient_first_name as recipientFirstName,
                 COALESCE(egg_distribution.recipient_middle_name, "") as recipientMiddleName,
@@ -69,7 +68,6 @@ class EggDistributionModel extends Model
                 egg_distribution.remarks
             ')
                 ->join('livestock_types', 'livestock_types.id = egg_distribution.poultry_type_id')
-                ->join('livestock_breeds', 'livestock_breeds.id = egg_distribution.poultry_breed_id')
                 ->where($whereClause)
                 ->orderBy('date_of_distribution', 'DESC')
                 ->orderBy('number_of_eggs', 'DESC')
@@ -97,8 +95,7 @@ class EggDistributionModel extends Model
                 egg_distribution.number_of_eggs as numberOfEggs,
                 egg_distribution.poultry_type_id as poultryTypeId,
                 livestock_types.livestock_type_name as livestockTypeName,
-                egg_distribution.poultry_breed_id as poultryBreedId,
-                COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                egg_distribution.poultry_breed as poultryBreed,
                 COALESCE(egg_distribution.recipient_user_id, "") as recipientUserId,
                 egg_distribution.recipient_first_name as recipientFirstName,
                 COALESCE(egg_distribution.recipient_middle_name, "") as recipientMiddleName,
@@ -114,7 +111,6 @@ class EggDistributionModel extends Model
                 egg_distribution.remarks
             ')
                 ->join('livestock_types', 'livestock_types.id = egg_distribution.poultry_type_id')
-                ->join('livestock_breeds', 'livestock_breeds.id = egg_distribution.poultry_breed_id')
                 ->where($whereClause)
                 ->orderBy('date_of_distribution', 'DESC')
                 ->orderBy('number_of_eggs', 'DESC')
@@ -154,8 +150,8 @@ class EggDistributionModel extends Model
                 $bind['recipient_user_id'] = $data->recipientUserId;
             }
 
-            if (isset($data->poultryBreedId)) {
-                $bind['poultry_breed_id'] = $data->poultryBreedId;
+            if (isset($data->poultryBreed)) {
+                $bind['poultry_breed'] = $data->poultryBreed;
             }
 
             if (isset($data->farmerAssociation)) {
