@@ -12,7 +12,7 @@ class LivestockMortalityModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $protectFields = true;
-    protected $allowedFields = ['livestock_id', 'farmer_id', 'cause_of_death', 'mortality_remarks', 'date_of_death', 'images','record_status', 'created_at', 'updated_at', 'deleted_at'];
+    protected $allowedFields = ['livestock_id', 'farmer_id', 'cause_of_death', 'mortality_remarks', 'date_of_death', 'images', 'record_status', 'created_at', 'updated_at', 'deleted_at'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -161,13 +161,13 @@ class LivestockMortalityModel extends Model
                 'mortality_remarks' => $data->remarks,
                 'date_of_death' => $data->dateOfDeath,
             ];
-    
-            if(isset($data->images)){
+
+            if (isset($data->images)) {
                 $bind['images'] = json_encode($data->images);
             }
-    
+
             $result = $this->insert($bind);
-    
+
             return $result;
         } catch (\Throwable $th) {
             //throw $th;
@@ -297,9 +297,9 @@ class LivestockMortalityModel extends Model
                 $year = $currentDate->format('Y'); // Year
 
                 $count = $this->selectCount('id')
-                ->where('MONTH(date_of_death)', $month)
-                ->where('YEAR(date_of_death)', $year)
-                ->countAllResults();
+                    ->where('MONTH(date_of_death)', $month)
+                    ->where('YEAR(date_of_death)', $year)
+                    ->countAllResults();
 
                 $data[] = [
                     'month' => $currentDate->format('F'),
@@ -468,7 +468,7 @@ class LivestockMortalityModel extends Model
         }
     }
 
-    public function getMortalitiesForReport( $minDate, $maxDate)
+    public function getMortalitiesForReport($minDate, $maxDate)
     {
         try {
             $whereClause = [
@@ -513,6 +513,61 @@ class LivestockMortalityModel extends Model
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage());
+        }
+    }
+
+    public function getAnimalHealthCountAllCity($city, $year)
+    {
+        try {
+            $whereClause = [
+                'livestock_mortalities.record_status' => 'Accessible',
+                'livestock_mortalities.deleted_at' => null,
+                'user_accounts.city' => $city,
+                'YEAR(livestock_mortalities.date_of_death)' => $year
+            ];
+
+            $data = $this->select('
+                ROW_NUMBER() OVER () AS id,
+                livestock_types.livestock_type_name as animal,
+                livestock_mortalities.cause_of_death as name,
+                COUNT(*) as count
+            ')
+                ->join('livestocks', 'livestocks.id = livestock_mortalities.livestock_id')
+                ->join('user_accounts', 'user_accounts.id = livestock_mortalities.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->groupBy('livestock_mortalities.cause_of_death')
+                ->groupBy('livestock_types.livestock_type_name')
+                ->orderBy('livestock_mortalities.cause_of_death')
+                ->orderBy('livestock_types.livestock_type_name')
+                ->orderBy('count','DESC')
+                ->get()->getResultArray();
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ': ' . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
+        }
+    }
+
+    public function getHealthCountBycity($city, $year)
+    {
+        try {
+            $whereClause = [
+                'livestock_mortalities.record_status' => 'Accessible',
+                'user_accounts.city' => $city,
+                'YEAR(livestock_mortalities.date_of_death)' => $year
+            ];
+
+            $count = $this->join('user_accounts', 'user_accounts.id = livestock_mortalities.farmer_id')
+                ->where($whereClause)->countAllResults();
+            return $count;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ': ' . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return 0;
         }
     }
 }

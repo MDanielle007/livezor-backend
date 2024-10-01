@@ -46,11 +46,11 @@ class LivestockVaccinationModel extends Model
             $whereClause = [
                 'livestock_vaccinations.record_status' => 'Accessible'
             ];
-    
-            if($category !== 'All'){
+
+            if ($category !== 'All') {
                 $whereClause['livestocks.category'] = $category;
             }
-    
+
             $livestockVaccinations = $this->select(
                 'livestock_vaccinations.id,
                 livestock_vaccinations.user_id as userId,
@@ -735,6 +735,67 @@ class LivestockVaccinationModel extends Model
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage());
+        }
+    }
+
+    public function getAnimalHealthCountAllCity($city, $year)
+    {
+        try {
+            $whereClause = [
+                'livestock_vaccinations.record_status' => 'Accessible',
+                'livestock_vaccinations.deleted_at' => null,
+                'user_accounts.city' => $city,
+                'YEAR(livestock_vaccinations.vaccination_date)' => $year
+            ];
+
+            $data = $this->select('
+                ROW_NUMBER() OVER () AS id,
+                livestock_types.livestock_type_name as animal,
+                livestock_vaccinations.vaccination_name as name,
+                COUNT(*) as count
+            ')
+                ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id','left')
+                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id','left')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->groupBy('livestock_vaccinations.vaccination_name')
+                ->groupBy('livestock_types.livestock_type_name')
+                ->orderBy('livestock_vaccinations.vaccination_name')
+                ->orderBy('livestock_types.livestock_type_name')
+                ->orderBy('count','DESC')
+                ->get()->getResultArray();
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ': ' . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
+        }
+    }
+
+    public function getHealthCountBycity($city, $year)
+    {
+        try {
+            $whereClause = [
+                'livestock_vaccinations.record_status' => 'Accessible',
+                'livestock_vaccinations.deleted_at' => null,
+                'user_accounts.city' => $city,
+                'YEAR(livestock_vaccinations.vaccination_date)' => $year
+            ];
+    
+            $count = $this->select('COUNT(DISTINCT CONCAT(livestock_vaccinations.livestock_id, livestock_vaccinations.vaccination_name)) as total')
+                ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id', 'left')
+                ->where($whereClause)
+                ->get()
+                ->getRow()
+                ->total;
+                
+            return $count;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ': ' . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return 0;
         }
     }
 }

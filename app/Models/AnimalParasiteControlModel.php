@@ -495,4 +495,65 @@ class AnimalParasiteControlModel extends Model
             return [];
         }
     }
+
+    public function getAnimalHealthCountAllCity($city, $year)
+    {
+        try {
+            $whereClause = [
+                'animal_parasite_controls.record_status' => 'Accessible',
+                'animal_parasite_controls.deleted_at' => null,
+                'user_accounts.city' => $city,
+                'YEAR(animal_parasite_controls.application_date)' => $year
+            ];
+
+            $data = $this->select('
+                ROW_NUMBER() OVER () AS id,
+                livestock_types.livestock_type_name as animal,
+                animal_parasite_controls.drug_name as name,
+                COUNT(*) as count
+            ')
+                ->join('livestocks', 'livestocks.id = animal_parasite_controls.livestock_id')
+                ->join('user_accounts', 'user_accounts.id = animal_parasite_controls.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->where($whereClause)
+                ->groupBy('animal_parasite_controls.drug_name')
+                ->groupBy('livestock_types.livestock_type_name')
+                ->orderBy('animal_parasite_controls.drug_name')
+                ->orderBy('livestock_types.livestock_type_name')
+                ->orderBy('count','DESC')
+                ->get()->getResultArray();
+            return $data;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ': ' . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
+        }
+    }
+
+    public function getHealthCountBycity($city, $year)
+    {
+        try {
+            $whereClause = [
+                'animal_parasite_controls.record_status' => 'Accessible',
+                'user_accounts.city' => $city,
+                'YEAR(animal_parasite_controls.application_date)' => $year
+            ];
+    
+            // Count unique combinations of livestock_id and drug_name
+            $count = $this->select('COUNT(DISTINCT CONCAT(animal_parasite_controls.livestock_id, animal_parasite_controls.drug_name)) as total')
+                ->join('user_accounts', 'user_accounts.id = animal_parasite_controls.farmer_id')
+                ->where($whereClause)
+                ->get()
+                ->getRow()
+                ->total;
+            
+            return $count;
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ': ' . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return 0;
+        }
+    }
 }

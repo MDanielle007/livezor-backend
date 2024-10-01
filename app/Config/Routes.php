@@ -92,6 +92,7 @@ $routes->group('api', function ($routes) {
         $routes->get('livestock-type-count-monitoring', 'LivestocksController::getLivestockTypeCountMonitoring');
         $routes->get('livestock-breed-count-monitoring', 'LivestocksController::getLivestockBreedCountMonitoring');
         $routes->get('livestock-ageclass-count-monitoring', 'LivestocksController::getLivestockAgeCountMonitoring');
+        $routes->get('health-count-city/(:any)/(:any)', 'LivestocksController::getAnimalHealthCountAllCity/$1/$2');
 
         // User Management endpoint routes
         $routes->post('update-user-image', 'UserController::uploadUserImage');

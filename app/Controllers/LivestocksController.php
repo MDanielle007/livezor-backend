@@ -3,10 +3,13 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\AnimalParasiteControlModel;
 use App\Models\FarmerAuditModel;
 use App\Models\LivestockAgeClassModel;
 use App\Models\LivestockBreedModel;
+use App\Models\LivestockMortalityModel;
 use App\Models\LivestockTypeModel;
+use App\Models\LivestockVaccinationModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
@@ -30,6 +33,9 @@ class LivestocksController extends ResourceController
     private $farmerLivestock;
     private $userModel;
     private $farmerAudit;
+    private $vaccination;
+    private $parasiteControl;
+    private $mortality;
 
     public function __construct()
     {
@@ -40,6 +46,9 @@ class LivestocksController extends ResourceController
         $this->farmerLivestock = new FarmerLivestockModel();
         $this->userModel = new UserModel();
         $this->farmerAudit = new FarmerAuditModel();
+        $this->vaccination = new LivestockVaccinationModel();
+        $this->parasiteControl = new AnimalParasiteControlModel();
+        $this->mortality = new LivestockMortalityModel();
         helper('jwt');
         // helper('excel');
     }
@@ -132,21 +141,21 @@ class LivestocksController extends ResourceController
 
             $breedName = $data->breedName;
 
-            if($breedName != ''){
-                if(is_string($breedName)){
-                    $data->livestockBreedId = $this->livestockBreed->insertLivestockBreed((object)[
+            if ($breedName != '') {
+                if (is_string($breedName)) {
+                    $data->livestockBreedId = $this->livestockBreed->insertLivestockBreed((object) [
                         'livestockBreedName' => $breedName,
                         'livestockBreedDescription' => '',
                         'livestockTypeId' => $data->livestockTypeId
                     ]);
-                }else{
+                } else {
                     $data->livestockBreedId = $breedName->code;
                 }
             }
 
             $livestockId = $this->livestock->insertLivestock($data);
-            
-            if(!$livestockId){
+
+            if (!$livestockId) {
                 return $this->fail('Failed to add livestock');
             }
 
@@ -167,10 +176,10 @@ class LivestocksController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
-            if(!$resultAudit){
+            if (!$resultAudit) {
                 return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
             }
-            
+
             return $this->respond(['result' => $livestockId], 200, 'Livestock Successfully Added');
         } catch (\Throwable $th) {
             //throw $th;
@@ -204,14 +213,14 @@ class LivestocksController extends ResourceController
 
             $breedName = $data->breedName;
 
-            if($breedName != ''){
-                if(is_string($breedName)){
-                    $data->livestockBreedId = $this->livestockBreed->insertLivestockBreed((object)[
+            if ($breedName != '') {
+                if (is_string($breedName)) {
+                    $data->livestockBreedId = $this->livestockBreed->insertLivestockBreed((object) [
                         'livestockBreedName' => $breedName,
                         'livestockBreedDescription' => '',
                         'livestockTypeId' => $data->livestockTypeId
                     ]);
-                }else{
+                } else {
                     $data->livestockBreedId = $breedName->code;
                 }
             }
@@ -221,7 +230,7 @@ class LivestocksController extends ResourceController
                 $data->livestockAgeClassId = $data->maleLivestockAgeClassId;
                 for ($i = 1; $i <= $data->maleLivestockCount; $i++) {
                     $livestockId = $this->livestock->insertLivestock($data);
-                    if(!$livestockId){
+                    if (!$livestockId) {
                         return $this->fail('Failed to add livestock');
                     }
                     $auditLog->livestockId = $livestockId;
@@ -231,7 +240,7 @@ class LivestocksController extends ResourceController
 
                     $auditLog->description = "Add New Livestock $livestockType";
                     $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
-                    if(!$resultAudit){
+                    if (!$resultAudit) {
                         return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
                     }
                 }
@@ -242,9 +251,9 @@ class LivestocksController extends ResourceController
                 $data->livestockAgeClassId = $data->femaleLivestockAgeClassId;
                 for ($i = 1; $i <= $data->femaleLivestockCount; $i++) {
                     $livestockId = $this->livestock->insertLivestock($data);
-                    if(!$livestockId){
+                    if (!$livestockId) {
                         return $this->fail('Failed to add livestock');
-                    }        
+                    }
                     $auditLog->livestockId = $livestockId;
                     $data->livestockId = $livestockId;
                     $result = $this->farmerLivestock->associateFarmerLivestock($data);
@@ -252,7 +261,7 @@ class LivestocksController extends ResourceController
 
                     $auditLog->description = "Add New Livestock $livestockType";
                     $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
-                    if(!$resultAudit){
+                    if (!$resultAudit) {
                         return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
                     }
                 }
@@ -284,22 +293,22 @@ class LivestocksController extends ResourceController
 
             $breedName = $data->breedName;
 
-            if($breedName != ''){
-                if(is_string($breedName)){
-                    $data->livestockBreedId = $this->livestockBreed->insertLivestockBreed((object)[
+            if ($breedName != '') {
+                if (is_string($breedName)) {
+                    $data->livestockBreedId = $this->livestockBreed->insertLivestockBreed((object) [
                         'livestockBreedName' => $breedName,
                         'livestockBreedDescription' => '',
                         'livestockTypeId' => $data->livestockTypeId
                     ]);
-                }else{
+                } else {
                     $data->livestockBreedId = $breedName->code;
                 }
             }
 
             $response = $this->livestock->updateLivestock($data->id, $data);
-            if(!$response){
+            if (!$response) {
                 return $this->fail('Failed to update livestock');
-            }   
+            }
 
             $livestockTagId = $data->livestockTagId;
 
@@ -312,7 +321,7 @@ class LivestocksController extends ResourceController
                 'entityAffected' => "Livestock",
             ];
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
-            if(!$resultAudit){
+            if (!$resultAudit) {
                 return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
             }
 
@@ -341,7 +350,7 @@ class LivestocksController extends ResourceController
             $response = $this->livestock->updateLivestockHealthStatus($id, $data);
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
-            if(!$resultAudit){
+            if (!$resultAudit) {
                 return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
             }
 
@@ -367,7 +376,7 @@ class LivestocksController extends ResourceController
             $data->entityAffected = "Livestock";
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($data);
-            if(!$resultAudit){
+            if (!$resultAudit) {
                 return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
             }
 
@@ -397,7 +406,7 @@ class LivestocksController extends ResourceController
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
-            if(!$resultAudit){
+            if (!$resultAudit) {
                 return $this->fail('Failed to record action', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
             }
             return $this->respond(['result' => $response], 200, 'Livestock Successfully Deleted');
@@ -405,7 +414,7 @@ class LivestocksController extends ResourceController
             //throw $th;
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
-            $this->fail('Failed to delete record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->fail('Failed to delete record', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -763,6 +772,67 @@ class LivestocksController extends ResourceController
             return $this->respond($data);
         } catch (\Throwable $th) {
             return $this->respond($th->getMessage());
+        }
+    }
+
+    public function getAnimalHealthCountAllCity($type, $year)
+    {
+        try {
+            $cities = [
+                'Puerto Galera',
+                'San Teodoro',
+                'Baco',
+                'Calapan City',
+                'Naujan',
+                'Victoria',
+                'Socorro',
+                'Pinamalayan',
+                'Gloria',
+                'Bansud',
+                'Bongabong',
+                'Roxas',
+                'Mansalay',
+                'Bulalacao'
+            ];
+
+            $data = [];
+            $i = 1;
+            foreach ($cities as $city) {
+                $healthData = [];
+                $totalCityCount = 0;
+
+                switch ($type) {
+                    case "Vaccination":
+                        $healthData = $this->vaccination->getAnimalHealthCountAllCity($city, $year);
+                        $totalCityCount = $this->vaccination->getHealthCountBycity($city, $year);
+                        break;
+                    case "Parasite Control":
+                        $healthData = $this->parasiteControl->getAnimalHealthCountAllCity($city, $year);
+                        $totalCityCount = $this->parasiteControl->getHealthCountBycity($city, $year);
+                        break;
+                    case "Mortality":
+                        $healthData = $this->mortality->getAnimalHealthCountAllCity($city, $year);
+                        $totalCityCount = $this->mortality->getHealthCountBycity($city, $year);
+                        break;
+                    default:
+                        break;
+                }
+
+                $registeredFarmersCount = $this->userModel->getFarmerCountByCity($city);
+                $data[] = [
+                    'id' => $i++,
+                    'healthData' => $healthData,
+                    'totalCityCount' => $totalCityCount,
+                    'city' => $city,
+                    'registeredFarmersCount' => $registeredFarmersCount
+                ];
+            }
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ': ' . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -1346,7 +1416,7 @@ class LivestocksController extends ResourceController
 
             // Check if the report data is not null
             if (is_null($livestockRecordsReport) || empty($livestockRecordsReport)) {
-                return ['error'=> true, 'message' => 'No data found for the given date range.'];
+                return ['error' => true, 'message' => 'No data found for the given date range.'];
             }
 
             // Generate Excel file using PhpSpreadsheet
@@ -1716,7 +1786,7 @@ class LivestocksController extends ResourceController
             $data = $this->livestock->getLivestockDistributionForCities($category, $minDate, $maxDate, $originTable, $cities);
             // Check if the report data is not null
             if (is_null($data) || empty($data)) {
-                return ['error'=> true, 'message' => 'No data found for the given date range.'];
+                return ['error' => true, 'message' => 'No data found for the given date range.'];
             }
 
             // Generate Excel file using PhpSpreadsheet
@@ -2015,7 +2085,7 @@ class LivestocksController extends ResourceController
             } else {
                 $data = $this->getLivestockDisProdMunicipalityForReport($category, $origin, $minDate, $maxDate);
             }
-            if(isset($data['error'])){
+            if (isset($data['error'])) {
                 return $this->failNotFound($data['message']);
             }
             return $this->respond($data);
