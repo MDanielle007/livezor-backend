@@ -210,6 +210,7 @@ class SyncController extends ResourceController
                 'heightUnit' => $livestock['heightUnit'],
                 'weight' => $livestock['weight'],
                 'weightUnit' => $livestock['weightUnit'],
+                'origin' => isset($livestock['origin']) ? $livestock['origin'] : null,
             ];
 
             $breedName = $livestock['breedName'];
