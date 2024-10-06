@@ -50,12 +50,29 @@ class SyncController extends ResourceController
     protected $modelName = 'App\Models\LivestockModel';
     protected $format = 'json';
 
+    public function syncA()
+    {
+        try {
+            //code...
+            $data = $this->request->getJSON(true);
+            $lres = $this->syncLivestock($data['livestock'], 'Livestock');
+            $pres = $this->syncLivestock($data['poultry'], 'Poultry');
+            $response = $lres + $pres;
+            return $this->respond($response);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail($th->getMessage(), 500);
+        }
+    }
+
     public function syncL()
     {
         try {
             //code...
             $data = $this->request->getJSON(true);
-            $response = $this->syncLivestock($data);
+            $response = $this->syncLivestock($data, 'Livestock');
 
             return $this->respond($response);
         } catch (\Throwable $th) {
@@ -169,18 +186,18 @@ class SyncController extends ResourceController
         }
     }
 
-    private function syncLivestock($livestockData)
+    private function syncLivestock($livestockData, $category)
     {
         try {
             $results = [];
 
             foreach ($livestockData as $livestock) {
                 if ($livestock['syncAction'] === 'insert') {
-                    $results[] = $this->insertLivestock($livestock);
+                    $results[] = $this->insertLivestock($livestock, $category);
                 } elseif ($livestock['syncAction'] === 'update') {
-                    $results[] = $this->updateLivestock($livestock);
+                    $results[] = $this->updateLivestock($livestock, $category);
                 } elseif ($livestock['syncAction'] === 'delete') {
-                    $results[] = $this->deleteLivestock($livestock);
+                    $results[] = $this->deleteLivestock($livestock, $category);
                 }
             }
 
@@ -193,27 +210,31 @@ class SyncController extends ResourceController
         }
     }
 
-    private function insertLivestock($livestock)
+    private function insertLivestock($livestock, $category)
     {
         try {
             $insertData = (object) [
                 'breedingEligibility' => $livestock['breedingEligibility'], //
                 'dateOfBirth' => $livestock['dateOfBirth'], //
-                'livestockAgeClassId' => $livestock['livestockAgeClassId'], // 
-                'livestockHealthStatus' => $livestock['livestockHealthStatus'],
-                'livestockTagId' => $livestock['livestockTagId'],
-                'livestockType' => $livestock['livestockType'],
-                'livestockTypeId' => $livestock['livestockTypeId'], //
                 'sex' => $livestock['sex'], //
-                'category' => 'Livestock',
-                'height' => $livestock['height'],
-                'heightUnit' => $livestock['heightUnit'],
-                'weight' => $livestock['weight'],
-                'weightUnit' => $livestock['weightUnit'],
+                'category' => $category,
+                'height' => isset($livestock['height']) ? $livestock['height'] : null,
+                'heightUnit' => isset($livestock['heightUnit']) ? $livestock['heightUnit'] : null,
+                'weight' => isset($livestock['weight']) ? $livestock['weight'] : null,
+                'weightUnit' => isset($livestock['weightUnit']) ? $livestock['weightUnit'] : null,
                 'origin' => isset($livestock['origin']) ? $livestock['origin'] : null,
             ];
 
-            $breedName = $livestock['breedName'];
+            $insertData->livestockAgeClassId = $category == 'Livestock' ? $livestock['livestockAgeClassId'] : $livestock['poultryAgeClassId'];
+            $insertData->livestockHealthStatus = $category == 'Livestock' ? $livestock['livestockHealthStatus'] : $livestock['poultryHealthStatus'];
+            $insertData->livestockTagId = $category == 'Livestock' ? $livestock['livestockTagId'] : $livestock['poultryTagId'];
+            $insertData->livestockType = $category == 'Livestock' ? $livestock['livestockType'] : $livestock['poultryType'];
+            $insertData->livestockTypeId = $category == 'Livestock' ? $livestock['livestockTypeId'] : $livestock['poultryTypeId'];
+
+            log_message('error', json_encode($insertData));
+
+
+            $breedName = isset($livestock['breedName']) ? $livestock['breedName'] : '';
             if ($breedName != '') {
                 if (is_string($breedName)) {
                     $insertData->livestockBreedId = $this->livestockBreed->getLivestockBreedIdByName($breedName, $insertData->livestockTypeId);
@@ -231,16 +252,16 @@ class SyncController extends ResourceController
                     'acquiredDate' => $livestock['acquiredDate']
                 ]);
 
-                $livestockType = $this->livestockTypes->getLivestockTypeName($livestock['livestockTypeId']);
-                $livestockTagId = $livestock['livestockTagId'];
+                $livestockType = $this->livestockTypes->getLivestockTypeName($category == 'Livestock' ? $livestock['livestockTypeId'] : $livestock['poultryTypeId']);
+                $livestockTagId = $category == 'Livestock' ? $livestock['livestockTagId'] : $livestock['poultryTagId'];
 
                 $auditLog = (object) [
                     'livestockId' => $livestockId,
                     'farmerId' => $livestock['userId'],
                     'action' => "Add",
-                    'title' => "Add New Livestock",
-                    'description' => "Add New Livestock $livestockType, $livestockTagId",
-                    'entityAffected' => "Livestock",
+                    'title' => "Add New $category",
+                    'description' => "Add New $category $livestockType, $livestockTagId",
+                    'entityAffected' => $category,
                 ];
 
                 $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
@@ -260,18 +281,13 @@ class SyncController extends ResourceController
         }
     }
 
-    private function updateLivestock($livestock)
+    private function updateLivestock($livestock, $category)
     {
         try {
             $updateData = (object) [
                 'id' => $livestock['id'],
-                'breedName' => $livestock['breedName'],
                 'breedingEligibility' => $livestock['breedingEligibility'],
                 'dateOfBirth' => $livestock['dateOfBirth'],
-                'livestockAgeClassId' => $livestock['livestockAgeClassId'],
-                'livestockHealthStatus' => $livestock['livestockHealthStatus'],
-                'livestockTagId' => $livestock['livestockTagId'],
-                'livestockTypeId' => $livestock['livestockTypeId'],
                 'sex' => $livestock['sex'],
                 'height' => $livestock['height'],
                 'heightUnit' => $livestock['heightUnit'],
@@ -279,7 +295,12 @@ class SyncController extends ResourceController
                 'weightUnit' => $livestock['weightUnit'],
             ];
 
-            $breedName = $livestock['breedName'];
+            $updateData->livestockAgeClassId = $category == 'Livestock' ? $livestock['livestockAgeClassId'] : $livestock['poultryAgeClassId'];
+            $updateData->livestockHealthStatus = $category == 'Livestock' ? $livestock['livestockHealthStatus'] : $livestock['poultryHealthStatus'];
+            $updateData->livestockTagId = $category == 'Livestock' ? $livestock['livestockTagId'] : $livestock['poultryTagId'];
+            $updateData->livestockTypeId = $category == 'Livestock' ? $livestock['livestockTypeId'] : $livestock['poultryTypeId'];
+
+            $breedName = isset($livestock['breedName']) ? $livestock['breedName'] : '';
             if ($breedName != '') {
                 if (is_string($breedName)) {
                     $updateData->livestockBreedId = $this->livestockBreed->getLivestockBreedIdByName($breedName, $updateData->livestockTypeId);
@@ -289,15 +310,15 @@ class SyncController extends ResourceController
             }
 
             if ($this->livestock->updateLivestock($livestock['id'], $updateData)) {
-                $livestockTagId = $livestock['livestockTagId'];
+                $livestockTagId = $category == 'Livestock' ? $livestock['livestockTagId'] : $livestock['poultryTagId'];
 
                 $auditLog = (object) [
                     'livestockId' => $livestock['id'],
                     'farmerId' => $livestock['userId'],
                     'action' => "Edit",
-                    'title' => "Edit Livestock Record",
-                    'description' => "Updated details for Livestock $livestockTagId",
-                    'entityAffected' => "Livestock",
+                    'title' => "Edit $category Record",
+                    'description' => "Updated details for $category $livestockTagId",
+                    'entityAffected' => $category,
                 ];
 
                 $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);
@@ -317,20 +338,20 @@ class SyncController extends ResourceController
         }
     }
 
-    private function deleteLivestock($livestock)
+    private function deleteLivestock($livestock, $category)
     {
         if ($this->livestock->deleteLivestock($livestock['id'])) {
 
-            $livestockTagId = $livestock['livestockTagId'];
+            $livestockTagId = $category == 'Livestock' ? $livestock['livestockTagId'] : $livestock['poultryTagId'];
 
             log_message('info', json_encode($livestock));
             $auditLog = (object) [
                 'livestockId' => $livestock['id'],
                 'farmerId' => $livestock['userId'],
                 'action' => "Delete",
-                'title' => "Delete Livestock Record",
-                'description' => "Delete Livestock $livestockTagId",
-                'entityAffected' => "Livestock",
+                'title' => "Delete $category Record",
+                'description' => "Delete $category $livestockTagId",
+                'entityAffected' => $category,
             ];
 
             $resultAudit = $this->farmerAudit->insertAuditTrailLog($auditLog);

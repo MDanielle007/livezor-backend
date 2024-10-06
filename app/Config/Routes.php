@@ -584,6 +584,7 @@ $routes->group('api', function ($routes) {
         $routes->get('farm', 'FarmInformationController::getAllFarmDataByFarmer');
 
         $routes->group('sync', function ($routes) {
+            $routes->post('animal', 'SyncController::syncA');
             $routes->post('livestock', 'SyncController::syncL');
             $routes->post('health', 'SyncController::syncH');
             $routes->post('pregnancy', 'SyncController::syncP');
