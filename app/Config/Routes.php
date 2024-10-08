@@ -149,6 +149,7 @@ $routes->group('api', function ($routes) {
         $routes->put('livestock-record-stat/(:any)', '::updateLivestockRecordStatus/$1');
         $routes->delete('delete-livestock-record', 'LivestocksController::deleteLivestock');
         $routes->get('all-livestocks-tagid', 'LivestocksController::getAllLivestockTagIDs');
+        $routes->get('all-livestocks-tagid/mortality', 'LivestocksController::getAllLivestockTagIDsMortality');
         $routes->get('livestock-production-year', 'LivestocksController::getLivestockProductionCountWholeYear');
         $routes->get('livestock-type-production-year', 'LivestocksController::getLivestockProductionWholeYear');
         $routes->get('livestock-type-production-year/(:any)/(:any)', 'LivestocksController::getLivestockProductionSelectedYear/$1/$2');

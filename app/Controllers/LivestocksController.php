@@ -580,6 +580,22 @@ class LivestocksController extends ResourceController
         }
     }
 
+    public function getAllLivestockTagIDsMortality()
+    {
+        try {
+            $userId = $this->request->getGet('fui');
+
+            $data = $this->livestock->getAllFarmerLivestockTagIDs($userId, true);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public function getAllFarmerLivestockTagIDs()
     {
         try {

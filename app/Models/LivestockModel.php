@@ -1352,16 +1352,19 @@ class LivestockModel extends Model
         }
     }
 
-    public function getAllFarmerLivestockTagIDs($userId)
+    public function getAllFarmerLivestockTagIDs($userId, $forMortality = false)
     {
         try {
             $whereClause = [
-                'livestocks.livestock_health_status' => 'Alive',
                 'livestocks.record_status' => 'Accessible',
                 'farmer_livestocks.farmer_id' => $userId,
                 'livestocks.livestock_tag_id IS NOT NULL' => null, // Condition for not null
                 'livestocks.category' => 'Livestock'
             ];
+
+            if($forMortality == true){
+                $whereClause['livestocks.livestock_health_status'] = 'Alive';
+            }
 
             $data = $this->select('
                 livestocks.id,
@@ -1370,14 +1373,18 @@ class LivestockModel extends Model
             ')
                 ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_mortalities', 'livestock_mortalities.livestock_id = livestocks.id', 'left')
                 ->where($whereClause)
+                ->where('livestock_mortalities.id IS NULL')
                 ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->findAll();
 
             return $data;
         } catch (\Throwable $th) {
             //throw $th;
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 
