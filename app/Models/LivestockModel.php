@@ -44,7 +44,6 @@ class LivestockModel extends Model
     {
         try {
             $whereClause = [
-                'livestocks.livestock_health_status' => 'Alive',
                 'livestocks.record_status' => 'Accessible',
                 'livestocks.category' => 'Livestock'
             ];
@@ -136,7 +135,6 @@ class LivestockModel extends Model
     {
         try {
             $whereClause = [
-                'livestocks.livestock_health_status' => 'Alive',
                 'livestocks.record_status' => 'Accessible',
                 'livestocks.category' => 'Poultry'
             ];
