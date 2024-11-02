@@ -11,14 +11,6 @@ class LivestockTypeSeeder extends Seeder
         $livestockTypes = [
             [
                 'id'=> '1',
-                'livestock_type_name' => 'Chicken',
-                'livestock_type_uses' => 'Meat, Eggs',
-                'category' => 'Poultry',
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ],
-            [
-                'id'=> '2',
                 'livestock_type_name' => 'Cattle',
                 'livestock_type_uses' => 'Meat, Milk',
                 'category' => 'Livestock',
@@ -26,31 +18,7 @@ class LivestockTypeSeeder extends Seeder
                 'updated_at' => date('Y-m-d H:i:s'),
             ],
             [
-                'id'=> '3',
-                'livestock_type_name' => 'Carabao',
-                'livestock_type_uses' => 'Meat, Labor',
-                'category' => 'Livestock',
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ],
-            [
-                'id'=> '4',
-                'livestock_type_name' => 'Pig',
-                'livestock_type_uses' => 'Meat',
-                'category' => 'Livestock',
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ],
-            [
-                'id'=> '5',
-                'livestock_type_name' => 'Goat',
-                'livestock_type_uses' => 'Meat, Milk',
-                'category' => 'Livestock',
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s')
-            ],
-            [
-                'id'=> '6',
+                'id'=> '2',
                 'livestock_type_name' => 'Sheep',
                 'livestock_type_uses' => 'Meat, Wool',
                 'category' => 'Livestock',
@@ -58,32 +26,16 @@ class LivestockTypeSeeder extends Seeder
                 'updated_at' => date('Y-m-d H:i:s')
             ],
             [
-                'id'=> '7',
-                'livestock_type_name' => 'Duck',
-                'livestock_type_uses' => 'Meat, Eggs',
-                'category' => 'Poultry',
+                'id'=> '3',
+                'livestock_type_name' => 'Goat',
+                'livestock_type_uses' => 'Meat, Milk',
+                'category' => 'Livestock',
                 'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
             ],
             [
-                'id'=> '8',
-                'livestock_type_name' => 'Turkey',
-                'livestock_type_uses' => 'Meat, Eggs',
-                'category' => 'Poultry',
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ],
-            [
-                'id'=> '9',
-                'livestock_type_name' => 'Goose',
-                'livestock_type_uses' => 'Meat, Eggs',
-                'category' => 'Poultry',
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ],
-            [
-                'id'=> '10',
-                'livestock_type_name' => 'Quail',
+                'id'=> '4',
+                'livestock_type_name' => 'Chicken',
                 'livestock_type_uses' => 'Meat, Eggs',
                 'category' => 'Poultry',
                 'created_at' => date('Y-m-d H:i:s'),

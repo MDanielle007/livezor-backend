@@ -231,9 +231,6 @@ class SyncController extends ResourceController
             $insertData->livestockType = $category == 'Livestock' ? $livestock['livestockType'] : $livestock['poultryType'];
             $insertData->livestockTypeId = $category == 'Livestock' ? $livestock['livestockTypeId'] : $livestock['poultryTypeId'];
 
-            log_message('error', json_encode($insertData));
-
-
             $breedName = isset($livestock['breedName']) ? $livestock['breedName'] : '';
             if ($breedName != '') {
                 if (is_string($breedName)) {

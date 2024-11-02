@@ -415,7 +415,6 @@ class LivestockVaccinationModel extends Model
                     ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
                     ->where('YEAR(livestock_vaccinations.vaccination_date)', $currentYear)
                     ->where('MONTH(livestock_vaccinations.vaccination_date)', $month)
-                    ->where('livestocks.category', 'Livestock')
                     ->countAllResults();
                 $data[] = [
                     'month' => $month,
@@ -498,7 +497,6 @@ class LivestockVaccinationModel extends Model
                 ->groupBy('YEAR(livestock_vaccinations.vaccination_date), MONTH(vaccination_date)')
                 ->orderBy('YEAR(livestock_vaccinations.vaccination_date)', 'ASC')
                 ->orderBy('MONTH(livestock_vaccinations.vaccination_date)', 'ASC')
-                ->where(['livestocks.category' => 'Livestock'])
                 ->findAll();
 
             // Create a complete list of months between start and end dates

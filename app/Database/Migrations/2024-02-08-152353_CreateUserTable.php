@@ -76,7 +76,7 @@ class CreateUserTable extends Migration
             ],
             'phone_number' => [
                 'type' => 'VARCHAR',
-                'constraint' => '11',
+                'constraint' => '13',
                 'null' => false,
             ],
             'user_image' => [
@@ -86,6 +86,11 @@ class CreateUserTable extends Migration
             'user_role' => [
                 'type' => 'ENUM',
                 'constraint' => ['DA Personnel', 'Farmer'],
+                'null' => false,
+            ],
+            'user_type' => [
+                'type' => 'ENUM',
+                'constraint' => ['Monitoring Staff', 'User Management Staff', 'Administrator', 'Farmer', 'Caretaker' ],
                 'null' => false,
             ],
             'user_status' => [

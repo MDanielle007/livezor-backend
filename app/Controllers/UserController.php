@@ -59,16 +59,17 @@ class UserController extends ResourceController
 
             $firstName = $this->request->getPost('firstName');
             $lastName = $this->request->getPost('lastName');
-            $userType = $this->request->getPost('userType');
+            $userRole = $this->request->getPost('userRole');
             $data = (object) [
                 'firstName' => $firstName,
-                'userId' => $this->generateUserID($firstName, $lastName, $userType),
+                'userId' => $this->generateUserID($firstName, $lastName, $userRole),
                 'middleName' => $this->request->getPost('middleName'),
                 'lastName' => $lastName,
                 'dateOfBirth' => $this->request->getPost('dateOfBirth'),
                 'gender' => $this->request->getPost('gender'),
                 'civilStatus' => $this->request->getPost('civilStatus'),
-                'userType' => $userType,
+                'userRole' => $userRole,
+                'userType' => $this->request->getPost('userType'),
                 'sitio' => $this->request->getPost('sitio'),
                 'barangay' => $this->request->getPost('barangay'),
                 'city' => $this->request->getPost('city'),
@@ -198,21 +199,18 @@ class UserController extends ResourceController
         }
     }
 
-    private function generateUserID($firstName, $lastName, $userType)
+    private function generateUserID($firstName, $lastName, $userRole)
     {
         // Determine the user type code
-        switch ($userType) {
+        switch ($userRole) {
             case 'DA Personnel':
-                $userTypeCode = 'DAP';
+                $userRoleCode = 'DAP';
                 break;
             case 'Farmer':
-                $userTypeCode = 'FMR';
-                break;
-            case 'Care Taker':
-                $userTypeCode = 'CTR';
+                $userRoleCode = 'FMR';
                 break;
             default:
-                $userTypeCode = 'UNK'; // Unknown user type
+                $userRoleCode = 'UNK'; // Unknown user type
                 break;
         }
 
@@ -228,8 +226,7 @@ class UserController extends ResourceController
 
 
         // Concatenate the parts to form the user ID
-        $userID = $userTypeCode . '-' . strtoupper($initials) . $year . $month . $day . $hour . $minute;
-        ;
+        $userID = $userRoleCode . '-' . strtoupper($initials) . $year . $month . $day . $hour . $minute;
 
         return $userID;
     }

@@ -31,7 +31,7 @@ class AuthController extends ResourceController
             if ($user && password_verify($password, $user['password'])) {
 
                 $loginres = $this->userModel->setUserLogin($user['id'], $notiftoken, $loginDate);
-                if (!$loginres){
+                if (!$loginres) {
                     return $this->respond([
                         'login' => false,
                         'error' => 'Invalid username or password.'
@@ -134,7 +134,7 @@ class AuthController extends ResourceController
 
             $token = JWT::encode($payload, $key, 'HS256');
 
-            $userModel->update($user['id'], ['reset_token' => $resetToken]);
+            $userModel->update($user['id'], (object) ['reset_token' => $resetToken]);
 
             // Create reset link
             $frontend = getenv('FRONTEND_URL');
@@ -164,18 +164,12 @@ class AuthController extends ResourceController
                 <title>Password Reset Request</title>
             </head>
             <body>
-                <p>Dear $name,</p>
-                
+                <p>Dear " . htmlspecialchars($name) . ",</p>
                 <p>We received a request to reset the password for your account associated with this email address. If you made this request, please click the link below to reset your password:</p>
-
-                <p><a href='$resetLink' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Reset Your Password</a></p>
-
+                <p><a href='" . htmlspecialchars($resetLink) . "' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Reset Your Password</a></p>
                 <p>If you did not request a password reset, you can safely ignore this email. Rest assured, your account is secure, and no changes have been made.</p>
-
                 <p>For security reasons, the link above will expire in 3 hours. If the link has expired, you can request a new password reset by visiting our website.</p>
-
                 <p>If you need further assistance, feel free to reach out to our support team.</p>
-
                 <p>Best regards,<br>Department of Agriculture IT Support Team</p>
             </body>
             </html>
@@ -183,13 +177,18 @@ class AuthController extends ResourceController
 
             // Use your email sending library or service here
             $emailService = \Config\Services::email();
+            $emailService->setHeader('MIME-Version', '1.0');
+            $emailService->setHeader('Content-Type', 'text/html; charset=UTF-8');
             $emailService->setTo($email);
             $emailService->setSubject($subject);
             $emailService->setMessage($message);
             $emailService->setMailType('html'); // Set the email format to HTML
 
-            $emailService->send();
-
+            if (!$emailService->send()) {
+                log_message('error', $emailService->printDebugger(['headers', 'subject', 'body']));
+                return false;
+            }
+            
             return true;
         } catch (\Throwable $th) {
             log_message('error', $th->getMessage());
