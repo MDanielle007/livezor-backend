@@ -139,12 +139,11 @@ class LivestockVaccinationModel extends Model
         return $livestockVaccinations;
     }
 
-    public function getReportData($category, $selectClause, $minDate, $maxDate)
+    public function getReportData($selectClause, $minDate, $maxDate)
     {
         try {
             $whereClause = [
                 'livestock_vaccinations.record_status' => 'Accessible',
-                'livestocks.category' => $category,
                 'livestock_vaccinations.vaccination_date >=' => $minDate,
                 'livestock_vaccinations.vaccination_date <=' => $maxDate
             ];
@@ -153,7 +152,7 @@ class LivestockVaccinationModel extends Model
                 ->select($selectClause)
                 ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id','left')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id')
                 ->where($whereClause)
@@ -164,6 +163,9 @@ class LivestockVaccinationModel extends Model
             return $data;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 
@@ -693,12 +695,11 @@ class LivestockVaccinationModel extends Model
         }
     }
 
-    public function getVaccinationsForReport($category, $minDate, $maxDate)
+    public function getVaccinationsForReport($minDate, $maxDate)
     {
         try {
             $whereClause = [
                 'livestock_vaccinations.record_status' => 'Accessible',
-                'livestocks.category' => $category,
                 'livestock_vaccinations.vaccination_date >=' => $minDate,
                 'livestock_vaccinations.vaccination_date <=' => $maxDate
             ];
@@ -719,7 +720,7 @@ class LivestockVaccinationModel extends Model
                 ')
                 ->join('livestocks', 'livestocks.id = livestock_vaccinations.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id','left')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_vaccinations.user_id')
                 ->where($whereClause)

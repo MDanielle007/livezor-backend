@@ -24,6 +24,7 @@ class AuditTrailController extends ResourceController
     {
         $this->auditTrails = new FarmerAuditModel();
         helper('jwt');
+        helper('reportfields');
     }
 
     public function getAllAuditTrailLogs()
@@ -55,9 +56,16 @@ class AuditTrailController extends ResourceController
     public function getAuditReportData()
     {
         try {
-            $selectClause = $this->request->getGet('selectClause');
-            $minDate = $this->request->getGet('minDate');
-            $maxDate = $this->request->getGet('maxDate');
+            $data = $this->request->getJSON(true);
+
+            $selectedFields = $data['selectedFields'];
+            $minDate = $data['minDate'];
+            $maxDate = $data['maxDate'];
+            $selectClause = getSelectedClauses($selectedFields);
+
+            // return $this->respond([
+            //     'selectClause' => $selectClause,
+            // ]);
 
             $auditTrails = $this->auditTrails->getReportData($selectClause, $minDate, $maxDate);
 

@@ -86,6 +86,9 @@ class LivestockEggProductionModel extends Model
             return $data;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 

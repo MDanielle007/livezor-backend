@@ -120,8 +120,9 @@ class LivestockPregnancyModel extends Model
             return $livestockPregnancies;
         } catch (\Throwable $th) {
             //throw $th;
-
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 

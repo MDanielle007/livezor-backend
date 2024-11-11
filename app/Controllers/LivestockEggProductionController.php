@@ -29,6 +29,7 @@ class LivestockEggProductionController extends ResourceController
         $this->eggProductionBatchGroup = new EggProductionBatchGroupModel();
         $this->farmerAudit = new FarmerAuditModel();
         helper('jwt');
+        helper('reportfields');
     }
 
     public function getAllEggProductions()
@@ -58,16 +59,23 @@ class LivestockEggProductionController extends ResourceController
 
     public function getLivestockEggProductionReportData(){
         try {
-            $selectClause = $this->request->getGet('selectClause');
-            $minDate = $this->request->getGet('minDate');
-            $maxDate = $this->request->getGet('maxDate');
+            $data = $this->request->getJSON(true);
+
+            $selectedFields = $data['selectedFields'];
+            $minDate = $data['minDate'];
+            $maxDate = $data['maxDate'];
+
+            $selectClause = getSelectedClauses($selectedFields);
+
 
             $livestockEggProductions = $this->livestockEggProduction->getReportData($selectClause, $minDate, $maxDate);
 
             return $this->respond($livestockEggProductions);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -50,7 +50,7 @@ class LivestocksController extends ResourceController
         $this->parasiteControl = new AnimalParasiteControlModel();
         $this->mortality = new LivestockMortalityModel();
         helper('jwt');
-        // helper('excel');
+        helper('reportfields');
     }
 
     public function getAllLivestocks()
@@ -63,24 +63,75 @@ class LivestocksController extends ResourceController
             //throw $th;
         }
     }
-
     public function getLivestockReportData()
     {
         try {
-            $selectClause = $this->request->getGet('selectClause');
-            $minDate = $this->request->getGet('minDate');
-            $maxDate = $this->request->getGet('maxDate');
+            $data = $this->request->getJSON(true);
+
+            $selectedFields = $data['selectedFields'];
+            $minDate = $data['minDate'];
+            $maxDate = $data['maxDate'];
             $category = 'Livestock';
 
-            $livestocks = $this->livestock->getReportData($category, $selectClause, $minDate, $maxDate);
+            $selectClause = getSelectedClauses($selectedFields);
 
-            // Call the helper function to generate the Excel file
-            // $tempFile = export_to_excel($livestocks);
-            return $this->respond($livestocks);
-            // return $this->response->download($tempFile, null);
+            $livestock = $this->livestock->getReportData($category, $selectClause, $minDate, $maxDate);
+            return $this->respond($livestock);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function getLivestockDIsProdReportData()
+    {
+        try {
+            $data = $this->request->getJSON(true);
+
+            $selectedFields = $data['selectedFields'];
+            $minDate = $data['minDate'];
+            $maxDate = $data['maxDate'];
+            $category = $data['category'];
+            $origin = $data['origin'];
+            $type = $data['type'];
+
+            $selectClause = getSelectedClauses($selectedFields);
+            $groupByFields = getGroupByFields($selectedFields);
+            $originTable = $origin === 'Distribution' ? 'Distributed' : 'Produced';
+
+            $livestock = [];
+            if ($type == 'Farmer') {
+                $livestock = $this->livestock->getFarmerDisProdReportData($category, $selectClause, $minDate, $maxDate, $originTable, $groupByFields);
+            } else if ($type == 'Municipality') {
+                $cities = [
+                    'Puerto Galera',
+                    'San Teodoro',
+                    'Baco',
+                    'Calapan City',
+                    'Naujan',
+                    'Victoria',
+                    'Socorro',
+                    'Pinamalayan',
+                    'Gloria',
+                    'Bansud',
+                    'Bongabong',
+                    'Roxas',
+                    'Mansalay',
+                    'Bulalacao'
+                ];
+
+                $livestock = $this->livestock->getCitiesDisProdReportData($category, $selectClause, $minDate, $maxDate, $originTable, $groupByFields, $cities);
+            } else {
+                return $this->fail('Invalid type', ResponseInterface::HTTP_BAD_REQUEST);
+            }
+            return $this->respond($livestock);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -1075,7 +1126,7 @@ class LivestocksController extends ResourceController
             $minDate = $this->request->getGet('minDate');
             $maxDate = $this->request->getGet('maxDate');
 
-            $livestockRecordsReport = $this->livestock->getLivestockRecordForReport($category, $minDate, $maxDate);
+            $livestockRecordsReport = $this->livestock->getLivestockRecordForReport(ucfirst($category), $minDate, $maxDate);
 
             // Check if the report data is not null
             if (is_null($livestockRecordsReport) || empty($livestockRecordsReport)) {
@@ -1385,44 +1436,6 @@ class LivestocksController extends ResourceController
         }
     }
 
-    private function generateHtmlFromSpreadsheet($spreadsheet)
-    {
-        // Use PhpSpreadsheet to save the sheet as an HTML string
-        $writer = IOFactory::createWriter($spreadsheet, 'Html');
-        ob_start();
-        $writer->save('php://output');
-        $html = ob_get_contents();
-        ob_end_clean();
-
-        return $html;
-    }
-
-    private function getLivestockOrPoultry($string)
-    {
-        $patterns = ['livestock', 'poultry'];
-
-        foreach ($patterns as $pattern) {
-            if (preg_match("/$pattern/", $string)) {
-                return $pattern;
-            }
-        }
-        return 'none';
-    }
-
-    private function splitAndCapitalize($string)
-    {
-        // Step 1: Insert a space before each capital letter (except the first letter)
-        $spacedString = preg_replace('/(?<!^)([A-Z])/', ' $1', $string);
-
-        // Step 2: Convert the entire string to lowercase
-        $lowercasedString = strtolower($spacedString);
-
-        // Step 3: Capitalize the first letter of each word
-        $capitalizedString = ucwords($lowercasedString);
-
-        return $capitalizedString;
-    }
-
     private function getLivestockDisProdFarmerForReport($category, $origin, $minDate, $maxDate)
     {
         try {
@@ -1715,65 +1728,6 @@ class LivestocksController extends ResourceController
             log_message('error', $th->getMessage());
             log_message('error', json_encode($th->getTrace()));
             return $th->getMessage();
-        }
-    }
-
-    public function getAnimalTypeCountMonitoring()
-    {
-        try {
-            $data = $this->livestock->getLivestockTypeCountMonitoring();
-
-            return $this->respond($data);
-        } catch (\Throwable $th) {
-            //throw $th;
-            log_message('error', $th->getMessage());
-            log_message('error', json_encode($th->getTrace()));
-            return $this->failServerError($th->getMessage());
-        }
-    }
-
-    public function getLivestockTypeCountMonitoring()
-    {
-        try {
-            $category = $this->request->getGet('category');
-            $data = $this->livestock->getLivestockTypeCountMonitoring($category);
-
-            return $this->respond($data);
-        } catch (\Throwable $th) {
-            //throw $th;
-            log_message('error', $th->getMessage());
-            log_message('error', json_encode($th->getTrace()));
-            return $this->failServerError($th->getMessage());
-        }
-    }
-
-    public function getLivestockBreedCountMonitoring()
-    {
-        try {
-            $category = $this->request->getGet('category');
-            $data = $this->livestock->getLivestockBreedCountMonitoring($category);
-
-            return $this->respond($data);
-        } catch (\Throwable $th) {
-            //throw $th;
-            log_message('error', $th->getMessage());
-            log_message('error', json_encode($th->getTrace()));
-            return $this->failServerError($th->getMessage());
-        }
-    }
-
-    public function getLivestockAgeCountMonitoring()
-    {
-        try {
-            $category = $this->request->getGet('category');
-            $data = $this->livestock->getLivestockAgeCountMonitoring($category);
-
-            return $this->respond($data);
-        } catch (\Throwable $th) {
-            //throw $th;
-            log_message('error', $th->getMessage());
-            log_message('error', json_encode($th->getTrace()));
-            return $this->failServerError($th->getMessage());
         }
     }
 
@@ -2110,6 +2064,103 @@ class LivestocksController extends ResourceController
             log_message('error', $th->getMessage() . ": " . $th->getLine());
             log_message('error', json_encode($th->getTrace()));
             return $this->respond($th->getMessage());
+        }
+    }
+
+    private function generateHtmlFromSpreadsheet($spreadsheet)
+    {
+        // Use PhpSpreadsheet to save the sheet as an HTML string
+        $writer = IOFactory::createWriter($spreadsheet, 'Html');
+        ob_start();
+        $writer->save('php://output');
+        $html = ob_get_contents();
+        ob_end_clean();
+
+        return $html;
+    }
+
+    private function getLivestockOrPoultry($string)
+    {
+        $patterns = ['livestock', 'poultry'];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match("/$pattern/", $string)) {
+                return $pattern;
+            }
+        }
+        return 'none';
+    }
+
+    private function splitAndCapitalize($string)
+    {
+        // Step 1: Insert a space before each capital letter (except the first letter)
+        $spacedString = preg_replace('/(?<!^)([A-Z])/', ' $1', $string);
+
+        // Step 2: Convert the entire string to lowercase
+        $lowercasedString = strtolower($spacedString);
+
+        // Step 3: Capitalize the first letter of each word
+        $capitalizedString = ucwords($lowercasedString);
+
+        return $capitalizedString;
+    }
+
+    public function getAnimalTypeCountMonitoring()
+    {
+        try {
+            $data = $this->livestock->getLivestockTypeCountMonitoring();
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failServerError($th->getMessage());
+        }
+    }
+
+    public function getLivestockTypeCountMonitoring()
+    {
+        try {
+            $category = $this->request->getGet('category');
+            $data = $this->livestock->getLivestockTypeCountMonitoring($category);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failServerError($th->getMessage());
+        }
+    }
+
+    public function getLivestockBreedCountMonitoring()
+    {
+        try {
+            $category = $this->request->getGet('category');
+            $data = $this->livestock->getLivestockBreedCountMonitoring($category);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failServerError($th->getMessage());
+        }
+    }
+
+    public function getLivestockAgeCountMonitoring()
+    {
+        try {
+            $category = $this->request->getGet('category');
+            $data = $this->livestock->getLivestockAgeCountMonitoring($category);
+
+            return $this->respond($data);
+        } catch (\Throwable $th) {
+            //throw $th;
+            log_message('error', $th->getMessage());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->failServerError($th->getMessage());
         }
     }
 

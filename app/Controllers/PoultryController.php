@@ -30,6 +30,7 @@ class PoultryController extends ResourceController
         $this->userModel = new UserModel();
         $this->farmerAudit = new FarmerAuditModel();
         helper('jwt');
+        helper('reportfields');
     }
 
     public function getAllPoultries(){
@@ -44,17 +45,24 @@ class PoultryController extends ResourceController
 
     public function getPoultryReportData(){
         try {
-            $selectClause = $this->request->getGet('selectClause');
-            $minDate = $this->request->getGet('minDate');
-            $maxDate = $this->request->getGet('maxDate');
+            $data = $this->request->getJSON(true);
+
+            $selectedFields = $data['selectedFields'];
+            $minDate = $data['minDate'];
+            $maxDate = $data['maxDate'];
             $category = 'Poultry';
+
+            
+            $selectClause = getSelectedClauses($selectedFields);
 
             $poultries = $this->poultry->getReportData($category, $selectClause, $minDate, $maxDate);
 
             return $this->respond($poultries);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

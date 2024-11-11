@@ -113,7 +113,7 @@ class LivestockModel extends Model
                 ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
                 ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id','left')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->where($whereClause)
                 ->orderBy('user_accounts.first_name', 'ASC')
@@ -127,7 +127,82 @@ class LivestockModel extends Model
 
             return $data;
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
+        }
+    }
+
+    public function getFarmerDisProdReportData($category, $selectClause, $minDate, $maxDate, $origin, $groupByFields)
+    {
+        try {
+            $whereClause = [
+                'livestocks.record_status' => 'Accessible',
+                'livestocks.category' => $category,
+                'livestocks.date_of_birth >=' => $minDate,
+                'livestocks.date_of_birth <=' => $maxDate,
+                'livestocks.origin' => $origin
+            ];
+
+            $data = $this
+                ->select($selectClause)
+                ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
+                ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id','left')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->where($whereClause)
+                ->groupBy($groupByFields)
+                ->orderBy('farmer_livestocks.acquired_date', 'ASC')
+                ->orderBy('farmerUserId', 'ASC')
+                ->orderBy('farmerName', 'ASC')
+                ->orderBy('livestock_types.livestock_type_name', 'ASC')
+                ->orderBy('livestock_breeds.livestock_breed_name', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
+        }
+    }
+
+    public function getCitiesDisProdReportData($category, $selectClause, $minDate, $maxDate, $origin, $groupByFields, $cities)
+    {
+        try {
+            $whereClause = [
+                'livestocks.record_status' => 'Accessible',
+                'livestocks.category' => $category,
+                'livestocks.date_of_birth >=' => $minDate,
+                'livestocks.date_of_birth <=' => $maxDate,
+                'livestocks.origin' => $origin
+            ];
+
+            $data = $this
+                ->select($selectClause)
+                ->join('farmer_livestocks', 'farmer_livestocks.livestock_id = livestocks.id')
+                ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
+                ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id', 'left') // Use left join if breed can be null
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id', 'left')
+                ->where($whereClause)
+                ->whereIn('user_accounts.city', $cities) // Filter by cities
+                ->groupBy($groupByFields)
+                ->orderBy('FIELD(user_accounts.city, ' . implode(',', array_map(function ($city) {
+                    return '"' . $city . '"';
+                }, $cities)) . ')')
+                ->orderBy('user_accounts.barangay', 'ASC')
+                ->orderBy('livestock_types.livestock_type_name', 'ASC')
+                ->orderBy('livestock_breeds.livestock_breed_name', 'ASC')
+                ->orderBy('livestock_age_class.livestock_age_classification', 'ASC')
+                ->findAll();
+
+            return $data;
+        } catch (\Throwable $th) {
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 
@@ -2245,7 +2320,7 @@ class LivestockModel extends Model
                 ->select('
                     livestocks.livestock_tag_id as livestockTagId,
                     livestock_types.livestock_type_name as livestockType,
-                    COALESCE(NULLIF(livestock_breeds.livestock_breed_name, ""), "Unknown") as livestockBreedName,
+                    COALESCE(livestock_breeds.livestock_breed_name, "Unknown")  as livestockBreedName,
                     livestock_age_class.livestock_age_classification as livestockAgeClassification,
                     user_accounts.user_id as farmerUserId,
                     CONCAT(user_accounts.first_name, " ", user_accounts.last_name) as farmerName,
@@ -2266,12 +2341,12 @@ class LivestockModel extends Model
                 ->join('farmer_livestocks', 'livestocks.id = farmer_livestocks.livestock_id')
                 ->join('user_accounts', 'user_accounts.id = farmer_livestocks.farmer_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id', 'left')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->where($whereClause)
-                ->orderBy('livestocks.date_of_birth', 'ASC')
                 ->orderBy('farmerUserId', 'ASC')
                 ->orderBy('farmerName', 'ASC')
+                ->orderBy('livestocks.date_of_birth', 'ASC')
                 ->orderBy('livestocks.livestock_tag_id', 'ASC')
                 ->findAll();
 
@@ -2279,6 +2354,7 @@ class LivestockModel extends Model
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage());
+            return [];
         }
     }
 
@@ -2337,6 +2413,7 @@ class LivestockModel extends Model
         } catch (\Throwable $th) {
             //throw $th;
             log_message('error', $th->getMessage());
+            return [];
         }
     }
 
@@ -2389,7 +2466,7 @@ class LivestockModel extends Model
             return $data;
         } catch (\Throwable $th) {
             log_message('error', $th->getMessage());
-            return $th->getMessage();
+            return [];
         }
     }
 

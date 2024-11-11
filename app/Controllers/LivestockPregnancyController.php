@@ -38,6 +38,7 @@ class LivestockPregnancyController extends ResourceController
         $this->farmerLivestock = new FarmerLivestockModel();
         $this->farmerAudit = new FarmerAuditModel();
         helper('jwt');
+        helper('reportfields');
     }
 
     public function getAllLivestockPregnancies()
@@ -53,16 +54,22 @@ class LivestockPregnancyController extends ResourceController
     public function getLivestockPregnancyReportData()
     {
         try {
-            $selectClause = $this->request->getGet('selectClause');
-            $minDate = $this->request->getGet('minDate');
-            $maxDate = $this->request->getGet('maxDate');
+            $data = $this->request->getJSON(true);
+
+            $selectedFields = $data['selectedFields'];
+            $minDate = $data['minDate'];
+            $maxDate = $data['maxDate'];
+            $selectClause = getSelectedClauses($selectedFields);
+
 
             $livestockPregnancies = $this->livestockPregnancy->getReportData($selectClause, $minDate, $maxDate);
 
             return $this->respond($livestockPregnancies);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

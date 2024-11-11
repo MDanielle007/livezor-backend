@@ -36,6 +36,7 @@ class LivestockMortalityController extends ResourceController
         $this->farmerAudit = new FarmerAuditModel();
         $this->arimaPrediction = new ArimaPredictionLibrary();
         helper('jwt');
+        helper('reportfields');
     }
 
     public function getAllLivestockMortalities()
@@ -413,15 +414,21 @@ class LivestockMortalityController extends ResourceController
     public function getMortalityReportData()
     {
         try {
-            $selectClause = $this->request->getGet('selectClause');
-            $minDate = $this->request->getGet('minDate');
-            $maxDate = $this->request->getGet('maxDate');
-            $livestocks = $this->livestockMortality->getReportData($selectClause, $minDate, $maxDate);
+            $data = $this->request->getJSON(true);
 
-            return $this->respond($livestocks);
+            $selectedFields = $data['selectedFields'];
+            $minDate = $data['minDate'];
+            $maxDate = $data['maxDate'];
+            $selectClause = getSelectedClauses($selectedFields);
+            
+            $mortalities = $this->livestockMortality->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($mortalities);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

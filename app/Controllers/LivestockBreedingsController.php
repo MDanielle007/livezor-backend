@@ -38,6 +38,7 @@ class LivestockBreedingsController extends ResourceController
         $this->farmerAudit = new FarmerAuditModel();
         $this->livestockType = new LivestockTypeModel();
         helper('jwt');
+        helper('reportfields');
     }
 
     public function getAllLivestockBreedings()
@@ -55,16 +56,22 @@ class LivestockBreedingsController extends ResourceController
     public function getLivestockBreedingReportData()
     {
         try {
-            $selectClause = $this->request->getGet('selectClause');
-            $minDate = $this->request->getGet('minDate');
-            $maxDate = $this->request->getGet('maxDate');
+            $data = $this->request->getJSON(true);
 
-            $auditTrails = $this->livestockBreeding->getReportData($selectClause, $minDate, $maxDate);
+            $selectedFields = $data['selectedFields'];
+            $minDate = $data['minDate'];
+            $maxDate = $data['maxDate'];
+            $selectClause = getSelectedClauses($selectedFields);
 
-            return $this->respond($auditTrails);
+
+            $breedings = $this->livestockBreeding->getReportData($selectClause, $minDate, $maxDate);
+
+            return $this->respond($breedings);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

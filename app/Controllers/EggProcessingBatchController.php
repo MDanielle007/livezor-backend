@@ -31,6 +31,7 @@ class EggProcessingBatchController extends ResourceController
         $this->eggMonitoringLog = new EggMonitoringLogsModel();
         $this->farmerAudit = new FarmerAuditModel();
         helper('jwt');
+        helper('reportfields');
     }
 
     public function getEggProcessingBatches()
@@ -43,35 +44,47 @@ class EggProcessingBatchController extends ResourceController
         }
     }
 
-    public function getLivestockEggMonitoringLogsReportData()
+    public function getEggProcessingReportData()
     {
         try {
-            $selectClause = $this->request->getGet('selectClause');
-            $minDate = $this->request->getGet('minDate');
-            $maxDate = $this->request->getGet('maxDate');
+            $data = $this->request->getJSON(true);
+
+            $selectedFields = $data['selectedFields'];
+            $minDate = $data['minDate'];
+            $maxDate = $data['maxDate'];
+            $selectClause = getSelectedClauses($selectedFields);
+
 
             $eggProBatches = $this->eggProcessBatches->getReportData($selectClause, $minDate, $maxDate);
 
             return $this->respond($eggProBatches);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     public function getEggMonitoringLogsReportData()
     {
         try {
-            $selectClause = $this->request->getGet('selectClause');
-            $minDate = $this->request->getGet('minDate');
-            $maxDate = $this->request->getGet('maxDate');
+            $data = $this->request->getJSON(true);
+
+            $selectedFields = $data['selectedFields'];
+            $minDate = $data['minDate'];
+            $maxDate = $data['maxDate'];
+
+            $selectClause = getSelectedClauses($selectedFields);
 
             $eggMonitoringLogs = $this->eggMonitoringLog->getReportData($selectClause, $minDate, $maxDate);
 
             return $this->respond($eggMonitoringLogs);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->respond(['error' => $th->getMessage()]);
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return $this->fail('Failed to fetch data', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

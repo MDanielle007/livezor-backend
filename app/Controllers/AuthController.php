@@ -107,9 +107,7 @@ class AuthController extends ResourceController
                 return $this->fail('Email or Username is required.', 400);
             }
 
-            // Check if user exists by email or username
-            $userModel = new UserModel();
-            $user = $userModel->checkUserEmailorUsername($emailOrUsername); //
+            $user = $this->userModel->checkUserEmailorUsername($emailOrUsername); //
 
             if (!$user) {
                 return $this->failNotFound('Email or Username not found.');
@@ -134,7 +132,7 @@ class AuthController extends ResourceController
 
             $token = JWT::encode($payload, $key, 'HS256');
 
-            $userModel->update($user['id'], (object) ['reset_token' => $resetToken]);
+            $this->userModel->update($user['id'], (object) ['reset_token' => $resetToken]);
 
             // Create reset link
             $frontend = getenv('FRONTEND_URL');
@@ -177,8 +175,6 @@ class AuthController extends ResourceController
 
             // Use your email sending library or service here
             $emailService = \Config\Services::email();
-            $emailService->setHeader('MIME-Version', '1.0');
-            $emailService->setHeader('Content-Type', 'text/html; charset=UTF-8');
             $emailService->setTo($email);
             $emailService->setSubject($subject);
             $emailService->setMessage($message);

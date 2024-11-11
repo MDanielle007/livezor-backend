@@ -454,8 +454,8 @@ class LivestockMortalityModel extends Model
             $data = $this->select($selectClause)
                 ->join('livestocks', 'livestocks.id = livestock_mortalities.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
-                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id','left')
+                ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id','left')
                 ->join('user_accounts', 'user_accounts.id = livestock_mortalities.farmer_id')
                 ->where($whereClause)
                 ->orderBy('livestock_mortalities.date_of_death', 'DESC')
@@ -465,6 +465,9 @@ class LivestockMortalityModel extends Model
             return $data;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 
@@ -499,7 +502,7 @@ class LivestockMortalityModel extends Model
                 ')
                 ->join('livestocks', 'livestocks.id = livestock_mortalities.livestock_id')
                 ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
+                ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id','left')
                 ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
                 ->join('user_accounts', 'user_accounts.id = livestock_mortalities.farmer_id')
                 ->where($whereClause)

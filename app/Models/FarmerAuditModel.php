@@ -148,17 +148,20 @@ class FarmerAuditModel extends Model
 
             $data = $this
             ->select($selectClause)
-            ->join('user_accounts','user_accounts.id = farmer_audit.farmer_id')
-            ->join('livestocks', 'livestocks.id = farmer_audit.livestock_id')
-            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id')
-            ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id')
-            ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id')
+            ->join('user_accounts','user_accounts.id = farmer_audit.farmer_id','left')
+            ->join('livestocks', 'livestocks.id = farmer_audit.livestock_id', 'left')
+            ->join('livestock_types', 'livestock_types.id = livestocks.livestock_type_id', 'left')
+            ->join('livestock_breeds', 'livestock_breeds.id = livestocks.livestock_breed_id', 'left')
+            ->join('livestock_age_class', 'livestock_age_class.id = livestocks.livestock_age_class_id', 'left')
             ->where($whereClause)
             ->orderBy('farmer_audit.timestamp', 'DESC')->findAll();
 
             return $data;
         } catch (\Throwable $th) {
             //throw $th;
+            log_message('error', $th->getMessage() . ": " . $th->getLine());
+            log_message('error', json_encode($th->getTrace()));
+            return [];
         }
     }
 
